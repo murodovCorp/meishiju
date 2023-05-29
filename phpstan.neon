@@ -1,0 +1,33 @@
+parameters:
+	excludePaths:
+		- app/Http/Controllers/API/v1/SocketController.php
+		- app/Telegram
+	ignoreErrors:
+		- '#Call to static method [a-zA-Z0-9\\_]+\(\) on an unknown class Str.#'
+		- '#Call to static method [a-zA-Z0-9\\_]+\(\) on an unknown class Http.#'
+		- '#Call to static method [a-zA-Z0-9\\_]+\(\) on an unknown class DB.#'
+		- '#Call to static method [a-zA-Z0-9\\_]+\(\) on an unknown class Log.#'
+		- '#Call to static method [a-zA-Z0-9\\_]+\(\) on an unknown class File.#'
+		- '#Call to static method [a-zA-Z0-9\\_]+\(\) on an unknown class Cache.#'
+		- '#Call to static method [a-zA-Z0-9\\_]+\(\) on an unknown class Artisan.#'
+		- '#Call to static method [a-zA-Z0-9\\_]+\(\) on an unknown class Redirect.#'
+		- '#Call to an undefined method [a-zA-Z0-9\\_]+\::when().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::where().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::firstOrCreate().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::find().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::pluck().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::updateOrCreate().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::create().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::when().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::firstWhere().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::first().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::count().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::delete().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::get().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::select().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::max().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::withAvg().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::paginate().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\Cache::set.#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::orderByDesc().#'
+		- '#Call to an undefined static method [a-zA-Z0-9\\_]+\::orderBy().#'
