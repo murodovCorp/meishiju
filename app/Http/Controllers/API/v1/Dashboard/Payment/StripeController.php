@@ -43,7 +43,7 @@ class StripeController extends Controller
         } catch (Throwable $e) {
             $this->error($e);
             return $this->onErrorResponse([
-                'message' => ResponseError::ERROR_501
+                'message' => $e->getMessage()
             ]);
         }
 
@@ -120,15 +120,21 @@ class StripeController extends Controller
      */
     public function paymentWebHook(Request $request): void
     {
-        Log::error('paymentWebHook', $request->all());
+
         $status = $request->input('data.object.status');
 
         $status = match ($status) {
-            'succeeded' => WalletHistory::PAID,
+            'succeeded', 'complete' => WalletHistory::PAID,
             default     => 'progress',
         };
 
         $token = $request->input('data.object.id');
+
+        Log::error('stripe webhook', [
+            'token'     => $token,
+            'status'    => $status,
+            '_status'   => $request->input('data.object.status')
+        ]);
 
         $this->service->afterHook($token, $status);
     }

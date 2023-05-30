@@ -38,7 +38,7 @@ class StripeService extends BaseService
         Stripe::setApiKey(data_get($payload, 'stripe_sk'));
 
         $order          = Order::find(data_get($data, 'order_id'));
-        $totalPrice     = ceil($order->rate_total_price * 2 * 100) / 2;
+        $totalPrice     = ceil($order->rate_total_price * 100);
 
         $order->update([
             'total_price' => ($totalPrice / $order->rate) / 100
@@ -47,7 +47,16 @@ class StripeService extends BaseService
         $host = request()->getSchemeAndHttpHost();
 
         $session = Session::create([
-            'payment_method_types' => ['card', 'alipay', 'wechat_pay'],
+            'payment_method_types'   => [
+                'alipay',
+                'wechat_pay'
+            ],
+            'payment_method_options' => [
+                'wechat_pay' => [
+                    'client' => 'web'
+                ]
+            ],
+            'currency'   => Str::lower($order->currency?->title ?? data_get($payload, 'currency')),
             'line_items' => [
                 [
                     'price_data' => [
@@ -69,7 +78,7 @@ class StripeService extends BaseService
             'user_id'   => auth('sanctum')->id(),
             'order_id'  => data_get($data, 'order_id'),
         ], [
-            'id' => $session->payment_intent,
+            'id' => $session->payment_intent ?? $session->id,
             'data' => [
                 'url'   => $session->url,
                 'price' => $totalPrice,

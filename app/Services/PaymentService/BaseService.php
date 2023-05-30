@@ -26,6 +26,10 @@ class BaseService extends CoreService
             ->where('id', $token)
             ->first();
 
+        if (empty($paymentProcess)) {
+            return;
+        }
+
         if (!empty($paymentProcess->subscription_id)) {
             $subscription = $paymentProcess->subscription;
 

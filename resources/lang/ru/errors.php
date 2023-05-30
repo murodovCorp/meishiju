@@ -100,6 +100,7 @@ return [
     $e::CANT_DELETE_ORDERS              => 'Не могу удалить заказы :ids',
     $e::CANT_UPDATE_ORDERS              => 'Не могу обновить заказы :ids',
     $e::STATUS_CHANGED                  => 'Статус вашего заказа изменен на :status',
+    $e::ADD_CASHBACK                    => 'Добавлен кэшбек',
     $e::PAYOUT_ACCEPTED                 => 'Выплата уже :status',
     $e::CANT_DELETE_IDS                 => 'Не могу удалить :ids',
     $e::USER_NOT_FOUND                  => 'Пользователь не найден',

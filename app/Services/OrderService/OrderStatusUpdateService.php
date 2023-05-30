@@ -7,6 +7,8 @@ use App\Jobs\PayReferral;
 use App\Models\Language;
 use App\Models\Order;
 use App\Models\OrderDetail;
+use App\Models\Point;
+use App\Models\PointHistory;
 use App\Models\PushNotification;
 use App\Models\Transaction;
 use App\Models\Translation;
@@ -61,6 +63,33 @@ class OrderStatusUpdateService extends CoreService
 
                     $this->adminWalletTopUp($order);
 
+                    $point = Point::getActualPoint($order->total_price);
+
+                    if (!empty($point)) {
+                        $token  = $order->user?->firebase_token;
+                        $token = is_array($token) ? $token : [$token];
+
+                        $this->sendNotification(
+                            $token,
+                            __('errors.' . ResponseError::ADD_CASHBACK, ['status' => !empty($tStatus) ? $tStatus : $status], $this->language),
+                            $order->id,
+                            [
+                                'id'     => $order->id,
+                                'status' => $order->status,
+                                'type'   => PushNotification::ADD_CASHBACK
+                            ],
+                            [$order->user_id]
+                        );
+
+                        $order->pointHistories()->create([
+                            'user_id'   => $order->user_id,
+                            'price'     => $point,
+                            'note'      => 'cashback',
+                        ]);
+
+                        $order->user?->wallet?->increment($point);
+                    }
+
                     PayReferral::dispatchAfterResponse($order->user, 'increment');
                 }
 
@@ -89,6 +118,14 @@ class OrderStatusUpdateService extends CoreService
                             'user'   => $user
                         ]);
 
+                    }
+
+                    if ($order->pointHistories?->count() > 0) {
+                        foreach ($order->pointHistories as $pointHistory) {
+                            /** @var PointHistory $pointHistory */
+                            $order->user?->wallet?->decrement($pointHistory->price);
+                            $pointHistory->delete();
+                        }
                     }
 
                     if ($order->status === Order::STATUS_DELIVERED) {

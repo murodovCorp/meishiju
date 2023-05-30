@@ -14,13 +14,9 @@ class ChangeUserIdColumnInReviewsTable extends Migration
     public function up(): void
     {
         Schema::table('reviews', function (Blueprint $table) {
-            $table->dropForeign('reviews_user_id_foreign');
             $table->foreignId('user_id')
                 ->nullable()
-                ->change()
-                ->constrained()
-                ->cascadeOnUpdate()
-                ->cascadeOnDelete();
+                ->change();
         });
     }
 

@@ -43,6 +43,7 @@ class PushNotification extends Model
     const BOOKING_STATUS        = 'booking_status';
     const NEW_BOOKING           = 'new_booking';
     const NEWS_PUBLISH          = 'news_publish';
+    const ADD_CASHBACK          = 'add_cashback';
 
     const TYPES = [
         self::NEW_ORDER             => self::NEW_ORDER,
@@ -52,6 +53,7 @@ class PushNotification extends Model
         self::BOOKING_STATUS        => self::BOOKING_STATUS,
         self::NEW_BOOKING           => self::NEW_BOOKING,
         self::NEWS_PUBLISH          => self::NEWS_PUBLISH,
+        self::ADD_CASHBACK          => self::ADD_CASHBACK,
     ];
 
     public function user(): BelongsTo

@@ -87,6 +87,7 @@ class ResponseError
     public const CANT_DELETE_ORDERS = 'CANT_DELETE_ORDERS';
     public const CANT_UPDATE_ORDERS = 'CANT_UPDATE_ORDERS';
     public const STATUS_CHANGED = 'STATUS_CHANGED';
+    public const ADD_CASHBACK = 'ADD_CASHBACK';
     public const BOOKING_STATUS_CHANGED = 'BOOKING_STATUS_CHANGED';
     public const PAYOUT_ACCEPTED = 'PAYOUT_ACCEPTED';
     public const CANT_DELETE_IDS = 'CANT_DELETE_IDS';
