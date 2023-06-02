@@ -395,6 +395,17 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
             ])
                 ->where('addon', false)
                 ->where('quantity', '>', 0),
+            'stocks' => fn($q) => $q
+                ->select([
+                    'id',
+                    'countable_type',
+                    'countable_id',
+                    'price',
+                    'quantity',
+                    'addon',
+                ])
+                ->where('addon', false)
+                ->where('quantity', '>', 0),
             'translation' => fn($q) => $q->where('locale', $this->language),
             'discounts' => fn($q) => $q
                 ->where('start', '<=', today())
