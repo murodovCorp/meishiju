@@ -480,6 +480,12 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                     ])
                     ->where('quantity', '>', 0)
                     ->where('addon', false),
+                'products.stocks' => fn($q) => $q
+                    ->select([
+                        'id', 'countable_type', 'countable_id', 'price', 'quantity', 'addon'
+                    ])
+                    ->where('quantity', '>', 0)
+                    ->where('addon', false),
             ])
             ->whereHas('products', fn($q) => $q
                 ->select([

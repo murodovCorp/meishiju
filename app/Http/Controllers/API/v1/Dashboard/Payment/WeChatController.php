@@ -11,21 +11,20 @@ use App\Models\PaymentProcess;
 use App\Models\Subscription;
 use App\Models\Transaction;
 use App\Models\WalletHistory;
-use App\Services\PaymentService\AliPayService;
+use App\Services\PaymentService\WeChatService;
 use App\Traits\ApiResponse;
 use App\Traits\OnResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Log;
 use Redirect;
 use Throwable;
 
-class AliPayController extends Controller
+class WeChatController extends Controller
 {
     use OnResponse, ApiResponse;
 
-    public function __construct(private AliPayService $service)
+    public function __construct(private WeChatService $service)
     {
         parent::__construct();
     }
@@ -45,7 +44,7 @@ class AliPayController extends Controller
         } catch (Throwable $e) {
             $this->error($e);
             return $this->onErrorResponse([
-                'message' => $e->getMessage() . ' ' . $e->getFile() . ' '  . $e->getLine() . ' '. $e->getCode(),
+                'message' => $e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getCode(),
             ]);
         }
 

@@ -11,6 +11,7 @@
         "ext-fileinfo": "*",
         "ext-gd": "*",
         "ext-json": "*",
+        "ext-openssl": "*",
         "ext-simplexml": "*",
         "ext-zip": "*",
         "aws/aws-sdk-php": "^3.0",
@@ -45,7 +46,7 @@
         "stripe/stripe-php": "^10.6",
         "twilio/sdk": "^6.40",
         "vonage/client": "^3.0",
-        "ext-openssl": "*"
+        "yansongda/laravel-pay": "^3.3"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.6",

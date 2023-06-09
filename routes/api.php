@@ -342,6 +342,9 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
             Route::get('order-alipay-process', [Payment\AliPayController::class, 'orderProcessTransaction']);
             Route::get('subscription-alipay-process', [Payment\AliPayController::class, 'subscriptionProcessTransaction']);
 
+            Route::get('order-we-chat-process', [Payment\WeChatController::class, 'orderProcessTransaction']);
+            Route::get('subscription-we-chat-process', [Payment\WeChatController::class, 'subscriptionProcessTransaction']);
+
             Route::get('order-razorpay-process', [Payment\RazorPayController::class, 'orderProcessTransaction']);
             Route::get('subscription-razorpay-process', [Payment\RazorPayController::class, 'subscriptionProcessTransaction']);
 
@@ -1106,11 +1109,13 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
     });
 
     Route::any('order-alipay-success', [Payment\AliPayController::class, 'orderResultTransaction']);
+    Route::any('order-we-chat-success', [Payment\WeChatController::class, 'orderResultTransaction']);
     Route::any('subscription-alipay-success', [Payment\AliPayController::class, 'subscriptionResultTransaction']);
 
     Route::group(['prefix' => 'webhook'], function () {
         Route::any('razorpay/payment',      [Payment\RazorPayController::class,     'paymentWebHook']);
         Route::any('alipay/payment',        [Payment\AliPayController::class,       'paymentWebHook']);
+        Route::any('we-chat/payment',       [Payment\WeChatController::class,       'paymentWebHook']);
         Route::any('stripe/payment',        [Payment\StripeController::class,       'paymentWebHook']);
         Route::any('flw/payment',           [Payment\FlutterWaveController::class,  'paymentWebHook']);
         Route::any('mercado-pago/payment',  [Payment\MercadoPagoController::class,  'paymentWebHook']);

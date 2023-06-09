@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Yansongda\LaravelPay\PayServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -17,6 +18,7 @@ class AppServiceProvider extends ServiceProvider
 //            $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
 //            $this->app->register(TelescopeServiceProvider::class);
 //        }
+        $this->app->register(PayServiceProvider::class);
     }
 
     /**
@@ -26,6 +28,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $this->app->register(PayServiceProvider::class);
     }
 }
