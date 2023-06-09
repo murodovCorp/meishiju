@@ -406,6 +406,21 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                 ])
                 ->where('addon', false)
                 ->where('quantity', '>', 0),
+            'stocks.addons.addon' => fn($query) => $query->select([
+                'id',
+                'uuid',
+                'tax',
+                'bar_code',
+                'status',
+                'active',
+                'img',
+                'min_qty',
+                'max_qty',
+            ])->when(data_get($filter, 'addon_status'), fn($q, $status) =>
+                $q->where('active', true)->where('status', '=', $status)
+            ),
+            'stocks.addons.addon.stock',
+            'stocks.addons.addon.translation' => fn($q) => $q->where('locale', $this->language),
             'translation' => fn($q) => $q->where('locale', $this->language),
             'discounts' => fn($q) => $q
                 ->where('start', '<=', today())
@@ -482,10 +497,30 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                     ->where('addon', false),
                 'products.stocks' => fn($q) => $q
                     ->select([
-                        'id', 'countable_type', 'countable_id', 'price', 'quantity', 'addon'
+                        'id',
+                        'countable_type',
+                        'countable_id',
+                        'price',
+                        'quantity',
+                        'addon',
                     ])
-                    ->where('quantity', '>', 0)
-                    ->where('addon', false),
+                    ->where('addon', false)
+                    ->where('quantity', '>', 0),
+                'products.stocks.addons.addon' => fn($query) => $query->select([
+                    'id',
+                    'uuid',
+                    'tax',
+                    'bar_code',
+                    'status',
+                    'active',
+                    'img',
+                    'min_qty',
+                    'max_qty',
+                ])->when(data_get($filter, 'addon_status'), fn($q, $status) =>
+                $q->where('active', true)->where('status', '=', $status)
+                ),
+                'products.stocks.addons.addon.stock',
+                'products.stocks.addons.addon.translation' => fn($q) => $q->where('locale', $this->language),
             ])
             ->whereHas('products', fn($q) => $q
                 ->select([
