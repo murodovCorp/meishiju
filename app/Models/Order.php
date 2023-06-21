@@ -149,11 +149,13 @@ class Order extends Model
 
     const PICKUP    = 'pickup';
     const DELIVERY  = 'delivery';
+    const YANDEX    = 'yandex';
     const DINE_IN   = 'dine_in';
 
     const DELIVERY_TYPES = [
         self::PICKUP   => self::PICKUP,
         self::DELIVERY => self::DELIVERY,
+        self::YANDEX   => self::YANDEX,
         self::DINE_IN  => self::DINE_IN,
     ];
 

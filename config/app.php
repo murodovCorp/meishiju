@@ -64,6 +64,8 @@ return [
 
     'telegram_bot_token' => env('TELEGRAM_BOT_TOKEN'),
 
+    'yandex_token' => env('YANDEX_TOKEN'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

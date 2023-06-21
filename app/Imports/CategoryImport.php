@@ -5,7 +5,6 @@ namespace App\Imports;
 use App\Models\Category;
 use App\Models\Language;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -49,16 +48,15 @@ class CategoryImport extends BaseImport implements ToCollection, WithHeadingRow,
                         'deleted_at' => null
                     ]);
 
-                    if (!data_get($row, 'title')) {
-                        return true;
+                    if (!empty(data_get($row, 'product_title'))) {
+                        $category->translation()->updateOrInsert([
+                            'category_id'   => $category->id,
+                            'locale'        => $this->language ?? $language,
+                        ], [
+                            'title'         => data_get($row, 'title', ''),
+                            'description'   => data_get($row, 'description', '')
+                        ]);
                     }
-
-                    $category->translation()->delete();
-                    $category->translation()->create([
-                        'locale'        => $this->language ?? $language->locale,
-                        'title'         => data_get($row, 'title'),
-                        'description'   => data_get($row, 'description', '')
-                    ]);
 
                     $this->downloadImages($category, data_get($row, 'img_urls', ''));
 

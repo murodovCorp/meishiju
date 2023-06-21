@@ -85,6 +85,12 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
         Route::get('system/information',            [Rest\SettingController::class, 'systemInformation']);
         Route::get('stat',                          [Rest\SettingController::class, 'stat']);
 
+        Route::group(['prefix' => 'yandex'], function () {
+            Route::get('delivery-methods',          [Rest\YandexController::class, 'deliveryMethods']);
+            Route::get('tariffs',                   [Rest\YandexController::class, 'tariffs']);
+            Route::get('check-price',               [Rest\YandexController::class, 'checkPrice']);
+        });
+
         /* Languages */
         Route::get('languages/default',             [Rest\LanguageController::class, 'default']);
         Route::get('languages/active',              [Rest\LanguageController::class, 'active']);
