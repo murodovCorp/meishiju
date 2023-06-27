@@ -24,7 +24,7 @@ class ExtraGroupResource extends JsonResource
             'id'            => $this->id,
             'type'          => (string) $this->type,
             'active'        => (bool) $this->active,
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
 
             // Relation
             'translation'   => TranslationResource::make($this->whenLoaded('translation')),

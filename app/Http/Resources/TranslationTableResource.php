@@ -25,9 +25,9 @@ class TranslationTableResource extends JsonResource
                 'locale' => (string) $this->locale,
                 'value' => (string) $this->value,
             ],
-            'created_at'    => $this->created_at?->format('Y-m-d H:i:s'),
-            'updated_at'    => $this->updated_at?->format('Y-m-d H:i:s'),
-            'deleted_at'    => $this->deleted_at?->format('Y-m-d H:i:s'),
+            'created_at'    => $this->created_at?->format('Y-m-d H:i:s') . 'Z',
+            'updated_at'    => $this->updated_at?->format('Y-m-d H:i:s') . 'Z',
+            'deleted_at'    => $this->deleted_at?->format('Y-m-d H:i:s') . 'Z',
         ];
     }
 }

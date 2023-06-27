@@ -21,7 +21,7 @@ class ProductPropertyResource extends JsonResource
             'locale'        => $this->locale,
             'key'           => $this->key,
             'value'         => $this->value,
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
         ];
     }
 }

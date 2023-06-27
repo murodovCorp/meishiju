@@ -22,7 +22,7 @@ class ShopDeliverymanSettingResource extends JsonResource
             'shop_id'       => $this->when($this->shop_id,    $this->shop_id),
             'value'         => $this->when($this->value,      $this->value),
             'period'        => $this->when($this->period,     $this->period),
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
 
             //Relations
             'shop'          => ShopResource::make($this->whenLoaded('shop')),

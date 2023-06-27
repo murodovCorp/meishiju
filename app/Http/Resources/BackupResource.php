@@ -24,8 +24,8 @@ class BackupResource extends JsonResource
             'title'         => $this->title,
             'status'        => $this->status,
             'path'          => '/storage/laravel-backup/',
-            'created_at'    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s')),
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'created_at'    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
 
             // Relations
             'user' => UserResource::make($this->whenLoaded('user')),

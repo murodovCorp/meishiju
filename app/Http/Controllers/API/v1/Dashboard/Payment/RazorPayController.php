@@ -14,6 +14,7 @@ use App\Traits\OnResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Log;
 use Redirect;
 use Throwable;
 
@@ -107,6 +108,11 @@ class RazorPayController extends Controller
      */
     public function paymentWebHook(Request $request): void
     {
+        Log::error('yandex', [
+            'all' => $request->all(),
+            'h'  => $request->headers
+        ]);
+
         $token  = $request->input('payload.payment_link.entity.id');
         $status = $request->input('payload.payment_link.entity.status');
 

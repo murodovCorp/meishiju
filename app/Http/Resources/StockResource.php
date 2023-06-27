@@ -29,7 +29,7 @@ class StockResource extends JsonResource
             'total_price'   => $this->when($this->rate_total_price, $this->rate_total_price),
             'addon'         => (boolean)$this->addon,
             'addons'        => StockAddonResource::collection($this->whenLoaded('addons')),
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
 
             // Relation
             'extras'        => ExtraValueResource::collection($this->whenLoaded('stockExtras')),

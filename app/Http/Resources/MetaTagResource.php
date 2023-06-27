@@ -31,9 +31,9 @@ class MetaTagResource extends JsonResource
             'robots'        => $this->when($this->robots, $this->robots),
             'change_freq'   => $this->when($this->change_freq, $this->change_freq),
             'priority'      => $this->when($this->priority, $this->priority),
-            'created_at'    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s')),
-            'updated_at'    => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s')),
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'created_at'    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
+            'updated_at'    => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s') . 'Z'),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
         ];
     }
 }

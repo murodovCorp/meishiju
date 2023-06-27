@@ -23,7 +23,7 @@ class ModelLogResource extends JsonResource
             'model_id'      => $this->when($this->model_id, $this->model_id),
             'data'          => $this->when($this->data, ModelLogDataResource::toArray($this->data)),
             'type'          => $this->when($this->type, $this->type),
-            'created_at'    => $this->when($this->created_at, $this->created_at),
+            'created_at'    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
             'created_by'    => $this->when($this->created_by, $this->created_by),
             'created_user'  => UserResource::make($this->whenLoaded('createdBy')),
         ];

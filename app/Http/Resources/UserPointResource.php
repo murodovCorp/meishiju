@@ -20,7 +20,7 @@ class UserPointResource extends JsonResource
         return [
             'user_id'       => $this->user_id,
             'price'         => $this->price,
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
         ];
     }
 }

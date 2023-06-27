@@ -23,7 +23,7 @@ class ShopPaymentResource extends JsonResource
             'status'        => $this->status,
             'client_id'     => $this->client_id,
             'secret_id'     => $this->secret_id,
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
             'payment'       => PaymentResource::make($this->whenLoaded('payment'))
         ];
     }

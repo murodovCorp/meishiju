@@ -35,7 +35,7 @@ class TranslationResource extends JsonResource
             'question'      => $this->when($this->question, (string) $this->question),
             'answer'        => $this->when($this->answer, (string) $this->answer),
             'faq'           => $this->when($this->faq, (string) $this->faq),
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
         ];
     }
 }

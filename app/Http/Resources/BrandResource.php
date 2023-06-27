@@ -24,9 +24,9 @@ class BrandResource extends JsonResource
             'active'            => (bool)$this->active,
             'img'               => $this->when($this->img, $this->img),
             'products_count'    => $this->when($this->products_count, $this->products_count),
-            'created_at'        => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s')),
-            'updated_at'        => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s')),
-            'deleted_at'        => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'created_at'        => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
+            'updated_at'        => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s') . 'Z'),
+            'deleted_at'        => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
 
             'meta_tags'         => MetaTagResource::collection($this->whenLoaded('metaTags')),
             'logs'              => ModelLogResource::collection($this->whenLoaded('logs')),

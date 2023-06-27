@@ -68,7 +68,7 @@ class PushNotificationResource extends JsonResource
             'user_id'       => $this->when($this->user_id,     $this->user_id),
             'created_at'    => $this->when($this->created_at,  $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
             'updated_at'    => $this->when($this->updated_at,  $this->updated_at?->format('Y-m-d H:i:s') . 'Z'),
-            'read_at'       => $this->read_at ? $this->read_at . 'Z' : null,
+            'read_at'       => $this->when($this->read_at,     $this->read_at . 'Z'),
 
             'user'          => UserResource::make($this->whenLoaded('user')),
             'client'        => $this->when(!empty($order), UserResource::make($order?->user)),

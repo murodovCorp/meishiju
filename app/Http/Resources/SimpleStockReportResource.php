@@ -42,7 +42,7 @@ class SimpleStockReportResource extends JsonResource
             ) ?? 0,
             // Relation
             'extras' => ExtraValueResource::collection($this->stockExtras),
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
         ];
     }
 }

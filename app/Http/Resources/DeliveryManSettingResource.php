@@ -28,9 +28,9 @@ class DeliveryManSettingResource extends JsonResource
             'color'             => $this->color,
             'online'            => (boolean)$this->online,
             'location'          => $this->location,
-            'created_at'        => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s')),
-            'updated_at'        => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s')),
-            'deleted_at'        => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'created_at'        => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
+            'updated_at'        => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s') . 'Z'),
+            'deleted_at'        => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
             // Relations
             'deliveryMan'       => UserResource::make($this->whenLoaded('deliveryMan')),
             'galleries'         => GalleryResource::collection($this->whenLoaded('galleries')),

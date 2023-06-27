@@ -24,10 +24,10 @@ class UserBookingResource extends JsonResource
             'booking_id'    => $this->when($this->booking_id, $this->booking_id),
             'user_id'       => $this->when($this->user_id,    $this->user_id),
             'table_id'      => $this->when($this->table_id,   $this->table_id),
-            'start_date'    => $this->when($this->start_date, $this->start_date),
-            'end_date'      => $this->when($this->end_date,   $this->end_date),
+            'start_date'    => $this->when($this->start_date, $this->start_date . 'Z'),
+            'end_date'      => $this->when($this->end_date,   $this->end_date . 'Z'),
             'status'        => $this->when($this->status,     $this->status),
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
 
             //Relations
             'booking'       => BookingResource::make($this->whenLoaded('booking')),

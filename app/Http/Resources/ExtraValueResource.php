@@ -22,7 +22,7 @@ class ExtraValueResource extends JsonResource
             'extra_group_id'    => (int) $this->extra_group_id,
             'value'             => (string) $this->value,
             'active'            => (boolean) $this->active,
-            'deleted_at'        => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'        => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
 
             // Relations
             'group'             => ExtraGroupResource::make($this->whenLoaded('group')),

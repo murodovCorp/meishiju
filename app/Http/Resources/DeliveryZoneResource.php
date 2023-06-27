@@ -20,7 +20,7 @@ class DeliveryZoneResource extends JsonResource
         return [
             'id'            => $this->id,
             'address'       => $this->address,
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
 
             'shop'      => ShopResource::make($this->whenLoaded('shop'))
         ];

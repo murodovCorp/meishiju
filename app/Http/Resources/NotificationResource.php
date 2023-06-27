@@ -22,9 +22,9 @@ class NotificationResource extends JsonResource
             'id'            => $this->when($this->id, $this->id),
             'type'          => $this->when($this->type, $this->type),
             'payload'       => $this->when($this->payload, $this->payload),
-            'created_at'    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s')),
-            'updated_at'    => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s')),
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'created_at'    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
+            'updated_at'    => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s') . 'Z'),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
         ];
     }
 }

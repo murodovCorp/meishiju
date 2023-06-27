@@ -22,7 +22,7 @@ class OrderStatusResource extends JsonResource
             'name'          => $this->when($this->name, $this->name),
             'active'        => (bool)$this->active,
             'sort'          => $this->when($this->sort, $this->sort),
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
         ];
     }
 }

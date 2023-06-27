@@ -3,9 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Helpers\Utility;
-use App\Http\Resources\Booking\BookingResource;
 use App\Http\Resources\Booking\TableResource;
-use App\Http\Resources\Booking\UserBookingResource;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -71,6 +69,7 @@ class OrderResource extends JsonResource
             'waiter_fee'                    => $this->when($this->rate_waiter_fee, $this->rate_waiter_fee),
             'delivery_date'                 => $this->when($this->delivery_date, $this->delivery_date),
             'delivery_time'                 => $this->when($this->delivery_time, $this->delivery_time),
+            'delivery_date_time'            => $this->when($this->delivery_time, date('Y-m-d H:i:s', strtotime("$this->delivery_date $this->delivery_time")) . 'Z'),
             'phone'                         => $this->when($this->phone, $this->phone),
             'username'                      => $this->when($this->username, $this->username),
             'receipt_discount'              => $this->when(request('receipt_discount'), request('receipt_discount') * $this->rate),
@@ -78,10 +77,10 @@ class OrderResource extends JsonResource
             'current'                       => (bool)$this->current,
             'img'                           => $this->when($this->img, $this->img),
             'total_discount'                => $this->when($this->rate_total_discount, $this->rate_total_discount),
-            'created_at'                    => $this->created_at?->format('Y-m-d H:i:s'),
-            'updated_at'                    => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s')),
-            'deleted_at'                    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
-            'km'                            => $this->whenLoaded('shop', $location),
+            'created_at'                    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
+            'updated_at'                    => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s') . 'Z'),
+            'deleted_at'                    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
+            'km'                            => $this->when($location, $location),
 
             'deliveryman'                   => UserResource::make($this->whenLoaded('deliveryMan')),
             'waiter'                        => UserResource::make($this->whenLoaded('waiter')),

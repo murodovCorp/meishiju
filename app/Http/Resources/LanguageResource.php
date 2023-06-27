@@ -25,7 +25,7 @@ class LanguageResource extends JsonResource
             'default'       => $this->default,
             'active'        => $this->active,
             'img'           => $this->img,
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
         ];
     }
 }

@@ -47,9 +47,9 @@ class RestReceiptResource extends JsonResource
             'discount_price'    => $this->when($discountPrice, $discountPrice * $this->currency()),
             'origin_price'      => $this->when($originPrice, $originPrice * $this->currency()),
             'total_price'       => $this->when($originPrice && $discountPrice, ($originPrice - $discountPrice) * $this->currency()),
-            'created_at'        => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s')),
-            'updated_at'        => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s')),
-            'deleted_at'        => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'created_at'        => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
+            'updated_at'        => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s') . 'Z'),
+            'deleted_at'        => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
 
             //Relations
             'shop'                  => ShopResource::make($this->whenLoaded('shop')),

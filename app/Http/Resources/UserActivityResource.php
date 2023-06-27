@@ -30,7 +30,7 @@ class UserActivityResource extends JsonResource
             'ip'            => $this->when($this->ip, $this->ip),
             'device'        => $this->when($this->device, $this->device),
             'agent'         => $this->when($this->agent, $this->agent),
-            'created_at'    => $this->when($this->created_at, $this->created_at),
+            'created_at'    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
 
             'user'          => UserResource::make($this->whenLoaded('user')),
 

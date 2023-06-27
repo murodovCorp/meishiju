@@ -20,7 +20,7 @@ class PaymentPayloadResource extends JsonResource
         return [
             'payment_id'    => $this->when($this->payment_id, $this->payment_id),
             'payload'       => $this->when($this->payload, $this->payload),
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
 
             //Relations
             'payment'       => PaymentResource::make($this->whenLoaded('payment')),

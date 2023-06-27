@@ -18,17 +18,17 @@ class WalletHistoryResource extends JsonResource
     {
         /** @var WalletHistory|JsonResource $this */
         return [
-            'id'            => $this->id,
-            'uuid'          => $this->uuid,
-            'wallet_uuid'   => $this->wallet_uuid,
+            'id'             => $this->id,
+            'uuid'           => $this->uuid,
+            'wallet_uuid'    => $this->wallet_uuid,
             'transaction_id' => $this->transaction_id,
             'type'          => $this->type,
             'price'         => $this->price_rate,
             'note'          => $this->note,
             'status'        => $this->status,
-            'created_at'    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s')),
-            'updated_at'    => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s')),
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'created_at'    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
+            'updated_at'    => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s') . 'Z'),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
 
             // Relations
             'author'        => UserResource::make($this->whenLoaded('author')),

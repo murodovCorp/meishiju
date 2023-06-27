@@ -290,7 +290,7 @@ class Order extends Model
             return $this->commission_fee * $this->rate;
         }
 
-        return $this->tax;
+        return $this->commission_fee;
     }
 
     public function getSellerPriceAttribute(): ?float

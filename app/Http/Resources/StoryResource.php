@@ -20,8 +20,8 @@ class StoryResource extends JsonResource
         return [
             'id'            => $this->when($this->id, $this->id),
             'file_urls'     => $this->when($this->file_urls, $this->file_urls),
-            'created_at'    => $this->when($this->created_at, optional($this->created_at)->format('Y-m-d H:i:s')),
-            'updated_at'    => $this->when($this->updated_at, optional($this->updated_at)->format('Y-m-d H:i:s')),
+            'created_at'    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
+            'updated_at'    => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s') . 'Z'),
 
             //Relations
             'product'       => ProductResource::make($this->whenLoaded('product')),

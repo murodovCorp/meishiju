@@ -21,7 +21,7 @@ class SmsPayloadResource extends JsonResource
             'type'          => $this->when($this->type, $this->type),
             'payload'       => $this->when($this->payload, $this->payload),
             'default'       => (bool)$this->default,
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
         ];
     }
 }

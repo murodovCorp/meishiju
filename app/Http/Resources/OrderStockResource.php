@@ -27,7 +27,7 @@ class OrderStockResource extends JsonResource
             'tax'               => $this->when($this->rate_tax_price, $this->rate_tax_price),
             'total_price'       => $this->when($this->rate_total_price, $this->rate_total_price),
             'addon'             => (boolean)$this->addon,
-            'deleted_at'        => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'        => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
             'addons'            => StockAddonResource::collection($this->whenLoaded('addons')),
 
             // Relation

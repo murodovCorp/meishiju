@@ -22,9 +22,9 @@ class WalletResource extends JsonResource
             'user_id'       => (int) $this->user_id,
             'price'         => $this->price_rate,
             'symbol'        => (string) $this->symbol,
-            'created_at'    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s')),
-            'updated_at'    => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s')),
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'created_at'    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
+            'updated_at'    => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s') . 'Z'),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
 
             // Relations
             'histories'     => WalletHistoryResource::collection($this->whenLoaded('histories')),

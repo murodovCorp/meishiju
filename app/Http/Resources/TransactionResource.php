@@ -28,9 +28,9 @@ class TransactionResource extends JsonResource
             'refund_time'           => $this->when($this->refund_time, $this->refund_time),
             'status'                => $this->when($this->status, $this->status),
             'status_description'    => $this->when($this->status_description, $this->status_description),
-            'created_at'            => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s')),
-            'updated_at'            => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s')),
-            'deleted_at'            => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'created_at'            => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
+            'updated_at'            => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s') . 'Z'),
+            'deleted_at'            => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
 
             // Relations
             'user' => UserResource::make($this->whenLoaded('user')),

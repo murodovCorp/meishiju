@@ -21,7 +21,7 @@ class ShopCategoryResource extends JsonResource
             'id'            => $this->id,
             'shop_id'       => $this->shop_id,
             'category_id'   => $this->category_id,
-            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
         ];
     }
 }

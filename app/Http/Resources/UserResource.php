@@ -34,7 +34,7 @@ class UserResource extends JsonResource
             'empty_p'               => empty($this->password),
             'email'                 => $this->when($this->email, $this->email),
             'phone'                 => $this->when($this->phone, $this->phone),
-            'birthday'              => $this->when($this->birthday, $this->birthday?->format('Y-m-d H:i:s')),
+            'birthday'              => $this->when($this->birthday, $this->birthday?->format('Y-m-d H:i:s') . 'Z'),
             'gender'                => $this->when($this->gender, $this->gender),
             'active'                => $this->active,
             'img'                   => $this->when($this->img, $this->img),
@@ -42,13 +42,13 @@ class UserResource extends JsonResource
             'my_referral'           => $this->when($this->my_referral, $this->my_referral),
             'role'                  => $this->when($this->role, $this->role),
             'email_verified_at'     => $this->when($this->email_verified_at,
-                $this->email_verified_at?->format('Y-m-d H:i:s')
+                $this->email_verified_at?->format('Y-m-d H:i:s') . 'Z'
             ),
             'phone_verified_at'     => $this->when($this->phone_verified_at,
-                $this->phone_verified_at?->format('Y-m-d H:i:s')
+                $this->phone_verified_at?->format('Y-m-d H:i:s') . 'Z'
             ),
             'registered_at'         => $this->when($this->created_at,
-                $this->created_at?->format('Y-m-d H:i:s')
+                $this->created_at?->format('Y-m-d H:i:s') . 'Z'
             ),
             'orders_sum_price'      => $this->when($this->orders_sum_total_price, $this->orders_sum_total_price),
             'delivery_man_orders_count' => $this->when($this->delivery_man_orders_count, $this->delivery_man_orders_count),
@@ -61,9 +61,9 @@ class UserResource extends JsonResource
                 $this->assign_reviews_avg_rating
             ),
             'review_count_by_rating'        => $this->when($reviewsGroup, $reviewsGroup),
-            'created_at'                    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s')),
-            'updated_at'                    => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s')),
-            'deleted_at'                    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'created_at'                    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
+            'updated_at'                    => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s') . 'Z'),
+            'deleted_at'                    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
             'referral_from_topup_price'     => $this->when(request('referral'), $this->referral_from_topup_price),
             'referral_from_withdraw_price'  => $this->when(request('referral'), $this->referral_from_withdraw_price),
             'referral_to_withdraw_price'    => $this->when(request('referral'), $this->referral_to_withdraw_price),

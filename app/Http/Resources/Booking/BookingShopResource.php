@@ -58,9 +58,9 @@ class BookingShopResource extends JsonResource
             'rating_avg'        => $this->when($this->reviews_avg_rating, $this->reviews_avg_rating),
             'reviews_count'     => $this->when($this->reviews_count, (int) $this->reviews_count),
             'orders_count'      => $this->when($this->orders_count, (int) $this->orders_count),
-            'created_at'        => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s')),
-            'updated_at'        => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s')),
-            'deleted_at'        => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'created_at'        => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
+            'updated_at'        => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s') . 'Z'),
+            'deleted_at'        => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
             'location'          => $this->when(data_get($this->location, 'latitude'), [
                 'latitude'      => data_get($this->location, 'latitude'),
                 'longitude'     => data_get($this->location, 'longitude'),

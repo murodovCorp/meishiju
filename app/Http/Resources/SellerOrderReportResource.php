@@ -19,9 +19,9 @@ class SellerOrderReportResource extends JsonResource
         /** @var Order|JsonResource $this */
 
         return [
-            'created_at'                    => $this->created_at?->format('Y-m-d H:i:s'),
-            'total_price'                   => $this->total_price,
-            'fm_total_price'                => $this->total_price - $this->commission_fee - $this->delivery_fee,
+            'created_at'        => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
+            'total_price'       => $this->total_price,
+            'fm_total_price'    => $this->total_price - $this->commission_fee - $this->delivery_fee,
         ];
     }
 }

@@ -25,7 +25,7 @@ class ReceiptNutritionResource extends JsonResource
             'id'                => $this->id,
             'weight'            => $this->when($this->weight, $this->weight),
             'percentage'        => $this->when($this->percentage, $this->percentage),
-            'deleted_at'        => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'deleted_at'        => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
 
             'translation'       => TranslationResource::make($this->whenLoaded('translation')),
             'translations'      => TranslationResource::collection($this->whenLoaded('translations')),

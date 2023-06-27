@@ -21,13 +21,13 @@ class ShopSubscriptionResource extends JsonResource
             'id'                => $this->when($this->id, $this->id),
             'shop_id'           => $this->when($this->shop_id, $this->shop_id),
             'subscription_id'   => $this->when($this->subscription_id, $this->subscription_id),
-            'expired_at'        => $this->when($this->expired_at, $this->expired_at),
+            'expired_at'        => $this->when($this->expired_at, $this->expired_at . 'Z'),
             'price'             => $this->when($this->price, $this->price),
             'type'              => $this->when($this->type, $this->type),
             'active'            => $this->when($this->active, $this->active),
-            'created_at'        => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s')),
-            'updated_at'        => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s')),
-            'deleted_at'        => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s')),
+            'created_at'        => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
+            'updated_at'        => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s') . 'Z'),
+            'deleted_at'        => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
             'subscription'      => SubscriptionResource::make($this->whenLoaded('subscription')),
         ];
     }
