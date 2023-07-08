@@ -139,6 +139,12 @@ class WeChatController extends Controller
      */
     public function paymentWebHook(Request $request): void
     {
+        \Log::error('wecat', [
+            'all' => $request->all(),
+            'he'  => $request->headers,
+            'EiH8WlbejIeffgGgV8m0946pTwAR7ajHZfaNiA5s158',
+            'ruT9wxRzOHuKgjuTqxyQc2my8afLtk60tGDI3UEY3GM',
+        ]);
         $status = $request->input('result.resultCode');
 
         $status = match ($status) {

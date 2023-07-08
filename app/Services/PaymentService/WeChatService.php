@@ -10,11 +10,9 @@ use App\Models\Payout;
 use App\Models\Shop;
 use App\Models\Subscription;
 use Exception;
+use GuzzleHttp\Exception\RequestException;
 use Http;
 use Illuminate\Database\Eloquent\Model;
-use NiZerin\AliPayGlobal;
-use NiZerin\Model\CustomerBelongsTo;
-use NiZerin\Model\TerminalType;
 use Str;
 use Throwable;
 use WeChatPay\Builder;
@@ -66,14 +64,14 @@ class WeChatService extends BaseService
         $host               = request()->getSchemeAndHttpHost();
         $currency           = Str::upper($order->currency?->title ?? data_get($payload, 'currency'));
 
-        $merchantId = '190000****';
+        $merchantId = '1577963751';
 
-        $merchantPrivateKeyFilePath = 'MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCXDvRJL3wAv2pvMZJS1F5XNoS9hHK4oDj2mJecQZMHs060vC3rQOmeMPFxfWoSPSq7Ugno/OgC3OUOoZvsHx0ePGJYd02RdlXZL4f3FjZsZwV8atw9kAZHNalbhY9baKO0V0h8cjzdUa9iDWtMHB5vStDJ25jCDlgR4lVk1C9evOhbB4mZ+s2k4+/J/qxURaRZa4gxPyEeTRCXCrOczGZB1JvNepWhlotRw6QgHn4VLuyR/3wXWkOA9J5zqjhlxKhXCZdVunUc2IZU0y9AcIIKZrk8opYpRZNH5O4+Wwd4aVexGuRsllcAtTUn+Egl5kBVT6WBXc0/Zn0mquyLlNspAgMBAAECggEAdic3QitHBdqy6IhQmEMOC49UIlx/0xNXmuJd69WKqIJCtLFgBVu/n4FOyOM83UlErEIOCFQRMXQQIfKcYAMyJl0621FttbJmkbtQ0R5psT6fluKKpAiMMJSzhCeiqu/c5AlFZDmCi+YBlWNDosN3trtBNjJyeI75qftrqbMh3ioS3gzPOc1oVNOWyr580iwNc2ALrhrac2lbBuC5A8ORXLUAUtM1YEOf5my8RSfE/yW6Af/NXwVG2JR+NmVdpAiNfUTAG7yH8kJLGq2ep9d2lChHGaZtBWGS1gCnai8IPgVCACOFP+4+pkeTSKNONRLPN8DyJnsFvX2Al4L6KIXQUQKBgQDmdC5TU6Nt1eOMPbQCUD9BePip0eDENr6e7SWJQxjuZWt18VRTHfqQDf+qMM5NdS2GP0JPH1xgWiyMAEeFPG/bpAiv6F7yGIfP+8REGFVZbdJRzPbtN+FiDTR7yPFWCicUQEuMu//NNKvqakuMLRgMT1Zg+uzqHYQIrTFYcOBrzQKBgQCnzbCosL3Ko+DX5dGPgk4c19JN/mlVAfIpumqv2ArojON/OW+GylcMPT7AZh8aSDTaRXxXTyUJTT++2xqlQENRXLCuxbGrtFWZgytjU4D4YYkn+ihtjLaeNib2vKLCCmfCN7chIzWBh3yhuKH/cdI7YbqDTugBFEEuhI3KhaCozQKBgE+spz+D0SLuKeeYhZ2vJM98BWyg9TahPrIvhyS3n+z7/3UdZGwAF1qqnFO43/qDoqOhR0mXrBZb1r7ocdGsnXewdJhsnDbTKFFN2AM67ncmsuo5FL3a7f86VYTeaiG3DN/Bgt07Ois2JKG88jWaeY/39gM9fZ9LaRSe3EqZa92ZAoGAQ6mDBGJQBTfTX/sBZzaJvMOhv2VIn8hrFzxd7I3WyDKXQSOtvtI0C3FerkH/ZJ+dAC5oluQI8Rk/DPxYYC3rdxFDBRYeMDhFE+N6SVDQflcF8SLDznig4ma/i1pA3rFHaV8B7tC9sH8rWCKU3+XLebpMdMoKbvT124YDjpgXUjkCgYBYmwwm5RYe2wEp9LHabXA91SArtfa2DkgSNPVcE1YJTgIK4Ubo88+zrhq84puIiPsrYocwMTm+P7XIEKddqpv8XTlGwFq9M5j5YzQqE9ukkze2UR7o9qlniUTL+aKgfAVY2i9pSrMYELLEXY6AXV+XWrVwqEhccgzPFtAESne8bA==';
+        $merchantPrivateKeyFilePath = file_get_contents('storage/wechat/apiclient_key.pem');
         $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
 
-        $merchantCertificateSerial = '3775B6A45ACD588826D15E583A95F5DD********';
+        $merchantCertificateSerial = '766D55E9A5223A06DAD2758B4D72829DE4598219';
 
-        $platformCertificateFilePath = 'file:///path/to/wechatpay/cert.pem';
+        $platformCertificateFilePath = file_get_contents('storage/wechat/apiclient_cert.pem');
         $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
 
         $platformCertificateSerial = PemUtil::parseCertificateSerialNo($platformCertificateFilePath);
@@ -92,6 +90,42 @@ class WeChatService extends BaseService
         ]);
 
         dd($resp->getBody());
+        try {
+            $resp = $instance
+                ->chain('v3/pay/transactions/native')
+                ->post(['json' => [
+                    'mchid'        => $merchantId,
+                    'out_trade_no' => Str::uuid(),
+                    'appid'        => 'wxfd853ee7ec0c59ef',
+                    'description'  => 'Image形象店-深圳腾大-QQ公仔',
+                    'notify_url'   => 'https://waimaiapi.meishiju.co/api/v1/webhook/we-chat/payment',
+                    'amount'       => [
+                        'total'    => 1,
+                        'currency' => 'CNY'
+                    ],
+                ]]);
+
+            dd(
+                $resp->getStatusCode(),
+                $resp->getBody(),
+                $resp->getReasonPhrase(),
+                $resp->getHeaders(),
+            );
+
+        } catch (Throwable|RequestException $e) {
+            dd(
+                $e->getMessage(),
+                $e->getFile(),
+                $e->getLine(),
+                $e->getTrace(),
+                $e instanceof RequestException && $e->hasResponse() ? $e->getResponse() : null,
+                $e->getResponse()->getStatusCode(),
+                $e->getResponse()->getReasonPhrase(),
+                $e->getResponse()->getBody(),
+                $e->getResponse()->getHeaders(),
+            );
+        }
+
 
         return PaymentProcess::updateOrCreate([
             'user_id'   => auth('sanctum')->id(),
