@@ -3,6 +3,7 @@
 
 require ('vendor/autoload.php');
 
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Exception\RequestException;
 use Psr\Http\Message\ResponseInterface;
@@ -44,9 +45,9 @@ class CertificateDownloader
         return static function(ResponseInterface $response) use ($apiv3Key, &$certs): ResponseInterface {
             $body = (string) $response->getBody();
             /** @var object{data:array<object{encrypt_certificate:object{serial_no:string,nonce:string,associated_data:string}}>} $json */
-            $json = \json_decode($body);
-            $data = \is_object($json) && isset($json->data) && \is_array($json->data) ? $json->data : [];
-            \array_map(static function($row) use ($apiv3Key, &$certs) {
+            $json = json_decode($body);
+            $data = is_object($json) && isset($json->data) && is_array($json->data) ? $json->data : [];
+            array_map(static function($row) use ($apiv3Key, &$certs) {
                 $cert = $row->encrypt_certificate;
                 $certs[$row->serial_no] = AesGcm::decrypt($cert->ciphertext, $apiv3Key, $cert->nonce, $cert->associated_data);
             }, $data);
@@ -64,18 +65,18 @@ class CertificateDownloader
     {
         static $certs = ['any' => null];
 
-        $outputDir = $opts['output'] ?? \sys_get_temp_dir();
+        $outputDir = $opts['output'] ?? sys_get_temp_dir();
         $apiv3Key = (string) $opts['key'];
 
         $instance = Builder::factory([
             'mchid'      => $opts['mchid'],
             'serial'     => $opts['serialno'],
-            'privateKey' => \file_get_contents((string)$opts['privatekey']),
+            'privateKey' => file_get_contents('public/wechat/apiclient_key.pem'),
             'certs'      => &$certs,
             'base_uri'   => (string)($opts['baseuri'] ?? self::DEFAULT_BASE_URI),
         ]);
 
-        /** @var \GuzzleHttp\HandlerStack $stack */
+        /** @var HandlerStack $stack */
         $stack = $instance->getDriver()->select(ClientDecoratorInterface::JSON_BASED)->getConfig('handler');
         // The response middle stacks were executed one by one on `FILO` order.
         $stack->after('verifier', Middleware::mapResponse(self::certsInjector($apiv3Key, $certs)), 'injector');
@@ -106,25 +107,25 @@ class CertificateDownloader
         return static function(ResponseInterface $response) use ($outputDir, &$certs): ResponseInterface {
             $body = (string) $response->getBody();
             /** @var object{data:array<object{effective_time:string,expire_time:string:serial_no:string}>} $json */
-            $json = \json_decode($body);
-            $data = \is_object($json) && isset($json->data) && \is_array($json->data) ? $json->data : [];
-            \array_walk($data, static function($row, $index, $certs) use ($outputDir) {
+            $json = json_decode($body);
+            $data = is_object($json) && isset($json->data) && is_array($json->data) ? $json->data : [];
+            array_walk($data, static function($row, $index, $certs) use ($outputDir) {
                 $serialNo = $row->serial_no;
-                $outpath = $outputDir . \DIRECTORY_SEPARATOR . 'wechatpay_' . $serialNo . '.pem';
+                $outpath = $outputDir . DIRECTORY_SEPARATOR . 'wechatpay_' . $serialNo . '.pem';
 
                 self::prompt(
                     'Certificate #' . $index . ' {',
                     '    Serial Number: ' . self::highlight($serialNo),
-                    '    Not Before: ' . (new \DateTime($row->effective_time))->format(\DateTime::W3C),
-                    '    Not After: ' . (new \DateTime($row->expire_time))->format(\DateTime::W3C),
+                    '    Not Before: ' . (new DateTime($row->effective_time))->format(DateTime::W3C),
+                    '    Not After: ' . (new DateTime($row->expire_time))->format(DateTime::W3C),
                     '    Saved to: ' . self::highlight($outpath),
                     '    You may confirm the above infos again even if this library already did(by Crypto\Rsa::verify):',
-                    '      ' . self::highlight(\sprintf('openssl x509 -in %s -noout -serial -dates', $outpath)),
+                    '      ' . self::highlight(sprintf('openssl x509 -in %s -noout -serial -dates', $outpath)),
                     '    Content: ', '', $certs[$serialNo] ?? '', '',
                     '}'
                 );
 
-                \file_put_contents($outpath, $certs[$serialNo]);
+                file_put_contents($outpath, $certs[$serialNo]);
             }, $certs);
 
             return $response;
@@ -136,7 +137,7 @@ class CertificateDownloader
      */
     private static function highlight(string $thing): string
     {
-        return \sprintf("\x1B[1;32m%s\x1B[0m", $thing);
+        return sprintf("\x1B[1;32m%s\x1B[0m", $thing);
     }
 
     /**
@@ -144,7 +145,7 @@ class CertificateDownloader
      */
     private static function prompt(...$messages): void
     {
-        \array_walk($messages, static function (string $message): void { \printf('%s%s', $message, \PHP_EOL); });
+        array_walk($messages, static function (string $message): void { printf('%s%s', $message, PHP_EOL); });
     }
 
     /**
@@ -169,7 +170,7 @@ class CertificateDownloader
             $shortopts .= $alias . ':';
             $longopts[] = $key . ':';
         }
-        $parsed = \getopt($shortopts, $longopts);
+        $parsed = getopt($shortopts, $longopts);
 
         if (!$parsed) {
             return null;
@@ -181,7 +182,7 @@ class CertificateDownloader
             if (isset($parsed[$key]) || isset($parsed[$alias])) {
                 /** @var string|string[] $possible */
                 $possible = $parsed[$key] ?? $parsed[$alias] ?? '';
-                $args[$key] = \is_array($possible) ? $possible[0] : $possible;
+                $args[$key] = is_array($possible) ? $possible[0] : $possible;
             } elseif ($mandatory) {
                 return null;
             }

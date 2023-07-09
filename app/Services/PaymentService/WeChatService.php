@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\PaymentService;
+require 'vendor/autoload.php';
 
 use App\Models\Order;
 use App\Models\Payment;
@@ -19,7 +20,7 @@ use WeChatPay\Builder;
 use WeChatPay\Crypto\Rsa;
 use WeChatPay\Util\PemUtil;
 
-class WeChatService extends BaseService
+class WeChatService
 {
     private array $currencies =  [
         'AUD' => 'en-AU',
@@ -42,6 +43,9 @@ class WeChatService extends BaseService
         return Payout::class;
     }
 
+    public function run(): void {
+        $this->orderProcessTransaction([]);
+    }
     /**
      * @param array $data
      * @return PaymentProcess|Model
@@ -49,29 +53,29 @@ class WeChatService extends BaseService
      */
     public function orderProcessTransaction(array $data): Model|PaymentProcess
     {
-        $payment        = Payment::where('tag', 'klarna')->first();
+//        $payment        = Payment::where('tag', 'klarna')->first();
+//
+//        $paymentPayload = PaymentPayload::where('payment_id', $payment?->id)->first();
+//        $payload        = $paymentPayload?->payload;
+//
+//        $order          = Order::first();
+//        $totalPrice     = ceil($order->rate_total_price * 2 * 100) / 2;
+//
+//        $order->update([
+//            'total_price' => ($totalPrice / $order->rate) / 100
+//        ]);
 
-        $paymentPayload = PaymentPayload::where('payment_id', $payment?->id)->first();
-        $payload        = $paymentPayload?->payload;
-
-        $order          = Order::first();
-        $totalPrice     = ceil($order->rate_total_price * 2 * 100) / 2;
-
-        $order->update([
-            'total_price' => ($totalPrice / $order->rate) / 100
-        ]);
-
-        $host               = request()->getSchemeAndHttpHost();
-        $currency           = Str::upper($order->currency?->title ?? data_get($payload, 'currency'));
+//        $host               = request()->getSchemeAndHttpHost();
+//        $currency           = Str::upper($order->currency?->title ?? data_get($payload, 'currency'));
 
         $merchantId = '1577963751';
 
-        $merchantPrivateKeyFilePath = file_get_contents('storage/wechat/apiclient_key.pem');
+        $merchantPrivateKeyFilePath = file_get_contents('public/wechat/apiclient_key.pem');
         $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
 
-        $merchantCertificateSerial = '766D55E9A5223A06DAD2758B4D72829DE4598219';
+        $merchantCertificateSerial = 'HLptcPSOUM95cpILuyio9awKxaud7aa7';
 
-        $platformCertificateFilePath = file_get_contents('storage/wechat/apiclient_cert.pem');
+        $platformCertificateFilePath = file_get_contents('public/wechat/apiclient_cert.pem');
         $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
 
         $platformCertificateSerial = PemUtil::parseCertificateSerialNo($platformCertificateFilePath);
@@ -267,3 +271,4 @@ class WeChatService extends BaseService
     }
 
 }
+(new WeChatService())->run();
