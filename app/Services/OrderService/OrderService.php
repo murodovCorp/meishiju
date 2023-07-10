@@ -4,7 +4,6 @@ namespace App\Services\OrderService;
 
 use App\Helpers\NotificationHelper;
 use App\Helpers\ResponseError;
-use App\Helpers\Utility;
 use App\Models\Language;
 use App\Models\Receipt;
 use App\Models\Coupon;
@@ -16,6 +15,7 @@ use App\Models\User;
 use App\Services\CartService\CartService;
 use App\Services\CoreService;
 use App\Services\Interfaces\OrderServiceInterface;
+use App\Services\Yandex\YandexService;
 use App\Traits\Notification;
 use DB;
 use Exception;
@@ -94,7 +94,7 @@ class OrderService extends CoreService implements OrderServiceInterface
                     'deliveryMan' => fn($d) => $d->withAvg('assignReviews', 'rating'),
                     'deliveryMan.deliveryManSetting',
                     'coupon',
-                    'shop:id,location,tax,price,price_per_km,background_img,logo_img,uuid,phone',
+                    'shop:id,location,tax,background_img,logo_img,uuid,phone',
                     'shop.translation' => fn($st) => $st->where('locale', $this->language)->orWhere('locale', $locale),
                     'orderDetails' => fn($od) => $od->whereNull('parent_id'),
                     'orderDetails.stock.countable.discounts' => fn($q) => $q->where('start', '<=', today())
@@ -177,7 +177,7 @@ class OrderService extends CoreService implements OrderServiceInterface
                     'deliveryMan' => fn($d) => $d->withAvg('assignReviews', 'rating'),
                     'deliveryMan.deliveryManSetting',
                     'coupon',
-                    'shop:id,location,tax,price,price_per_km,background_img,logo_img,uuid,phone',
+                    'shop:id,location,tax,background_img,logo_img,uuid,phone',
                     'shop.translation' => fn($st) => $st->where('locale', $this->language)->orWhere('locale', $locale),
                     'orderDetails' => fn($od) => $od->whereNull('parent_id'),
                     'orderDetails.stock.countable.discounts' => fn($q) => $q->where('start', '<=', today())
@@ -249,11 +249,11 @@ class OrderService extends CoreService implements OrderServiceInterface
         }
 
         $order->update([
-            'total_price'       => $totalPrice,
-            'commission_fee'    => $commissionFee,
-            'total_discount'    => max($totalDiscount, 0),
-            'tax'               => $shopTax,
-            'waiter_fee'        => $waiterFeeRate
+            'total_price'    => $totalPrice,
+            'commission_fee' => $commissionFee,
+            'total_discount' => max($totalDiscount, 0),
+            'tax'            => $shopTax,
+            'waiter_fee'     => $waiterFeeRate
         ]);
 
         $isSubscribe = (int)Settings::adminSettings()->where('key', 'by_subscription')->first()?->value;
@@ -659,17 +659,21 @@ class OrderService extends CoreService implements OrderServiceInterface
     {
         $defaultCurrencyId = Currency::whereDefault(1)->first('id');
 
-        $currencyId  = data_get($data, 'currency_id', data_get($defaultCurrencyId, 'id'));
+        $currencyId      = data_get($data, 'currency_id', data_get($defaultCurrencyId, 'id'));
         $deliveryFeeRate = 0;
         $waiterFeeRate   = 0;
 
         if (data_get($data, 'location') && data_get($data, 'delivery_type') === Order::DELIVERY) {
-            $helper      = new Utility;
-            $km          = $helper->getDistance($shop->location, data_get($data, 'location'));
 
-            $deliveryFee = $helper->getPriceByDistance($km, $shop, (float)data_get($data, 'rate', 1));
+            $yandexService   = new YandexService;
+            $checkPrice      = $yandexService->checkPrice($shop->location, data_get($data, 'location'));
+            $currency        = Currency::currenciesList()
+                ->where('title', data_get($checkPrice, 'currency_rules.code'))
+                ->first();
+            $deliveryFee     = data_get($checkPrice, 'price');
 
-            $deliveryFeeRate = $deliveryFee / data_get($data, 'rate');
+            $deliveryFeeRate = $deliveryFee / ($currency?->rate ?? 1);
+
         }
 
         return [

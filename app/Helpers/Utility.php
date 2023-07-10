@@ -2,7 +2,6 @@
 
 namespace App\Helpers;
 
-use App\Models\Shop;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class Utility
@@ -14,17 +13,11 @@ class Utility
     }
 
     /**
-     * @param float|null $km
-     * @param Shop|null $shop
-     * @param float|null $rate
      * @return float|null
      */
-    public function getPriceByDistance(?float $km, ?Shop $shop, ?float $rate): ?float
+    public function getDeliveryFee(): ?float
     {
-        $price      = data_get($shop, 'price', 0);
-        $pricePerKm = data_get($shop, 'price_per_km');
-
-        return round(($price + ($pricePerKm * $km)) * $rate, 2);
+        return round(0);
     }
 
     /**
@@ -34,7 +27,6 @@ class Utility
      */
     public function getDistance(array $origin, array $destination): float|int|null
     {
-
         if (count($origin) !== 2 && count($destination) !== 2) {
             return 0;
         }

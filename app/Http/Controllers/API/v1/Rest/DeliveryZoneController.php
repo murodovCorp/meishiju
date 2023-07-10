@@ -52,15 +52,7 @@ class DeliveryZoneController extends RestBaseController
             ]);
         }
 
-        $km = $request->input('km');
-
-        if ($km <= 0) {
-            $km = 1;
-        }
-
-        return round(
-            ($deliveryZone->shop->price + ($deliveryZone->shop->price_per_km * $km)) * $this->currency(), 2
-        );
+        return round(0);
     }
 
     /**

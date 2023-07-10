@@ -44,7 +44,7 @@ class OrderController extends CookBaseController
         }
 
         $orders = $this->repository->ordersPaginate($filter, with: [
-            'shop:id,location,tax,price,price_per_km,background_img,logo_img',
+            'shop:id,location,tax,background_img,logo_img',
             'shop.translation'      => fn($q) => $q->where('locale', $this->language),
             'currency'              => fn($q) => $q->select('id', 'title', 'symbol'),
             'user:id,firstname,lastname,img',

@@ -104,11 +104,22 @@ class LoginController extends Controller
                     ]
                 );
 
+                if ($request->input('avatar')) {
+
+//                    $user->galleries()->delete();
+                    $user->update(['img' => $request->input('avatar')]);
+//                    $user->uploads([$request->input('avatar')]);
+
+                }
+
                 $user->socialProviders()->updateOrCreate(
                     [
                         'provider'      => $provider,
                         'provider_id'   => $request->input('id'),
                     ],
+                    [
+                        'avatar' => $request->input('avatar')
+                    ]
                 );
 
                 if (!$user->hasAnyRole(Role::query()->pluck('name')->toArray())) {

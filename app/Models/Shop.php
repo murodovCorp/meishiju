@@ -41,10 +41,6 @@ use Illuminate\Support\Carbon;
  * @property string|null $logo_img
  * @property float $min_amount
  * @property string $status
- * @property integer $price
- * @property integer $price_per_km
- * @property integer $rate_price
- * @property integer $rate_price_per_km
  * @property string|null $status_note
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -164,24 +160,6 @@ class Shop extends Model
 //        'visibility'    => 'boolean',
     ];
 
-    public function getRatePriceAttribute(): ?float
-    {
-        if (request()->is('api/v1/dashboard/user/*') || request()->is('api/v1/rest/*')) {
-            return $this->price * $this->currency();
-        }
-
-        return $this->price;
-    }
-
-    public function getRatePricePerKmAttribute(): ?float
-    {
-        if (request()->is('dashboard/user') || request()->is('api/v1/rest/*')) {
-            return $this->price_per_km * $this->currency();
-        }
-
-        return $this->price_per_km;
-    }
-
     public function getAvgRateAttribute(): ?float
     {
         return $this->orders()->where([
@@ -297,41 +275,6 @@ class Shop extends Model
 
     public function scopeFilter($query, $filter)
     {
-        $orders  = [];
-
-        if (data_get($filter, 'address.latitude') && data_get($filter, 'address.longitude')) {
-            DeliveryZone::list()->map(function (DeliveryZone $deliveryZone) use ($filter, &$orders) {
-
-                if (!$deliveryZone->shop_id) {
-                    return null;
-                }
-
-                $shop       = $deliveryZone->shop;
-
-                $location   = data_get($deliveryZone->shop, 'location', []);
-
-                $km         = (new Utility)->getDistance($location, data_get($filter, 'address', []));
-                $rate       = data_get($filter, 'currency.rate', 1);
-
-                $orders[$deliveryZone->shop_id] = (new Utility)->getPriceByDistance($km, $shop, $rate);
-
-                if (
-                    Utility::pointInPolygon(data_get($filter, 'address'), $deliveryZone->address)
-                    && $orders[$deliveryZone->shop_id] > 0
-                ) {
-                    return $deliveryZone->shop_id;
-                }
-
-                unset($orders[$deliveryZone->shop_id]);
-
-                return null;
-            })
-                ->reject(fn($data) => empty($data))
-                ->toArray();
-
-            arsort($orders);
-        }
-
         $query
             ->when(data_get($filter, 'user_id'), function ($q, $userId) {
                 $q->where('user_id', $userId);
@@ -376,17 +319,8 @@ class Shop extends Model
                     ->where('to', '>=', '23-00')
                 );
             })
-            ->when(data_get($filter, 'address'), function ($query) use ($filter, $orders) {
-                $orderBys = ['new', 'old', 'best_sale', 'low_sale', 'high_rating', 'low_rating', 'trust_you'];
-                $orderByIds = implode(',', array_keys($orders));
-
-                $query
-                    ->whereHas('deliveryZone')
-                    ->when($orderByIds && !in_array(data_get($filter, 'order_by'), $orderBys),
-                        function ($builder) use ($filter, $orderByIds, $orders) {
-                            $builder->whereIn('id', array_keys($orders))->orderByRaw("FIELD(shops.id, $orderByIds) ASC");
-                        });
-
+            ->when(data_get($filter, 'address'), function ($query) use ($filter) {
+                $query->whereHas('deliveryZone');
             })
             ->when(data_get($filter, 'search'), function ($query, $search) {
                 $query->where(function ($query) use ($search) {
@@ -405,12 +339,6 @@ class Shop extends Model
                     $q->when(is_array($take), fn($q) => $q->whereIn('id', $take), fn($q) => $q->where('id', $take));
                 });
 
-            })
-            ->when(data_get($filter, 'free_delivery'), function (Builder $q) {
-                $q->where([
-                    ['price', '=', 0],
-                    ['price_per_km', '=', 0],
-                ]);
             })
             ->when(data_get($filter, 'fast_delivery'), function (Builder $q) {
                 $q

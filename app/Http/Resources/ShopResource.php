@@ -29,8 +29,6 @@ class ShopResource extends JsonResource
             'uuid'              => $this->when($this->uuid, $this->uuid),
             'discounts_count'   => $this->whenLoaded('discounts', $this->discounts_count),
             'user_id'           => $this->when($this->user_id, $this->user_id),
-            'price'             => $this->when($this->rate_price, $this->rate_price),
-            'price_per_km'      => $this->when($this->rate_price_per_km, $this->rate_price_per_km),
             'tax'               => $this->when($this->tax, $this->tax),
             'service_fee'       => $this->when($this->service_fee, $this->service_fee),
             'percentage'        => $this->when($this->percentage, $this->percentage),

@@ -1,8 +1,9 @@
 <?php
 
 namespace App\Services\PaymentService;
-require 'vendor/autoload.php';
+//require 'vendor/autoload.php';
 
+use App\Helpers\AesUtil;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentPayload;
@@ -43,8 +44,65 @@ class WeChatService
         return Payout::class;
     }
 
-    public function run(): void {
-        $this->orderProcessTransaction([]);
+    public function generateSalt($length = 10): string
+    {
+        $chars    = '1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM';
+        $char_len = strlen($chars) - 1;
+        $output   = '';
+
+        while (strlen($output) < $length) {
+            $output .= $chars[ rand(0, $char_len) ];
+        }
+
+        return $output;
+    }
+
+    public function getCertificate(): array {
+
+        $timestamp      = time();
+        $nonce          = $this->generateSalt(22);
+        $body           = '';
+        $url_parts      = parse_url('https://api.mch.weixin.qq.com/v3/certificates');
+        $canonical_url  = ($url_parts['path'] . (!empty($url_parts['query']) ? "?${url_parts['query']}" : ""));
+        $schema         = 'WECHATPAY2-SHA256-RSA2048';
+
+        $message = 'GET'."\n". $canonical_url."\n". $timestamp."\n". $nonce."\n". $body."\n";
+
+        openssl_sign(
+            $message,
+            $rawSign,
+            file_get_contents('storage/wechat/apiclient_key.pem'),
+            'sha256WithRSAEncryption'
+        );
+
+        $sign   = base64_encode($rawSign);
+        $token  = sprintf('mchid="%s",nonce_str="%s",timestamp="%d",serial_no="%s",signature="%s"',
+            '1577963751', $nonce, $timestamp, '766D55E9A5223A06DAD2758B4D72829DE4598219', $sign);
+
+        $request = Http::withHeaders([
+            'Authorization' => $schema . ' ' . $token,
+            'User-Agent'    => $_SERVER['HTTP_USER_AGENT'],
+            'Accept'    => $_SERVER['HTTP_ACCEPT'],
+        ])->get('https://api.mch.weixin.qq.com/v3/certificates');
+
+        return $request->json();
+
+//        array:1 [
+//            "data" => array:1 [
+//            0 => array:4 [
+//            "effective_time" => "2020-02-29T22:58:58+08:00"
+//      "encrypt_certificate" => array:4 [
+//            "algorithm" => "AEAD_AES_256_GCM"
+//        "associated_data" => "certificate"
+//        "ciphertext" => "ZPlXRz61rQPTgph3JVsQ1ZQsXQq6HvHpn5XOGhGOSylINjcLE7peVmjBTlILe0HMoa987oI1ORkk/Nubi6jjT3sO6K+HqWQoerAgWJPdhB/y6TxbYEKBHeoPKM2iTk6K6gTR4ymnioZUiRjVL2gJuCNxyCi8+0WSoEivZRq/n1aFwrQQfocaBNNs9XNNM+S6pFkS9JY6zEomFpZrBfQq/k0KvayB9XG3N2x3wB35GnbSl59xBUmaT6MG2Sh86sNluSDIOtaVEf2PckYMlvUp5OsV8TCzqbD6EGoyQiaEq/SUmCEpSsyZf3Nyqw1C7ZSjvbHVn0R9rMY0Yw6R8EVbN4A6TycehDn/F1CPPIf+HscXeRaiN+VCd1/hz2uiJRKQhpUJD7tWYAbQINdvQjb+ZSaWW10ZzwtADSbo/RAiiDnUV3jlD9AUH8YE0nr7jbX/MBE69wHOP6peoC1QE/+nDFXL8Ai+e7BVmVQoLqICQHZymsJcuwinG3losTM7bkgrwe6L+CpI8DmRQTUL5bxZK8kZafOgC35m7BZ0Dks9Z2VI6r/2MLnjvZebTjOLHW1AeWmZa+0gxJZAsMeCe/E38yHvusCbvg3WEFY02EQ6MkYvsLZSK/FVwWfnuCSwOIhLSzUt4upB05DwJk7efPsowpPC0wjmsZuz1+ick4+/bBK19poTYnVf0yWmmdSJECJYLvX0CbDXZ3TWpV10eQ6Vy5X/b46/kjf3jJjcQCU1Ww8GlOfwwrjWhENNb4UkYaKWMQFYZVGWvQrEJ7GBEgxdwGkmAIF/O3iOxaml4zoc99GdIM3ecm+qPZlkRb8G7Ft3+6Ap9r0P5jCfweOHNRREIC5g+gfsCaFjazKpJbCHw+GAIgBHpx8pfQskaj8FRumONgyBASb4M78QYHPIRai1y+TH3eRcW+ERSc2Ecrr4SxyQiYzYSSBB1r4OX3Nm35MBL9MMf9hUY7c5/AU5oUFH/E3XuFmewbkbGHuLWa0RvmqkjKXH2RCqwJaZc4NxRKVnqbozPJ/gh/QiZFEumUCnKtfT908QXpHxJNSfMUwfQNOssbSmUW6a3ADnt4zIKepSWKabqEVAWjMc1+HPjLwFni98aUYCZO8oJ6+uacDCtDDYY0Kv5byTra/47Cx0XeO5a3bBlMlxlPmLQ1/9+1ncvatNUUgzVONz3DR3oH68aSUKo7EmZEnHn6QIOCZcFYJ1n1y5H85UyVkvAdCeI4yY1v5V3mZ5EgO5YUQrn6bYiWTSPSjbTiUKktSwNY9K8qG0FEwCoDJ9QSrzfW+cCqX3z+I9KlkNvOP3cBK/MW2qQZsxw4SB5L2GDkGl2w358I+Oxd8E5zztq+v9CXwz+Xf76M9A0criFRr7gHWvbGft0Jy4U75i5Xz9OGUE/Gx1/X6pnYFdPynMU9nbSxl+Q2IsqjmYOrjAoIiiek63hIyZMrlUOluQ5g1ysoBIHo58nT7XdyxqcojDytj1ECRtHI42+KbNKQKCMtcq2v+lOwwHwzndEi+Pf5dm8vsDrmqQWNpeTBQdl7YXlhAyNfcSLDRCxOBD/0iaCXki133S+YoGkceXWEuLpt/7llJgV34wyC30m8ZczgXgZBveAY/92bHTZwclydjpT1mwo8BK5hCTIchDDYtFogPcU+hfs4E30U9r7TnsE/IGDAGs19aNU/In2w9dmyqzf5T3sxjC9cEZ8rTK4dxpPxj11LJwZ9G+dmrZaG9Zio2rG3lQKW9CDhaJ9Yp+S1NrZx70AHMgDDhCFaEaslVqI3mDjfXjdkFS+i9QdTCPFAGz+9suITN3elljcyw9/XairqNR5t0FYSw5mUYMUTLp0Ey0t3QeQwULny/9jwA0NAPNLOaLe2NIELqZ/1PvH9O2dw=="
+//        "nonce" => "bd8fc9993d6e"
+//      ]
+//      "expire_time" => "2025-02-27T22:58:58+08:00"
+//      "serial_no" => "34AA489F1F6082D039CC339105F24709E60A44B6"
+//    ]
+//  ]
+//]
+        //$this->orderProcessTransaction([]);
     }
     /**
      * @param array $data
@@ -53,32 +111,34 @@ class WeChatService
      */
     public function orderProcessTransaction(array $data): Model|PaymentProcess
     {
-//        $payment        = Payment::where('tag', 'klarna')->first();
-//
-//        $paymentPayload = PaymentPayload::where('payment_id', $payment?->id)->first();
-//        $payload        = $paymentPayload?->payload;
-//
-//        $order          = Order::first();
-//        $totalPrice     = ceil($order->rate_total_price * 2 * 100) / 2;
-//
-//        $order->update([
-//            'total_price' => ($totalPrice / $order->rate) / 100
-//        ]);
+//        dd((new AesUtil('HLptcPSOUM95cpILuyio9awKxaud7aa7'))->decryptToString('certificate', 'bd8fc9993d6e', 'ZPlXRz61rQPTgph3JVsQ1ZQsXQq6HvHpn5XOGhGOSylINjcLE7peVmjBTlILe0HMoa987oI1ORkk/Nubi6jjT3sO6K+HqWQoerAgWJPdhB/y6TxbYEKBHeoPKM2iTk6K6gTR4ymnioZUiRjVL2gJuCNxyCi8+0WSoEivZRq/n1aFwrQQfocaBNNs9XNNM+S6pFkS9JY6zEomFpZrBfQq/k0KvayB9XG3N2x3wB35GnbSl59xBUmaT6MG2Sh86sNluSDIOtaVEf2PckYMlvUp5OsV8TCzqbD6EGoyQiaEq/SUmCEpSsyZf3Nyqw1C7ZSjvbHVn0R9rMY0Yw6R8EVbN4A6TycehDn/F1CPPIf+HscXeRaiN+VCd1/hz2uiJRKQhpUJD7tWYAbQINdvQjb+ZSaWW10ZzwtADSbo/RAiiDnUV3jlD9AUH8YE0nr7jbX/MBE69wHOP6peoC1QE/+nDFXL8Ai+e7BVmVQoLqICQHZymsJcuwinG3losTM7bkgrwe6L+CpI8DmRQTUL5bxZK8kZafOgC35m7BZ0Dks9Z2VI6r/2MLnjvZebTjOLHW1AeWmZa+0gxJZAsMeCe/E38yHvusCbvg3WEFY02EQ6MkYvsLZSK/FVwWfnuCSwOIhLSzUt4upB05DwJk7efPsowpPC0wjmsZuz1+ick4+/bBK19poTYnVf0yWmmdSJECJYLvX0CbDXZ3TWpV10eQ6Vy5X/b46/kjf3jJjcQCU1Ww8GlOfwwrjWhENNb4UkYaKWMQFYZVGWvQrEJ7GBEgxdwGkmAIF/O3iOxaml4zoc99GdIM3ecm+qPZlkRb8G7Ft3+6Ap9r0P5jCfweOHNRREIC5g+gfsCaFjazKpJbCHw+GAIgBHpx8pfQskaj8FRumONgyBASb4M78QYHPIRai1y+TH3eRcW+ERSc2Ecrr4SxyQiYzYSSBB1r4OX3Nm35MBL9MMf9hUY7c5/AU5oUFH/E3XuFmewbkbGHuLWa0RvmqkjKXH2RCqwJaZc4NxRKVnqbozPJ/gh/QiZFEumUCnKtfT908QXpHxJNSfMUwfQNOssbSmUW6a3ADnt4zIKepSWKabqEVAWjMc1+HPjLwFni98aUYCZO8oJ6+uacDCtDDYY0Kv5byTra/47Cx0XeO5a3bBlMlxlPmLQ1/9+1ncvatNUUgzVONz3DR3oH68aSUKo7EmZEnHn6QIOCZcFYJ1n1y5H85UyVkvAdCeI4yY1v5V3mZ5EgO5YUQrn6bYiWTSPSjbTiUKktSwNY9K8qG0FEwCoDJ9QSrzfW+cCqX3z+I9KlkNvOP3cBK/MW2qQZsxw4SB5L2GDkGl2w358I+Oxd8E5zztq+v9CXwz+Xf76M9A0criFRr7gHWvbGft0Jy4U75i5Xz9OGUE/Gx1/X6pnYFdPynMU9nbSxl+Q2IsqjmYOrjAoIiiek63hIyZMrlUOluQ5g1ysoBIHo58nT7XdyxqcojDytj1ECRtHI42+KbNKQKCMtcq2v+lOwwHwzndEi+Pf5dm8vsDrmqQWNpeTBQdl7YXlhAyNfcSLDRCxOBD/0iaCXki133S+YoGkceXWEuLpt/7llJgV34wyC30m8ZczgXgZBveAY/92bHTZwclydjpT1mwo8BK5hCTIchDDYtFogPcU+hfs4E30U9r7TnsE/IGDAGs19aNU/In2w9dmyqzf5T3sxjC9cEZ8rTK4dxpPxj11LJwZ9G+dmrZaG9Zio2rG3lQKW9CDhaJ9Yp+S1NrZx70AHMgDDhCFaEaslVqI3mDjfXjdkFS+i9QdTCPFAGz+9suITN3elljcyw9/XairqNR5t0FYSw5mUYMUTLp0Ey0t3QeQwULny/9jwA0NAPNLOaLe2NIELqZ/1PvH9O2dw=='));
+        $payment        = Payment::where('tag', 'klarna')->first();
 
-//        $host               = request()->getSchemeAndHttpHost();
-//        $currency           = Str::upper($order->currency?->title ?? data_get($payload, 'currency'));
+        $paymentPayload = PaymentPayload::where('payment_id', $payment?->id)->first();
+        $payload        = $paymentPayload?->payload;
 
-        $merchantId = '1577963751';
+        $order          = Order::first();
+        $totalPrice     = ceil($order->rate_total_price * 2 * 100) / 2;
 
-        $merchantPrivateKeyFilePath = file_get_contents('public/wechat/apiclient_key.pem');
-        $merchantPrivateKeyInstance = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
+        $order->update([
+            'total_price' => ($totalPrice / $order->rate) / 100
+        ]);
 
-        $merchantCertificateSerial = 'HLptcPSOUM95cpILuyio9awKxaud7aa7';
+        $host               = request()->getSchemeAndHttpHost();
+        $currency           = Str::upper($order->currency?->title ?? data_get($payload, 'currency'));
 
-        $platformCertificateFilePath = file_get_contents('public/wechat/apiclient_cert.pem');
-        $platformPublicKeyInstance = Rsa::from($platformCertificateFilePath, Rsa::KEY_TYPE_PUBLIC);
+        $merchantId                  = '1577963751';
+        $merchantCertificateSerial   = '766D55E9A5223A06DAD2758B4D72829DE4598219';
 
-        $platformCertificateSerial = PemUtil::parseCertificateSerialNo($platformCertificateFilePath);
+        $merchantPrivateKeyFilePath  = file_get_contents('storage/wechat/apiclient_key.pem');
+        $merchantPrivateKeyInstance  = Rsa::from($merchantPrivateKeyFilePath, Rsa::KEY_TYPE_PRIVATE);
+
+        $platformCertificateFilePath = file_get_contents('storage/wechat/apiclient_cert.pem');
+        $platformPublicKeyInstance   = Rsa::from('-----BEGIN CERTIFICATE-----
+ZPlXRz61rQPTgph3JVsQ1ZQsXQq6HvHpn5XOGhGOSylINjcLE7peVmjBTlILe0HMoa987oI1ORkk/Nubi6jjT3sO6K+HqWQoerAgWJPdhB/y6TxbYEKBHeoPKM2iTk6K6gTR4ymnioZUiRjVL2gJuCNxyCi8+0WSoEivZRq/n1aFwrQQfocaBNNs9XNNM+S6pFkS9JY6zEomFpZrBfQq/k0KvayB9XG3N2x3wB35GnbSl59xBUmaT6MG2Sh86sNluSDIOtaVEf2PckYMlvUp5OsV8TCzqbD6EGoyQiaEq/SUmCEpSsyZf3Nyqw1C7ZSjvbHVn0R9rMY0Yw6R8EVbN4A6TycehDn/F1CPPIf+HscXeRaiN+VCd1/hz2uiJRKQhpUJD7tWYAbQINdvQjb+ZSaWW10ZzwtADSbo/RAiiDnUV3jlD9AUH8YE0nr7jbX/MBE69wHOP6peoC1QE/+nDFXL8Ai+e7BVmVQoLqICQHZymsJcuwinG3losTM7bkgrwe6L+CpI8DmRQTUL5bxZK8kZafOgC35m7BZ0Dks9Z2VI6r/2MLnjvZebTjOLHW1AeWmZa+0gxJZAsMeCe/E38yHvusCbvg3WEFY02EQ6MkYvsLZSK/FVwWfnuCSwOIhLSzUt4upB05DwJk7efPsowpPC0wjmsZuz1+ick4+/bBK19poTYnVf0yWmmdSJECJYLvX0CbDXZ3TWpV10eQ6Vy5X/b46/kjf3jJjcQCU1Ww8GlOfwwrjWhENNb4UkYaKWMQFYZVGWvQrEJ7GBEgxdwGkmAIF/O3iOxaml4zoc99GdIM3ecm+qPZlkRb8G7Ft3+6Ap9r0P5jCfweOHNRREIC5g+gfsCaFjazKpJbCHw+GAIgBHpx8pfQskaj8FRumONgyBASb4M78QYHPIRai1y+TH3eRcW+ERSc2Ecrr4SxyQiYzYSSBB1r4OX3Nm35MBL9MMf9hUY7c5/AU5oUFH/E3XuFmewbkbGHuLWa0RvmqkjKXH2RCqwJaZc4NxRKVnqbozPJ/gh/QiZFEumUCnKtfT908QXpHxJNSfMUwfQNOssbSmUW6a3ADnt4zIKepSWKabqEVAWjMc1+HPjLwFni98aUYCZO8oJ6+uacDCtDDYY0Kv5byTra/47Cx0XeO5a3bBlMlxlPmLQ1/9+1ncvatNUUgzVONz3DR3oH68aSUKo7EmZEnHn6QIOCZcFYJ1n1y5H85UyVkvAdCeI4yY1v5V3mZ5EgO5YUQrn6bYiWTSPSjbTiUKktSwNY9K8qG0FEwCoDJ9QSrzfW+cCqX3z+I9KlkNvOP3cBK/MW2qQZsxw4SB5L2GDkGl2w358I+Oxd8E5zztq+v9CXwz+Xf76M9A0criFRr7gHWvbGft0Jy4U75i5Xz9OGUE/Gx1/X6pnYFdPynMU9nbSxl+Q2IsqjmYOrjAoIiiek63hIyZMrlUOluQ5g1ysoBIHo58nT7XdyxqcojDytj1ECRtHI42+KbNKQKCMtcq2v+lOwwHwzndEi+Pf5dm8vsDrmqQWNpeTBQdl7YXlhAyNfcSLDRCxOBD/0iaCXki133S+YoGkceXWEuLpt/7llJgV34wyC30m8ZczgXgZBveAY/92bHTZwclydjpT1mwo8BK5hCTIchDDYtFogPcU+hfs4E30U9r7TnsE/IGDAGs19aNU/In2w9dmyqzf5T3sxjC9cEZ8rTK4dxpPxj11LJwZ9G+dmrZaG9Zio2rG3lQKW9CDhaJ9Yp+S1NrZx70AHMgDDhCFaEaslVqI3mDjfXjdkFS+i9QdTCPFAGz+9suITN3elljcyw9/XairqNR5t0FYSw5mUYMUTLp0Ey0t3QeQwULny/9jwA0NAPNLOaLe2NIELqZ/1PvH9O2dw==
+-----END CERTIFICATE-----', Rsa::KEY_TYPE_PUBLIC);
+
+        $platformCertificateSerial   = PemUtil::parseCertificateSerialNo($platformCertificateFilePath);
 
         $instance = Builder::factory([
             'mchid'      => $merchantId,
@@ -271,4 +331,3 @@ class WeChatService
     }
 
 }
-(new WeChatService())->run();

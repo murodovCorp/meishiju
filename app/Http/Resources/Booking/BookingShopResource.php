@@ -37,8 +37,6 @@ class BookingShopResource extends JsonResource
             'uuid'              => $this->when($this->uuid, $this->uuid),
             'discounts_count'   => $this->whenLoaded('discounts', $this->discounts_count),
             'user_id'           => $this->when($this->user_id, $this->user_id),
-            'price'             => $this->when($this->rate_price, $this->rate_price),
-            'price_per_km'      => $this->when($this->rate_price_per_km, $this->rate_price_per_km),
             'tax'               => $this->when($this->tax, $this->tax),
             'percentage'        => $this->when($this->percentage, $this->percentage),
             'phone'             => $this->when($this->phone, $this->phone),

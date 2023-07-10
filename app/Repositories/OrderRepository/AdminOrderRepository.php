@@ -68,7 +68,7 @@ class AdminOrderRepository extends CoreRepository
             ->withCount('orderDetails')
             ->with([
                 'user:id,lastname,firstname',
-                'shop:id,location,tax,price,price_per_km,background_img,logo_img',
+                'shop:id,location,tax,background_img,logo_img',
                 'shop.translation' => fn($q) => $q->select('id', 'shop_id', 'locale', 'title')
                     ->where('locale', $this->language)->orWhere('locale', $locale),
                 'deliveryMan:id,lastname,firstname',

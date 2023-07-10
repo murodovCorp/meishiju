@@ -60,8 +60,6 @@ class ShopImport implements ToCollection, WithHeadingRow, WithBatchInserts
                 'take'              => data_get($row, 'take') !== null ? data_get($row, 'take') : '',
                 'delivery_time'     => $deliveryTime,
                 'type'              => $type,
-                'price'             => data_get($row, 'price', 0),
-                'price_per_km'      => data_get($row, 'price_per_km', 0),
             ]);
 
             $this->downloadImages(Shop::find($shop->id), data_get($row, 'img_urls', ''));

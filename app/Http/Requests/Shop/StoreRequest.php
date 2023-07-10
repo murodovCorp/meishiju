@@ -20,8 +20,6 @@ class StoreRequest extends BaseRequest
             'delivery_time_from'    => 'required|numeric',
             'delivery_time_to'      => 'required|numeric',
             'delivery_time_type'    => ['required', Rule::in(Shop::DELIVERY_TIME_TYPE)],
-            'price'                 => 'numeric|min:0',
-            'price_per_km'          => 'numeric|min:0',
             'status'                => ['string',   Rule::in(Shop::STATUS)],
             'active'                => ['numeric',  Rule::in(1,0)],
             'title'                 => 'required|array',

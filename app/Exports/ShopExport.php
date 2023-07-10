@@ -39,11 +39,7 @@ class ShopExport extends BaseExport implements FromCollection, WithHeadings
             'Status',
             'Status Note',
             'Created At',
-            'Take',
             'Delivery Time',
-            'Type',
-            'Delivery Price',
-            'Delivery Price Per Km',
         ];
     }
 
@@ -73,11 +69,8 @@ class ShopExport extends BaseExport implements FromCollection, WithHeadings
             'status'            => $shop->status, //13
             'status_note'       => $shop->status_note, //14
             'created_at'        => $shop->created_at ?? date('Y-m-d H:i:s'),//23
-            'take'              => $shop->take, //19
             'delivery_time'     => "from: $from, to: $to, type: $type", //20
             'type'              => data_get(Shop::TYPES, $shop->type, 'shop'), //21
-            'price'             => $shop->price, //22
-            'price_per_km'      => $shop->price_per_km, //23
         ];
     }
 }

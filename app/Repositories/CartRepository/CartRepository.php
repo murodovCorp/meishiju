@@ -3,7 +3,6 @@
 namespace App\Repositories\CartRepository;
 
 use App\Helpers\ResponseError;
-use App\Helpers\Utility;
 use App\Http\Resources\Cart\CartDetailResource;
 use App\Models\Cart;
 use App\Models\CartDetail;
@@ -13,6 +12,7 @@ use App\Models\Language;
 use App\Models\Order;
 use App\Repositories\CoreRepository;
 use App\Services\CartService\CartService;
+use App\Services\Yandex\YandexService;
 use App\Traits\SetCurrency;
 
 class CartRepository extends CoreRepository
@@ -89,7 +89,7 @@ class CartRepository extends CoreRepository
         $locale   = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
         $currency = Currency::currenciesList()->where('id', data_get($data, 'currency_id'))->first();
         $cart = Cart::with([
-            'shop:id,location,tax,price,price_per_km,uuid,logo_img,status,type',
+            'shop:id,location,tax,uuid,logo_img,status,type',
             'shop.translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
             'userCarts.cartDetails' => fn($q) => $q->whereNull('parent_id'),
             'userCarts.cartDetails.stock.countable.discounts' => fn($q) => $q->where('start', '<=', today())
@@ -129,12 +129,13 @@ class CartRepository extends CoreRepository
             ]);
         }
 
-        $totalTax    = 0;
-        $price       = 0;
+        $deliveryFee  = 0;
+        $totalTax     = 0;
+        $price        = 0;
         $receiptPrice = 0;
-        $discount    = 0;
-        $cartDetails = data_get(data_get($cart->userCarts, '*.cartDetails', []), 0, []);
-        $inReceipts = [];
+        $discount     = 0;
+        $cartDetails  = data_get(data_get($cart->userCarts, '*.cartDetails', []), 0, []);
+        $inReceipts   = [];
 
         foreach ($cart->userCarts as $userCart) {
 
@@ -197,11 +198,16 @@ class CartRepository extends CoreRepository
             $totalPrice -= ($couponPrice * $rate);
         }
 
-        $helper      = new Utility;
-        $km          = $helper->getDistance($cart->shop->location, data_get($data, 'address', []));
+        if (data_get($data, 'type') === Order::DELIVERY) {
+            $yandexService   = new YandexService;
+            $checkPrice      = $yandexService->checkPrice($cart->shop->location, data_get($data, 'location'));
+            $currency        = Currency::currenciesList()
+                ->where('title', data_get($checkPrice, 'currency_rules.code'))
+                ->first();
+            $deliveryFee     = data_get($checkPrice, 'price') / ($currency?->rate ?? 1);
 
-        $deliveryFee = data_get($data, 'type') === Order::DELIVERY ?
-            $helper->getPriceByDistance($km, $cart->shop, $rate) : 0;
+            $deliveryFee     = $deliveryFee * $this->currency();
+        }
 
         $shopTax     = max((($totalPrice - $discount) / $rate) / 100 * $cart->shop->tax, 0) * $rate;
 

@@ -64,6 +64,7 @@ class OrderResource extends JsonResource
             'status'                        => $this->when($this->status, $this->status),
             'location'                      => $this->when($this->location, $this->location),
             'address'                       => $this->when($this->address, $this->address),
+            'yandex'                        => $this->when($this->yandex, $this->yandex),
             'delivery_type'                 => $this->when($this->delivery_type, $this->delivery_type),
             'delivery_fee'                  => $this->when($this->rate_delivery_fee, $this->rate_delivery_fee),
             'waiter_fee'                    => $this->when($this->rate_waiter_fee, $this->rate_waiter_fee),

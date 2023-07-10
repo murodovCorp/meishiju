@@ -444,8 +444,6 @@ INSERT INTO `translations` (`id`, `status`, `locale`, `group`, `key`, `value`, `
 (794, 1, 'en', 'web', 'delivery_time_to', 'Delivery time to', '2023-01-30 14:36:39', '2023-01-30 14:36:39', NULL),
 (795, 1, 'ru', 'web', 'start_price', 'Стартовая цена', '2023-01-30 14:37:05', '2023-01-30 14:37:05', NULL),
 (796, 1, 'en', 'web', 'start_price', 'Start price', '2023-01-30 14:37:05', '2023-01-30 14:37:05', NULL),
-(797, 1, 'ru', 'web', 'price_per_km', 'Цена за км', '2023-01-30 14:37:31', '2023-01-30 14:37:31', NULL),
-(798, 1, 'en', 'web', 'price_per_km', 'Price per km', '2023-01-30 14:37:31', '2023-01-30 14:37:31', NULL),
 (799, 1, 'ru', 'web', 'address', 'Адрес', '2023-01-30 15:13:57', '2023-01-30 15:13:57', NULL),
 (800, 1, 'en', 'web', 'address', 'Address', '2023-01-30 15:13:57', '2023-04-25 06:04:44', NULL),
 (801, 1, 'ar', 'web', 'restore.all', 'Restore all', '2023-01-30 18:43:07', '2023-01-30 18:43:07', NULL),

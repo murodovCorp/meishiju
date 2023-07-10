@@ -351,7 +351,6 @@ return [
         'origin_price' => 'origin price',
         'nutrition_id' => 'nutrition',
         'min_quantity' => 'min quantity',
-        'price_per_km' => 'price per km',
         'countable_id' => 'product',
         'verify_token' => 'verify token',
 

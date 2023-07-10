@@ -31,8 +31,6 @@ return new class extends Migration
             $table->text('status_note')->nullable();
             $table->json('delivery_time');
             $table->tinyInteger('type');
-            $table->double('price')->default(0);
-            $table->double('price_per_km')->default(0);
             $table->timestamps();
             $table->softDeletes();
         });

@@ -50,6 +50,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $phone
  * @property string|null $username
  * @property string|null $img
+ * @property array|null $yandex
  * @property boolean|null $current
  * @property float|null $waiter_fee
  * @property int|null $waiter_id
@@ -127,6 +128,7 @@ class Order extends Model
     protected $casts = [
         'location' => 'array',
         'address'  => 'array',
+        'yandex'   => 'array',
     ];
 
     const STATUS_NEW        = 'new';

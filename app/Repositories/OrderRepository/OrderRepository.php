@@ -5,11 +5,11 @@ namespace App\Repositories\OrderRepository;
 use App\Exports\OrdersReportExport;
 use App\Exports\OrdersRevenueReportExport;
 use App\Helpers\ResponseError;
-use App\Helpers\Utility;
 use App\Http\Resources\OrderResource;
 use App\Models\Bonus;
 use App\Models\CategoryTranslation;
 use App\Models\Coupon;
+use App\Models\Currency;
 use App\Models\Language;
 use App\Models\Order;
 use App\Models\OrderDetail;
@@ -20,6 +20,7 @@ use App\Models\Stock;
 use App\Repositories\CoreRepository;
 use App\Repositories\Interfaces\OrderRepoInterface;
 use App\Repositories\ReportRepository\ChartRepository;
+use App\Services\Yandex\YandexService;
 use App\Traits\SetCurrency;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Support\Collection;
@@ -70,7 +71,7 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
 
         if (empty($with)) {
             $with = [
-                'shop:id,location,tax,price,price_per_km,background_img,logo_img',
+                'shop:id,location,tax,background_img,logo_img',
                 'shop.translation'      => fn($q) => $q->where('locale', $this->language),
                 'currency'              => fn($q) => $q->select('id', 'title', 'symbol'),
                 'user:id,firstname,lastname,uuid,img,phone',
@@ -280,15 +281,21 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
 
         if (!empty($shop)) {
             /** @var Shop $shop */
-            $shopTax     = max((($totalPrice / $this->currency()) / 100 * $shop->tax) * $this->currency(), 0);
-
-            $helper      = new Utility;
-            $km          = $helper->getDistance($shop->location, data_get($filter, 'address', []));
-
-            $deliveryFee = data_get($filter, 'type') === Order::DELIVERY ?
-                $helper->getPriceByDistance($km, $shop, $this->currency()) : 0;
-
+            $shopTax = max((($totalPrice / $this->currency()) / 100 * $shop->tax) * $this->currency(), 0);
         }
+
+        if (data_get($filter, 'type') === Order::DELIVERY) {
+            $yandexService   = new YandexService;
+            $checkPrice      = $yandexService->checkPrice($shop->location, data_get($filter, 'location'));
+            $currency        = Currency::currenciesList()
+                ->where('title', data_get($checkPrice, 'currency_rules.code'))
+                ->first();
+            $deliveryFee     = data_get($checkPrice, 'price') / ($currency?->rate ?? 1);
+
+            $deliveryFee     = $deliveryFee * $this->currency();
+            $km              = data_get($checkPrice, 'distance_meters') / 1000;
+        }
+
 
         $coupon = Coupon::checkCoupon(data_get($filter, 'coupon'))->first();
 
@@ -342,7 +349,7 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
                 'deliveryMan' => fn($d) => $d->withAvg('assignReviews', 'rating'),
                 'deliveryMan.deliveryManSetting',
                 'coupon',
-                'shop:id,location,tax,price,price_per_km,background_img,logo_img,uuid,phone',
+                'shop:id,location,tax,background_img,logo_img,uuid,phone',
                 'shop.translation' => fn($st) => $st->where('locale', $this->language)->orWhere('locale', $locale),
                 'orderDetails' => fn($od) => $od->whereNull('parent_id'),
                 'orderDetails.stock.countable.translation' => fn($ct) => $ct->where('locale', $this->language)->orWhere('locale', $locale),

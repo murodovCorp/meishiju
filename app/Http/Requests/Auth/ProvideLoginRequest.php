@@ -13,7 +13,7 @@ class ProvideLoginRequest extends BaseRequest
     public function rules(): array
 	{
 		return [
-            'email'     => 'required|email',
+            'email'     => 'email',
             'id'        => 'required|string',
             'referral'  => 'string|exists:users,my_referral|max:255',
 		];

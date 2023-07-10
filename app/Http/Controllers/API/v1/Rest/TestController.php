@@ -44,7 +44,6 @@ use App\Models\Invitation;
 use App\Models\Language;
 use App\Models\Like;
 use App\Models\MetaTag;
-use App\Models\ModelLog;
 use App\Models\Notification;
 use App\Models\NotificationUser;
 use App\Models\Order;
@@ -110,6 +109,7 @@ use App\Models\UserCart;
 use App\Models\UserPoint;
 use App\Models\Wallet;
 use App\Models\WalletHistory;
+use App\Services\Yandex\YandexService;
 use App\Traits\ApiResponse;
 use Artisan;
 use Http;
@@ -122,6 +122,8 @@ class TestController extends Controller
 
     public function bosyaTest(Request $request)
     {
+        (new YandexService)->checkPrice($request->input('loc'), $request->input('lat'));
+
 //        $this->createNewTranslations();
 //        $this->ordersUpdate();
     }

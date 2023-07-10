@@ -47,7 +47,9 @@
         "twilio/sdk": "^6.40",
         "vonage/client": "^3.0",
         "wechatpay/wechatpay": "^1.4",
-        "yansongda/laravel-pay": "^3.3"
+        "yansongda/laravel-pay": "^3.3",
+      "ext-sodium": "*",
+        "ext-libsodium": "*"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.6",

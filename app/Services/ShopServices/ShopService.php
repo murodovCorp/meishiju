@@ -205,8 +205,6 @@ class ShopService extends CoreService implements ShopServiceInterface
             'show_type'         => data_get($data, 'show_type', $shop?->show_type ?? 1),
             'visibility'        => (int)Settings::adminSettings()->where('key', 'by_subscription')->first()?->value,
             'status_note'       => data_get($data, 'status_note', $shop?->status_note ?? ''),
-            'price'             => data_get($data, 'price', $shop?->price),
-            'price_per_km'      => data_get($data, 'price_per_km', $shop?->price_per_km),
             'type'              => data_get(Shop::TYPES_BY, data_get($data, 'type', $shop?->type)),
             'location'          => [
                 'latitude'      => data_get($location, 'latitude', data_get($shop?->location, 'latitude', 0)),
