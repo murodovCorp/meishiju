@@ -17,6 +17,7 @@ class StoreRequest extends BaseRequest
     public function rules(): array
     {
         return [
+            'delivery_price'        => 'required|int|max:100',
             'delivery_time_from'    => 'required|numeric',
             'delivery_time_to'      => 'required|numeric',
             'delivery_time_type'    => ['required', Rule::in(Shop::DELIVERY_TIME_TYPE)],

@@ -51,12 +51,12 @@ class UserBookingService extends CoreService
 
                 $model  = $this->model()->create($data)->load([
                     'booking:id,shop_id',
-                    'booking.shop:id,user_id',
+                    'booking.shop:id,user_id,delivery_price',
                     'booking.shop.seller:id,firebase_token',
 
                     'table:shop_section_id,id',
                     'table.shopSection:id,shop_id',
-                    'table.shopSection.shop:id,user_id',
+                    'table.shopSection.shop:id,user_id,delivery_price',
                     'table.shopSection.shop.seller:id,firebase_token',
                 ]);
 

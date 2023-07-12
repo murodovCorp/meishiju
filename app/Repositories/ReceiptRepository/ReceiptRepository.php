@@ -34,7 +34,7 @@ class ReceiptRepository extends CoreRepository
                     ->orWhere('locale', $locale),
                 'nutritions.translation'  => fn($q) => $q->select('locale', 'title', 'nutrition_id')
                     ->where('locale', $this->language),
-                'shop:id,logo_img,uuid',
+                'shop:id,logo_img,uuid,delivery_price',
                 'shop.translation'  => fn($q) => $q->select('locale', 'title', 'shop_id')
                     ->where('locale', $this->language)
                     ->orWhere('locale', $locale),
@@ -69,7 +69,7 @@ class ReceiptRepository extends CoreRepository
                     ->where('locale', $this->language)
                     ->orWhere('locale', $locale),
                 'nutritions.translation'    => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
-                'shop:id,logo_img,uuid',
+                'shop:id,logo_img,uuid,delivery_price',
                 'shop.translation'  => fn($q) => $q->select('locale', 'title', 'shop_id')
                     ->where('locale', $this->language)
                     ->orWhere('locale', $locale),
@@ -96,7 +96,7 @@ class ReceiptRepository extends CoreRepository
             'ingredients',
             'instructions',
             'nutritions.translations',
-            'shop:id,logo_img,uuid',
+            'shop:id,logo_img,uuid,delivery_price',
             'shop.translation'  => fn($q) => $q->select('locale', 'title', 'shop_id')
                 ->where('locale', $this->language)
                 ->orWhere('locale', $locale),
@@ -120,7 +120,7 @@ class ReceiptRepository extends CoreRepository
             'ingredient'                => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
             'instruction'               => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
             'nutritions.translation'    => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
-            'shop:id,logo_img,uuid',
+            'shop:id,logo_img,uuid,delivery_price',
             'shop.translation'  => fn($q) => $q->select('locale', 'title', 'shop_id')
                 ->where('locale', $this->language)
                 ->orWhere('locale', $locale),

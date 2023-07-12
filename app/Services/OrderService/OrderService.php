@@ -62,7 +62,7 @@ class OrderService extends CoreService implements OrderServiceInterface
                 $shop = Shop::find(data_get($data, 'shop_id', 0));
 
                 /** @var Order $order */
-                $order = $this->model()->create($this->setOrderParams($data, $shop));
+                $order = $this->model()->create($this->setOrderParams($data));
 
                 if (data_get($data, 'images.0')) {
                     $order->update(['img' => data_get($data, 'images.0')]);
@@ -146,7 +146,7 @@ class OrderService extends CoreService implements OrderServiceInterface
 
                 $data['user_id'] = $order->user_id;
 
-                $order->update($this->setOrderParams($data, $shop));
+                $order->update($this->setOrderParams($data));
 
                 if (data_get($data, 'images.0')) {
 
@@ -230,17 +230,12 @@ class OrderService extends CoreService implements OrderServiceInterface
 
         $shopTax        = max($totalPrice / 100 * $shop?->tax, 0);
 
-        $totalPrice     += ($order->delivery_fee + $shopTax);
 
         $totalDiscount += $this->recalculateReceipt($order);
 
         $isSubscribe = (int)Settings::adminSettings()->where('key', 'by_subscription')->first()?->value;
 
-        $totalPrice = max(max($totalPrice, 0) - max($totalDiscount, 0), 0);
-
-        $commissionFee = !$isSubscribe ?
-            max(($totalPrice / 100 * $shop?->percentage <= 0.99 ? 1 : $shop?->percentage), 0)
-            : 0;
+        $totalPrice     += $shopTax;
 
         $waiterFeeRate = $order->waiter_fee;
 
@@ -248,12 +243,37 @@ class OrderService extends CoreService implements OrderServiceInterface
             $waiterFeeRate = $totalPrice / 100 * $shop->service_fee;
         }
 
+        $deliveryFeeRate = $order->delivery_fee;
+
+        if (data_get($data, 'location') && data_get($data, 'delivery_type') === Order::DELIVERY) {
+
+            $yandexService   = new YandexService;
+            $checkPrice      = $yandexService->checkPrice($order, $shop->location, data_get($data, 'location'));
+            $currency        = Currency::currenciesList()
+                ->where('title', data_get($checkPrice, 'currency_rules.code'))
+                ->first();
+            $deliveryFee     = data_get($checkPrice, 'price');
+
+            $deliveryFeeRate = $deliveryFee / ($currency?->rate ?? 1);
+
+        }
+
+        $totalPrice += $deliveryFeeRate;
+        $totalPrice += $waiterFeeRate;
+
+        $totalPrice = max(max($totalPrice, 0) - max($totalDiscount, 0), 0);
+
+        $commissionFee = !$isSubscribe ?
+            max(($totalPrice / 100 * $shop?->percentage <= 0.99 ? 1 : $shop?->percentage), 0)
+            : 0;
+
         $order->update([
             'total_price'    => $totalPrice,
             'commission_fee' => $commissionFee,
             'total_discount' => max($totalDiscount, 0),
             'tax'            => $shopTax,
-            'waiter_fee'     => $waiterFeeRate
+            'waiter_fee'     => $waiterFeeRate,
+            'delivery_fee'   => $deliveryFeeRate,
         ]);
 
         $isSubscribe = (int)Settings::adminSettings()->where('key', 'by_subscription')->first()?->value;
@@ -274,6 +294,7 @@ class OrderService extends CoreService implements OrderServiceInterface
             }
 
         }
+
     }
     /**
      * @param Coupon $coupon
@@ -652,29 +673,12 @@ class OrderService extends CoreService implements OrderServiceInterface
 
     /**
      * @param array $data
-     * @param Shop $shop
      * @return array
      */
-    private function setOrderParams(array $data, Shop $shop): array
+    private function setOrderParams(array $data): array
     {
         $defaultCurrencyId = Currency::whereDefault(1)->first('id');
-
-        $currencyId      = data_get($data, 'currency_id', data_get($defaultCurrencyId, 'id'));
-        $deliveryFeeRate = 0;
-        $waiterFeeRate   = 0;
-
-        if (data_get($data, 'location') && data_get($data, 'delivery_type') === Order::DELIVERY) {
-
-            $yandexService   = new YandexService;
-            $checkPrice      = $yandexService->checkPrice($shop->location, data_get($data, 'location'));
-            $currency        = Currency::currenciesList()
-                ->where('title', data_get($checkPrice, 'currency_rules.code'))
-                ->first();
-            $deliveryFee     = data_get($checkPrice, 'price');
-
-            $deliveryFeeRate = $deliveryFee / ($currency?->rate ?? 1);
-
-        }
+        $currencyId        = data_get($data, 'currency_id', data_get($defaultCurrencyId, 'id'));
 
         return [
             'user_id'           => data_get($data, 'user_id', auth('sanctum')->id()),
@@ -693,8 +697,8 @@ class OrderService extends CoreService implements OrderServiceInterface
             'tax'               => 0,
             'commission_fee'    => 0,
             'status'            => data_get($data, 'status', 'new'),
-            'delivery_fee'      => max($deliveryFeeRate, 0),
-            'waiter_fee'        => max($waiterFeeRate, 0),
+            'delivery_fee'      => 0,
+            'waiter_fee'        => 0,
             'delivery_type'     => data_get($data, 'delivery_type'),
             'location'          => data_get($data, 'location'),
             'address'           => data_get($data, 'address'),

@@ -26,7 +26,7 @@ class BookingRepository extends CoreRepository
         return $models
             ->filter($filter)
             ->with([
-                'shop:id,uuid,logo_img,open,visibility',
+                'shop:id,uuid,logo_img,open,visibility,delivery_price',
                 'shop.translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
             ])
             ->orderBy(data_get($filter, 'column', 'id'), data_get($filter, 'sort', 'desc'))
@@ -38,7 +38,7 @@ class BookingRepository extends CoreRepository
         $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
         return Booking::with([
-            'shop:id,uuid,logo_img,open,visibility',
+            'shop:id,uuid,logo_img,open,visibility,delivery_price',
             'shop.translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
         ])
             ->where('shop_id', $shopId)

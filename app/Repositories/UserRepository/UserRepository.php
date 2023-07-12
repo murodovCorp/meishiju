@@ -188,7 +188,7 @@ class UserRepository extends CoreRepository
 
                 return $query->whereIn('status', $statuses);
             }),
-            'deliveryManOrders.shop:id,uuid,logo_img,location',
+            'deliveryManOrders.shop:id,uuid,logo_img,location,delivery_price',
             'deliveryManOrders.user:id,img,firstname,lastname',
             'deliveryManOrders.shop.translation' => fn($q) => $q->where('locale', $this->language),
             'wallet',

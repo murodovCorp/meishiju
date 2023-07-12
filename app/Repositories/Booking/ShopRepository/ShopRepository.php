@@ -96,6 +96,7 @@ class ShopRepository extends CoreRepository
                 'status',
                 'type',
                 'delivery_time',
+                'delivery_price',
                 'open',
                 'visibility',
                 'location',

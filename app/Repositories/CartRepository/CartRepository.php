@@ -36,7 +36,7 @@ class CartRepository extends CoreRepository
 
         $cart = $this->model()
             ->with([
-                'shop:id',
+                'shop:id,delivery_price',
                 'shop.bonus',
                 'userCarts.cartDetails',
             ])
@@ -89,7 +89,7 @@ class CartRepository extends CoreRepository
         $locale   = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
         $currency = Currency::currenciesList()->where('id', data_get($data, 'currency_id'))->first();
         $cart = Cart::with([
-            'shop:id,location,tax,uuid,logo_img,status,type',
+            'shop:id,location,tax,uuid,logo_img,status,type,delivery_price',
             'shop.translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
             'userCarts.cartDetails' => fn($q) => $q->whereNull('parent_id'),
             'userCarts.cartDetails.stock.countable.discounts' => fn($q) => $q->where('start', '<=', today())
@@ -200,16 +200,17 @@ class CartRepository extends CoreRepository
 
         if (data_get($data, 'type') === Order::DELIVERY) {
             $yandexService   = new YandexService;
-            $checkPrice      = $yandexService->checkPrice($cart->shop->location, data_get($data, 'location'));
+            $checkPrice      = $yandexService->checkPrice($cart, $cart->shop->location, data_get($data, 'address'));
             $currency        = Currency::currenciesList()
                 ->where('title', data_get($checkPrice, 'currency_rules.code'))
                 ->first();
+
             $deliveryFee     = data_get($checkPrice, 'price') / ($currency?->rate ?? 1);
 
             $deliveryFee     = $deliveryFee * $this->currency();
         }
 
-        $shopTax     = max((($totalPrice - $discount) / $rate) / 100 * $cart->shop->tax, 0) * $rate;
+        $shopTax     = max(($totalPrice - $discount) / $rate / 100 * $cart->shop->tax, 0) * $rate;
 
         return [
             'status' => true,

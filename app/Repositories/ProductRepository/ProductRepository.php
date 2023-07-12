@@ -179,7 +179,7 @@ class ProductRepository extends CoreRepository implements ProductRepoInterface
                     'locale',
                     'title',
                 ])->where('locale', $this->language),
-                'shop:id,status,uuid,user_id,logo_img,background_img,type',
+                'shop:id,status,uuid,user_id,logo_img,background_img,type,delivery_price',
             ])
             ->whereHas('shop', fn ($query) => $query->where('status', 'approved'))
             ->whereHas('stocks', fn($q) => $q->where('quantity', '>', 0))

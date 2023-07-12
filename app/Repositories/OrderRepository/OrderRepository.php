@@ -71,7 +71,7 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
 
         if (empty($with)) {
             $with = [
-                'shop:id,location,tax,background_img,logo_img',
+                'shop:id,location,tax,background_img,logo_img,delivery_price',
                 'shop.translation'      => fn($q) => $q->where('locale', $this->language),
                 'currency'              => fn($q) => $q->select('id', 'title', 'symbol'),
                 'user:id,firstname,lastname,uuid,img,phone',
@@ -286,7 +286,7 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
 
         if (data_get($filter, 'type') === Order::DELIVERY) {
             $yandexService   = new YandexService;
-            $checkPrice      = $yandexService->checkPrice($shop->location, data_get($filter, 'location'));
+            $checkPrice      = $yandexService->checkPrice($result->toArray(), $shop->location, data_get($filter, 'location'));
             $currency        = Currency::currenciesList()
                 ->where('title', data_get($checkPrice, 'currency_rules.code'))
                 ->first();
@@ -349,7 +349,7 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
                 'deliveryMan' => fn($d) => $d->withAvg('assignReviews', 'rating'),
                 'deliveryMan.deliveryManSetting',
                 'coupon',
-                'shop:id,location,tax,background_img,logo_img,uuid,phone',
+                'shop:id,location,tax,background_img,logo_img,uuid,phone,delivery_price',
                 'shop.translation' => fn($st) => $st->where('locale', $this->language)->orWhere('locale', $locale),
                 'orderDetails' => fn($od) => $od->whereNull('parent_id'),
                 'orderDetails.stock.countable.translation' => fn($ct) => $ct->where('locale', $this->language)->orWhere('locale', $locale),

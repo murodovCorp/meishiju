@@ -122,7 +122,172 @@ class TestController extends Controller
 
     public function bosyaTest(Request $request)
     {
-        (new YandexService)->checkPrice($request->input('loc'), $request->input('lat'));
+        /** @var Order $order */
+        $order = Order::with([
+            'currency',
+            'orderDetails',
+            'shop.seller',
+            'shop.translation' => fn($q) => $q->where('locale', $this->language),
+            'user',
+        ])
+            ->find(2652);
+
+//        $order->shop->update([
+//            'location' => [
+//                'latitude'  => '55.691862',
+//                'longitude' => '37.578001',
+//            ]
+//        ]);
+//
+//        $order->update([
+//            'location' => [
+//                'latitude'  => '55.692862',
+//                'longitude' => '37.579001',
+//            ]
+//        ]);
+//array:18 [
+//  "id" => "3c31cc0b808844ca8cd8e1b6f7a6de95"
+//  "corp_client_id" => "1570693d73da4b9c969fe805e696d314"
+//  "items" => array:1 [
+//    0 => array:8 [
+//      "pickup_point" => 1805131656
+//      "droppof_point" => 1805131657
+//      "title" => "Плюмбус"
+//      "size" => array:3 [
+//        "length" => 0.15
+//        "width" => 0.15
+//        "height" => 0.15
+//      ]
+//      "weight" => 0.3
+//      "cost_value" => "6.06"
+//      "cost_currency" => "RUB"
+//      "quantity" => 1
+//    ]
+//  ]
+//  "route_points" => array:3 [
+//    0 => array:12 [
+//      "id" => 1805131656
+//      "contact" => array:3 [
+//        "name" => "Giotto"
+//        "phone" => "+79607316358"
+//        "email" => "zaq@gmail.com"
+//      ]
+//      "address" => array:9 [
+//        "fullname" => "проспект 60-летия Октября, 21к2"
+//        "shortname" => "проспект 60-летия Октября, 21к2"
+//        "coordinates" => array:2 [
+//          0 => 37.578001
+//          1 => 55.691862
+//        ]
+//        "country" => "Россия"
+//        "city" => "Москва"
+//        "street" => "проспект 60-летия Октября"
+//        "building" => "21к2"
+//        "uri" => "ymapsbm1://geo?data=Cgg1NjY3Mzg0MhJQ0KDQvtGB0YHQuNGPLCDQnNC-0YHQutCy0LAsINC_0YDQvtGB0L_QtdC60YIgNjAt0LvQtdGC0LjRjyDQntC60YLRj9Cx0YDRjywgMjHQujIiCg1CTxZCFYXEXkI,"
+//        "description" => "Москва"
+//      ]
+//      "type" => "source"
+//      "visit_order" => 1
+//      "visit_status" => "pending"
+//      "skip_confirmation" => true
+//      "leave_under_door" => false
+//      "meet_outside" => false
+//      "no_door_call" => false
+//      "modifier_age_check" => false
+//      "visited_at" => []
+//    ]
+//    1 => array:13 [
+//      "id" => 1805131657
+//      "contact" => array:2 [
+//        "name" => "James"
+//        "phone" => "+79775053520"
+//      ]
+//      "address" => array:9 [
+//        "fullname" => "проспект 60-летия Октября, 21к2"
+//        "shortname" => "проспект 60-летия Октября, 21к2"
+//        "coordinates" => array:2 [
+//          0 => 37.578001
+//          1 => 55.691862
+//        ]
+//        "country" => "Россия"
+//        "city" => "Москва"
+//        "street" => "проспект 60-летия Октября"
+//        "building" => "21к2"
+//        "uri" => "ymapsbm1://geo?data=Cgg1NjY3Mzg0MhJQ0KDQvtGB0YHQuNGPLCDQnNC-0YHQutCy0LAsINC_0YDQvtGB0L_QtdC60YIgNjAt0LvQtdGC0LjRjyDQntC60YLRj9Cx0YDRjywgMjHQujIiCg1CTxZCFYXEXkI,"
+//        "description" => "Москва"
+//      ]
+//      "type" => "destination"
+//      "visit_order" => 2
+//      "visit_status" => "pending"
+//      "skip_confirmation" => true
+//      "leave_under_door" => false
+//      "meet_outside" => false
+//      "no_door_call" => false
+//      "modifier_age_check" => false
+//      "external_order_id" => "2651"
+//      "visited_at" => []
+//    ]
+//    2 => array:12 [
+//      "id" => 1805131658
+//      "contact" => array:3 [
+//        "name" => "Giotto"
+//        "phone" => "+79607316358"
+//        "email" => "zaq@gmail.com"
+//      ]
+//      "address" => array:9 [
+//        "fullname" => "проспект 60-летия Октября, 21к2"
+//        "shortname" => "проспект 60-летия Октября, 21к2"
+//        "coordinates" => array:2 [
+//          0 => 37.578001
+//          1 => 55.691862
+//        ]
+//        "country" => "Россия"
+//        "city" => "Москва"
+//        "street" => "проспект 60-летия Октября"
+//        "building" => "21к2"
+//        "uri" => "ymapsbm1://geo?data=Cgg1NjY3Mzg0MhJQ0KDQvtGB0YHQuNGPLCDQnNC-0YHQutCy0LAsINC_0YDQvtGB0L_QtdC60YIgNjAt0LvQtdGC0LjRjyDQntC60YLRj9Cx0YDRjywgMjHQujIiCg1CTxZCFYXEXkI,"
+//        "description" => "Москва"
+//      ]
+//      "type" => "return"
+//      "visit_order" => 3
+//      "visit_status" => "pending"
+//      "skip_confirmation" => true
+//      "leave_under_door" => false
+//      "meet_outside" => false
+//      "no_door_call" => false
+//      "modifier_age_check" => false
+//      "visited_at" => []
+//    ]
+//  ]
+//  "status" => "new"
+//  "version" => 1
+//  "user_request_revision" => "1"
+//  "skip_door_to_door" => false
+//  "skip_client_notify" => false
+//  "skip_emergency_notify" => false
+//  "skip_act" => false
+//  "optional_return" => false
+//  "created_ts" => "2023-07-12T07:09:29.87866+00:00"
+//  "updated_ts" => "2023-07-12T07:09:29.87866+00:00"
+//  "pricing" => []
+//  "available_cancel_state" => "free"
+//  "features" => []
+//  "revision" => 1
+//]
+        $lat = ['latitude' => '55.691862', 'longitude' => '37.578001'];
+        $lon = ['latitude' => '55.691862', 'longitude' => '37.578001'];
+
+        $result = (new YandexService)->checkPrice($order, $lat, $lon);
+//        $result = (new YandexService)->createOrder($order, $lat, $lon);
+//        $result = (new YandexService)->getOrderInfo();
+//        $result = (new YandexService)->acceptOrder();
+//        $result = (new YandexService)->cancelInfoOrder();
+//        $result = (new YandexService)->cancelOrder();
+//        $result = (new YandexService)->orderDriverVoiceForwarding();
+//        $result = (new YandexService)->orderDriverPerformerPosition();
+//        $result = (new YandexService)->orderTrackingLinks();
+//        $result = (new YandexService)->orderPointsEta();
+        dd($result, $order->delivery_fee, $order->rate_delivery_fee, $this->currency);
 
 //        $this->createNewTranslations();
 //        $this->ordersUpdate();

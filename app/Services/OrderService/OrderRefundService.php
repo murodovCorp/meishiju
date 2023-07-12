@@ -75,7 +75,7 @@ class OrderRefundService extends CoreService
             }
 
             $orderRefund = $orderRefund->loadMissing([
-                'order.shop:id,uuid,user_id',
+                'order.shop:id,uuid,user_id,delivery_price',
                 'order.shop.seller:id',
                 'order.shop.seller.wallet:id,user_id,uuid',
                 'order.deliveryMan:id',

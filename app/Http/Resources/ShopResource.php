@@ -45,6 +45,7 @@ class ShopResource extends JsonResource
             'type'              => $this->when($this->type, data_get(Shop::TYPES, $this->type)),
             'avg_rate'          => $this->when($this->avg_rate, $this->avg_rate),
             'delivery_time'     => $this->when($this->delivery_time, $this->delivery_time),
+            'delivery_price'    => $this->when($this->delivery_price, $this->delivery_price),
             'invite_link'       => $this->when($isSeller, "/shop/invitation/$this->uuid/link"),
             'rating_avg'        => $this->when($this->reviews_avg_rating, $this->reviews_avg_rating),
             'reviews_count'     => $this->when($this->reviews_count, (int) $this->reviews_count),

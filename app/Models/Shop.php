@@ -2,12 +2,10 @@
 
 namespace App\Models;
 
-use App\Helpers\Utility;
 use App\Traits\Loadable;
 use App\Traits\Reviewable;
 use App\Traits\SetCurrency;
 use Database\Factories\ShopFactory;
-use DB;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -41,6 +39,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $logo_img
  * @property float $min_amount
  * @property string $status
+ * @property string $delivery_price
  * @property string|null $status_note
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -157,7 +156,6 @@ class Shop extends Model
         'delivery_time' => 'array',
         'close_time'    => 'date:H:i',
         'open'          => 'boolean',
-//        'visibility'    => 'boolean',
     ];
 
     public function getAvgRateAttribute(): ?float

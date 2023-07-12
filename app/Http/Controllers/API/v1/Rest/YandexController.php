@@ -9,6 +9,8 @@ use App\Http\Requests\Yandex\DeliveryMethodRequest;
 use App\Services\YandexService\YandexService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Log;
 
 class YandexController extends Controller
 {
@@ -38,6 +40,15 @@ class YandexController extends Controller
         $result = $this->service->checkPrice($request->validated());
 
         return $this->successResponse(__('errors.' . ResponseError::SUCCESS, locale: $this->language), $result);
+    }
+
+    /**
+     * @param Request $request
+     * @return void
+     */
+    public function webhook(Request $request): void
+    {
+        Log::error('yandex', $request->all());
     }
 
 }

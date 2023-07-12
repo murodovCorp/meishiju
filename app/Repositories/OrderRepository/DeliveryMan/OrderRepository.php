@@ -52,7 +52,7 @@ class OrderRepository extends CoreRepository
                 'coupon',
                 'waiter:id,firstname,lastname,img,phone,email',
                 'cook:id,firstname,lastname,img,phone,email',
-                'shop:id,location,tax,background_img,logo_img,uuid,phone',
+                'shop:id,location,tax,background_img,logo_img,uuid,phone,delivery_price',
                 'shop.translation' => fn($q) => $q->where('locale', $this->language),
                 'transaction.paymentSystem' => function ($q) {
                     $q->select('id', 'tag', 'active');

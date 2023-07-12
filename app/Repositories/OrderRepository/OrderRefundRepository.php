@@ -29,7 +29,7 @@ class OrderRefundRepository extends CoreRepository
             ->filter($filter)
             ->with([
                 'order' => fn($q) => $q->select('id', 'shop_id', 'user_id', 'status', 'created_at'),
-                'order.shop:id,uuid',
+                'order.shop:id,uuid,delivery_price',
                 'order.shop.translation' => fn($q) => $q->where('locale', $this->language)
                     ->select('id', 'locale', 'title', 'shop_id')
             ])
@@ -64,7 +64,7 @@ class OrderRefundRepository extends CoreRepository
                         }
                     })
                     ->select('id', 'shop_id', 'user_id', 'status', 'total_price', 'created_at'),
-                'order.shop:id,uuid,logo_img',
+                'order.shop:id,uuid,logo_img,delivery_price',
                 'order.shop.translation' => fn($q) => $q->where('locale', $this->language)
                                                         ->select('id', 'locale', 'title', 'shop_id'),
                 'order.user:id,firstname,lastname,uuid'

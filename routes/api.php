@@ -534,6 +534,9 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
             Route::apiResource('orders',  Seller\OrderController::class)->except('index');
             Route::delete('orders/delete',          [Seller\OrderController::class, 'destroy']);
 
+            /* Yandex Order */
+            Route::post('yandex/{id}/check-price',   [Seller\YandexController::class, 'checkPrice']);
+
             /* Transaction */
             Route::get('transactions/paginate', [Seller\TransactionController::class, 'paginate']);
             Route::get('transactions/{id}', [Seller\TransactionController::class, 'show']);
@@ -1122,6 +1125,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
         Route::any('razorpay/payment',      [Payment\RazorPayController::class,     'paymentWebHook']);
         Route::any('alipay/payment',        [Payment\AliPayController::class,       'paymentWebHook']);
         Route::any('we-chat/payment',       [Payment\WeChatController::class,       'paymentWebHook']);
+        Route::any('webhook/yandex/order',  [Rest\YandexController::class,          'webhook']);
         Route::any('stripe/payment',        [Payment\StripeController::class,       'paymentWebHook']);
         Route::any('flw/payment',           [Payment\FlutterWaveController::class,  'paymentWebHook']);
         Route::any('mercado-pago/payment',  [Payment\MercadoPagoController::class,  'paymentWebHook']);

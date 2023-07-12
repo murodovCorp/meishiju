@@ -54,6 +54,7 @@ class AdminShopRepository extends CoreRepository
                 'id',
                 'uuid',
                 'background_img',
+                'delivery_type',
                 'logo_img',
                 'open',
                 'tax',
@@ -128,8 +129,8 @@ class AdminShopRepository extends CoreRepository
         return $shop
             ->filter($filter)
             ->with([
-                'translation'   => fn($q) => $q->where('locale', $this->language),
-                'discounts'     => fn($q) => $q->where('end', '>=', now())->select('id', 'shop_id', 'end'),
+                'translation' => fn($q) => $q->where('locale', $this->language),
+                'discounts'   => fn($q) => $q->where('end', '>=', now())->select('id', 'shop_id', 'end'),
             ])
             ->whereHas('translation', fn($q) => $q->where('locale', $this->language))
             ->latest()
@@ -137,6 +138,7 @@ class AdminShopRepository extends CoreRepository
                 'id',
                 'logo_img',
                 'status',
+                'delivery_price',
             ])
             ->paginate(data_get($filter, 'perPage', 10));
     }
