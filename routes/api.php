@@ -535,11 +535,22 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
             Route::delete('orders/delete',          [Seller\OrderController::class, 'destroy']);
 
             /* Yandex Order */
-            Route::post('yandex/{id}/check-price',   [Seller\YandexController::class, 'checkPrice']);
+            Route::group(['prefix' => 'yandex/order'], function () {
+                Route::post('{id}/check-price',       [Seller\YandexController::class, 'checkPrice']);
+                Route::post('{id}/create',            [Seller\YandexController::class, 'createOrder']);
+                Route::post('{id}/get-info',          [Seller\YandexController::class, 'getOrderInfo']);
+                Route::post('{id}/accept',            [Seller\YandexController::class, 'acceptOrder']);
+                Route::post('{id}/cancel-info',       [Seller\YandexController::class, 'cancelInfoOrder']);
+                Route::post('{id}/cancel',            [Seller\YandexController::class, 'cancelOrder']);
+                Route::post('{id}/driver',            [Seller\YandexController::class, 'orderDriver']);
+                Route::post('{id}/driver-position',   [Seller\YandexController::class, 'orderDriverPosition']);
+                Route::post('{id}/tracking-links',    [Seller\YandexController::class, 'orderTrackingLinks']);
+                Route::post('{id}/points-eta',        [Seller\YandexController::class, 'orderPointsEta']);
+            });
 
             /* Transaction */
             Route::get('transactions/paginate', [Seller\TransactionController::class, 'paginate']);
-            Route::get('transactions/{id}', [Seller\TransactionController::class, 'show']);
+            Route::get('transactions/{id}',     [Seller\TransactionController::class, 'show']);
 
             /* Seller Subscription */
             Route::get('subscriptions',               [Seller\SubscriptionController::class, 'index']);

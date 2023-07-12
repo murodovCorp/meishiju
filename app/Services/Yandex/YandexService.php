@@ -6,11 +6,23 @@ use App\Models\Cart;
 use App\Models\Currency;
 use App\Models\Order;
 use Http;
+use Illuminate\Http\Client\PendingRequest;
 use Str;
 
 class YandexService
 {
     private string $baseUrl = 'https://b2b.taxi.yandex.net';
+
+    /**
+     * @return PendingRequest
+     */
+    private function getBaseHttp(): PendingRequest
+    {
+        return Http::withToken(config('app.yandex_token'))
+            ->withHeaders([
+                'Accept-Language' => 'RU-ru'
+            ]);
+    }
 
     /**
      * @param array $data
@@ -45,6 +57,7 @@ class YandexService
 
         return $items;
     }
+
     /**
      * @param Order $order
      * @return array
@@ -137,6 +150,12 @@ class YandexService
         return $this->getArrayItems($model);
     }
 
+    /**
+     * @param Order|Cart|array $model
+     * @param array $shopLocation
+     * @param array $clientLocation
+     * @return array
+     */
     public function checkPrice(Order|Cart|array $model, array $shopLocation, array $clientLocation): array
     {
         $coordinates = [
@@ -154,10 +173,7 @@ class YandexService
             ],
         ];
 
-        $request = Http::withToken('y0_AgAAAABsYLysAAc6MQAAAADkNEQMsgJuRaQ0RM-mS_yfM0t-OgxlJ9E')
-            ->withHeaders([
-                'Accept-Language' => 'RU-ru'
-            ])
+        $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v1/check-price", [
                 'items' => $this->getItems($model),
 //                'client_requirements' => [
@@ -178,14 +194,17 @@ class YandexService
         return $request->json();
     }
 
+    /**
+     * @param Order $order
+     * @param array $shopLocation
+     * @param array $clientLocation
+     * @return array
+     */
     public function createOrder(Order $order, array $shopLocation, array $clientLocation): array
     {
         $requestId = Str::uuid();
 
-        $request = Http::withToken('y0_AgAAAABsYLysAAc6MQAAAADkNEQMsgJuRaQ0RM-mS_yfM0t-OgxlJ9E')
-            ->withHeaders([
-                'Accept-Language' => 'RU-ru'
-            ])
+        $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/create?request_id=$requestId", [
                 'callback_url'  => request()->getSchemeAndHttpHost() . '/api/v1/webhook/yandex/order',
                 'items'         => $this->getItems($order),
@@ -196,7 +215,7 @@ class YandexService
                                 (double)data_get($shopLocation, 'longitude'),
                                 (double)data_get($shopLocation, 'latitude')
                             ],
-                            'fullname' => 'проспект 60-летия Октября, 21к2',
+                            'fullname' => $order->shop?->translation?->address,
                         ],
                         'contact' => [
                             'name'  => $order->shop?->translation?->title,
@@ -213,7 +232,7 @@ class YandexService
                                 (double)data_get($clientLocation, 'longitude'),
                                 (double)data_get($clientLocation, 'latitude')
                             ],
-                            'fullname' => 'проспект 60-летия Октября, 21к2' //data_get($order->address, 'address')
+                            'fullname' => data_get($order->address, 'address')
                         ],
                         'contact' => [
                             'name'  => $order->username ?? $order->user?->firstname,
@@ -233,53 +252,58 @@ class YandexService
                 'skip_emergency_notify' => false
             ]);
 
+        $order->update([
+            'yandex' => collect($order->yandex)->merge(['request_id' => $requestId])->toArray()
+        ]);
+
         return $request->json();
     }
 
-    public function getOrderInfo(string $requestId = '14d2d94c801543b3aee148cbe59d02f7'): array
+    /**
+     * @param string $requestId
+     * @return array
+     */
+    public function getOrderInfo(string $requestId): array
     {
-        $request = Http::withToken('y0_AgAAAABsYLysAAc6MQAAAADkNEQMsgJuRaQ0RM-mS_yfM0t-OgxlJ9E')
-            ->withHeaders([
-                'Accept-Language' => 'RU-ru'
-            ])
+        $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/info?claim_id=$requestId");
 
         return $request->json();
     }
 
-    public function acceptOrder(string $requestId = '14d2d94c801543b3aee148cbe59d02f7'): array
+    /**
+     * @param string $requestId
+     * @return array
+     */
+    public function acceptOrder(string $requestId): array
     {
-        $request = Http::withToken('y0_AgAAAABsYLysAAc6MQAAAADkNEQMsgJuRaQ0RM-mS_yfM0t-OgxlJ9E')
-            ->withHeaders([
-                'Accept-Language' => 'RU-ru'
-            ])
+        $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/accept?claim_id=$requestId");
 
         return $request->json();
     }
 
-    public function cancelInfoOrder(string $requestId = '14d2d94c801543b3aee148cbe59d02f7'): array
+    /**
+     * @param string $requestId
+     * @return array
+     */
+    public function cancelInfoOrder(string $requestId): array
     {
-        $request = Http::withToken('y0_AgAAAABsYLysAAc6MQAAAADkNEQMsgJuRaQ0RM-mS_yfM0t-OgxlJ9E')
-            ->withHeaders([
-                'Accept-Language' => 'RU-ru'
-            ])
+        $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/cancel-info?claim_id=$requestId");
 
-        //free
-        //paid
-        //unavailable
         return $request->json();
     }
 
-    public function cancelOrder(string $requestId = '14d2d94c801543b3aee148cbe59d02f7'): array
+    /**
+     * @param string $requestId
+     * @return array
+     */
+    public function cancelOrder(string $requestId): array
     {
         $state = $this->cancelInfoOrder($requestId);
 
-        $request = Http::withToken('y0_AgAAAABsYLysAAc6MQAAAADkNEQMsgJuRaQ0RM-mS_yfM0t-OgxlJ9E')
-            ->withHeaders([
-                'Accept-Language' => 'RU-ru'
-            ])
+        $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/cancel?claim_id=$requestId", [
                 'cancel_state' => data_get($state, 'cancel_state'),
                 'version'      => 2,
@@ -288,12 +312,13 @@ class YandexService
         return $request->json();
     }
 
-    public function orderDriverVoiceForwarding(string $requestId = '14d2d94c801543b3aee148cbe59d02f7'): array
+    /**
+     * @param string $requestId
+     * @return array
+     */
+    public function orderDriverVoiceForwarding(string $requestId): array
     {
-        $request = Http::withToken('y0_AgAAAABsYLysAAc6MQAAAADkNEQMsgJuRaQ0RM-mS_yfM0t-OgxlJ9E')
-            ->withHeaders([
-                'Accept-Language' => 'RU-ru'
-            ])
+        $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/driver-voiceforwarding", [
                 'claim_id' => $requestId
             ]);
@@ -301,34 +326,37 @@ class YandexService
         return $request->json();
     }
 
-    public function orderDriverPerformerPosition(string $requestId = '14d2d94c801543b3aee148cbe59d02f7'): array
+    /**
+     * @param string $requestId
+     * @return array
+     */
+    public function orderDriverPerformerPosition(string $requestId): array
     {
-        $request = Http::withToken('y0_AgAAAABsYLysAAc6MQAAAADkNEQMsgJuRaQ0RM-mS_yfM0t-OgxlJ9E')
-            ->withHeaders([
-                'Accept-Language' => 'RU-ru'
-            ])
+        $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/performer-position?claim_id=$requestId");
 
         return $request->json();
     }
 
-    public function orderTrackingLinks(string $requestId = '14d2d94c801543b3aee148cbe59d02f7'): array
+    /**
+     * @param string $requestId
+     * @return array
+     */
+    public function orderTrackingLinks(string $requestId): array
     {
-        $request = Http::withToken('y0_AgAAAABsYLysAAc6MQAAAADkNEQMsgJuRaQ0RM-mS_yfM0t-OgxlJ9E')
-            ->withHeaders([
-                'Accept-Language' => 'RU-ru'
-            ])
+        $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/tracking-links?claim_id=$requestId");
 
         return $request->json();
     }
 
-    public function orderPointsEta(string $requestId = '14d2d94c801543b3aee148cbe59d02f7'): array
+    /**
+     * @param string $requestId
+     * @return array
+     */
+    public function orderPointsEta(string $requestId): array
     {
-        $request = Http::withToken('y0_AgAAAABsYLysAAc6MQAAAADkNEQMsgJuRaQ0RM-mS_yfM0t-OgxlJ9E')
-            ->withHeaders([
-                'Accept-Language' => 'RU-ru'
-            ])
+        $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/points-eta?claim_id=$requestId");
 
         return $request->json();

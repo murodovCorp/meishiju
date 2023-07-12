@@ -2,27 +2,10 @@
 
 namespace App\Http\Controllers\API\v1\Dashboard\Seller;
 
-use App\Exports\OrderExport;
 use App\Helpers\ResponseError;
-use App\Http\Requests\FilterParamsRequest;
-use App\Http\Requests\Order\CookUpdateRequest;
-use App\Http\Requests\Order\StatusUpdateRequest;
-use App\Http\Requests\Order\WaiterUpdateRequest;
-use App\Http\Requests\Order\DeliveryManUpdateRequest;
-use App\Http\Requests\Order\StocksCalculateRequest;
-use App\Http\Requests\Order\StoreRequest;
-use App\Http\Requests\Order\UpdateRequest;
-use App\Imports\OrderImport;
 use App\Models\Order;
-use App\Models\PushNotification;
-use App\Models\Settings;
-use App\Models\User;
-use App\Services\OrderService\OrderStatusUpdateService;
 use App\Services\Yandex\YandexService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
-use Throwable;
 
 class YandexController extends SellerBaseController
 {
@@ -31,15 +14,10 @@ class YandexController extends SellerBaseController
         parent::__construct();
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @param int $id
-     * @return JsonResponse
-     */
-    public function checkPrice(int $id): JsonResponse
+    public function getOrder(int $id): array
     {
         /** @var Order $order */
+
         $order = Order::with([
             'currency',
             'orderDetails',
@@ -51,25 +29,53 @@ class YandexController extends SellerBaseController
             ->find($id);
 
         if (!$order) {
-            return $this->onErrorResponse([
+            return [
+                'status'  => false,
                 'code'    => ResponseError::ERROR_404,
                 'message' => __('errors.' . ResponseError::ORDER_NOT_FOUND, locale: $this->language)
-            ]);
+            ];
         }
 
         if (!$order->shop?->location) {
-            return $this->onErrorResponse([
+            return [
+                'status'  => false,
                 'code'    => ResponseError::ERROR_400,
                 'message' => 'Shop location is incorrect'
-            ]);
+            ];
         }
 
         if (!$order->location) {
-            return $this->onErrorResponse([
+            return [
+                'status'  => false,
                 'code'    => ResponseError::ERROR_400,
                 'message' => 'Order location is incorrect'
-            ]);
+            ];
         }
+
+        $data = $this->service->checkPrice($order, $order->shop?->location, $order->location);
+
+        return [
+            'status' => true,
+            'data'   => $data
+        ];
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function checkPrice(int $id): JsonResponse
+    {
+        $result = $this->getOrder($id);
+
+        if (!data_get($result, 'status')) {
+            return $this->onErrorResponse($result);
+        }
+
+        /** @var Order $order */
+        $order  = data_get($result, 'data');
 
         $result = $this->service->checkPrice($order, $order->shop?->location, $order->location);
 
@@ -80,276 +86,237 @@ class YandexController extends SellerBaseController
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param StoreRequest $request
-     * @return JsonResponse
-     */
-    public function store(StoreRequest $request): JsonResponse
-    {
-        $validated = $request->validated();
-
-        if ((int)data_get(Settings::adminSettings()->where('key', 'order_auto_approved')->first(), 'value') === 1) {
-            $validated['status'] = Order::STATUS_ACCEPTED;
-        }
-
-        $result = $this->orderService->create($validated);
-
-        if (!data_get($result, 'status')) {
-            return $this->onErrorResponse($result);
-        }
-
-        $tokens = $this->tokens();
-
-        $this->sendNotification(
-            data_get($tokens, 'tokens'),
-            "New order was created",
-            data_get($result, 'data.id', ''),
-            data_get($result, 'data')?->setAttribute('type', PushNotification::NEW_ORDER)?->only(['id', 'status', 'type']),
-            data_get($tokens, 'ids', [])
-        );
-
-        return $this->successResponse(
-            __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_CREATED, locale: $this->language),
-            $this->orderRepository->reDataOrder(data_get($result, 'data')),
-        );
-    }
-
-    public function tokens(): array
-    {
-        $admins = User::with([
-            'roles' => fn($q) => $q->where('name', 'admin')
-        ])
-            ->whereHas('roles', fn($q) => $q->where('name', 'admin') )
-            ->whereNotNull('firebase_token')
-            ->pluck('firebase_token', 'id')
-            ->toArray();
-
-        $aTokens = [];
-
-        foreach ($admins as $adminToken) {
-            $aTokens = array_merge($aTokens, is_array($adminToken) ? array_values($adminToken) : [$adminToken]);
-        }
-
-        return [
-            'tokens' => array_values(array_unique($aTokens)),
-            'ids'    => array_keys($admins)
-        ];
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return JsonResponse
-     */
-    public function show(int $id): JsonResponse
-    {
-        $order = $this->orderRepository->orderById($id, $this->shop->id);
-
-        if ($order) {
-            return $this->successResponse(
-                __('errors.' . ResponseError::SUCCESS, locale: $this->language),
-                $this->orderRepository->reDataOrder($order)
-            );
-        }
-
-        return $this->onErrorResponse([
-            'code'    => ResponseError::ERROR_404,
-            'message' => __('errors.' . ResponseError::ORDER_NOT_FOUND, locale: $this->language)
-        ]);
-    }
-
-    /**
-     * Update the specified resource in storage.
+     * Display a listing of the resource.
      *
      * @param int $id
-     * @param UpdateRequest $request
      * @return JsonResponse
      */
-    public function update(int $id, UpdateRequest $request): JsonResponse
+    public function createOrder(int $id): JsonResponse
     {
-        $result = $this->orderService->update($id, $request->all());
+        $result = $this->getOrder($id);
 
         if (!data_get($result, 'status')) {
             return $this->onErrorResponse($result);
         }
 
-        return $this->successResponse(
-            __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_UPDATED, locale: $this->language),
-            $this->orderRepository->reDataOrder(data_get($result, 'data')),
-        );
-    }
-
-    /**
-     * Update Order Status details by OrderDetail ID.
-     *
-     * @param int $orderId
-     * @param StatusUpdateRequest $request
-     * @return JsonResponse
-     */
-    public function orderStatusUpdate(int $orderId, StatusUpdateRequest $request): JsonResponse
-    {
         /** @var Order $order */
-        $order = Order::with([
-            'shop.seller',
-            'deliveryMan',
-            'waiter',
-            'cook',
-            'user.wallet',
-        ])
-            ->where('shop_id', $this->shop->id)
-            ->find($orderId);
+        $order  = data_get($result, 'data');
 
-        if (!$order) {
-            return $this->onErrorResponse([
-                'code' => ResponseError::ERROR_404,
-                'message' => __('errors.' . ResponseError::ORDER_NOT_FOUND, locale: $this->language)
-            ]);
-        }
+        $result = $this->service->createOrder($order, $order->shop?->location, $order->location);
 
-        $result = (new OrderStatusUpdateService)->statusUpdate($order, $request->input('status'));
+        return $this->successResponse(
+            __('errors.' . ResponseError::SUCCESS, locale: $this->language),
+            $result
+        );
+
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function getOrderInfo(int $id): JsonResponse
+    {
+        $result = $this->getOrder($id);
 
         if (!data_get($result, 'status')) {
             return $this->onErrorResponse($result);
         }
 
+        /** @var Order $order */
+        $order  = data_get($result, 'data');
+
+        $result = $this->service->getOrderInfo(data_get($order->yandex, 'request_id'));
+
         return $this->successResponse(
-            __('errors.' . ResponseError::NO_ERROR),
-            $this->orderRepository->reDataOrder(data_get($result, 'data')),
+            __('errors.' . ResponseError::SUCCESS, locale: $this->language),
+            $result
         );
+
     }
 
     /**
-     * Update Order DeliveryMan Update.
+     * Display a listing of the resource.
      *
-     * @param int $orderId
-     * @param DeliveryManUpdateRequest $request
+     * @param int $id
      * @return JsonResponse
      */
-    public function orderDeliverymanUpdate(int $orderId, DeliveryManUpdateRequest $request): JsonResponse
+    public function acceptOrder(int $id): JsonResponse
     {
-        $result = $this->orderService->updateDeliveryMan($orderId, $request->input('deliveryman'), $this->shop->id);
+        $result = $this->getOrder($id);
 
         if (!data_get($result, 'status')) {
             return $this->onErrorResponse($result);
         }
 
+        /** @var Order $order */
+        $order  = data_get($result, 'data');
+
+        $result = $this->service->acceptOrder(data_get($order->yandex, 'request_id'));
+
         return $this->successResponse(
-            __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_UPDATED, locale: $this->language),
-            $this->orderRepository->reDataOrder(data_get($result, 'data')),
+            __('errors.' . ResponseError::SUCCESS, locale: $this->language),
+            $result
         );
+
     }
 
     /**
-     * Update Order Waiter Update.
+     * Display a listing of the resource.
      *
-     * @param int $orderId
-     * @param WaiterUpdateRequest $request
+     * @param int $id
      * @return JsonResponse
      */
-    public function orderWaiterUpdate(int $orderId, WaiterUpdateRequest $request): JsonResponse
+    public function cancelInfoOrder(int $id): JsonResponse
     {
-        $result = $this->orderService->updateWaiter($orderId, $request->input('waiter_id'), $this->shop->id);
+        $result = $this->getOrder($id);
 
         if (!data_get($result, 'status')) {
             return $this->onErrorResponse($result);
         }
 
+        /** @var Order $order */
+        $order  = data_get($result, 'data');
+
+        $result = $this->service->cancelInfoOrder(data_get($order->yandex, 'request_id'));
+
         return $this->successResponse(
-            __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_UPDATED, locale: $this->language),
-            $this->orderRepository->reDataOrder(data_get($result, 'data')),
+            __('errors.' . ResponseError::SUCCESS, locale: $this->language),
+            $result
         );
+
     }
 
     /**
-     * Update Order Cook Update.
+     * Display a listing of the resource.
      *
-     * @param int $orderId
-     * @param CookUpdateRequest $request
+     * @param int $id
      * @return JsonResponse
      */
-    public function orderCookUpdate(int $orderId, CookUpdateRequest $request): JsonResponse
+    public function cancelOrder(int $id): JsonResponse
     {
-        $result = $this->orderService->updateCook($orderId, $request->input('cook_id'));
+        $result = $this->getOrder($id);
 
         if (!data_get($result, 'status')) {
             return $this->onErrorResponse($result);
         }
 
+        /** @var Order $order */
+        $order  = data_get($result, 'data');
+
+        $result = $this->service->cancelOrder(data_get($order->yandex, 'request_id'));
+
         return $this->successResponse(
-            __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_UPDATED, locale: $this->language),
-            $this->orderRepository->reDataOrder(data_get($result, 'data')),
+            __('errors.' . ResponseError::SUCCESS, locale: $this->language),
+            $result
         );
+
     }
 
     /**
-     * Calculate products when cart updated.
+     * Display a listing of the resource.
      *
-     * @param StocksCalculateRequest $request
+     * @param int $id
      * @return JsonResponse
      */
-    public function orderStocksCalculate(StocksCalculateRequest $request): JsonResponse
+    public function orderDriver(int $id): JsonResponse
     {
-        $validated = $request->validated();
-        $validated['shop_id'] = $this->shop->id;
+        $result = $this->getOrder($id);
 
-        $result = $this->orderRepository->orderStocksCalculate($validated);
+        if (!data_get($result, 'status')) {
+            return $this->onErrorResponse($result);
+        }
 
-        return $this->successResponse(__('errors.' . ResponseError::SUCCESS, locale: $this->language), $result);
+        /** @var Order $order */
+        $order  = data_get($result, 'data');
+
+        $result = $this->service->orderDriverVoiceForwarding(data_get($order->yandex, 'request_id'));
+
+        return $this->successResponse(
+            __('errors.' . ResponseError::SUCCESS, locale: $this->language),
+            $result
+        );
+
     }
 
     /**
-     * @param FilterParamsRequest $request
+     * Display a listing of the resource.
+     *
+     * @param int $id
      * @return JsonResponse
      */
-    public function destroy(FilterParamsRequest $request): JsonResponse
+    public function orderDriverPosition(int $id): JsonResponse
     {
-        $result = $this->orderService->destroy($request->input('ids'), $this->shop->id);
+        $result = $this->getOrder($id);
 
-        if (count($result) > 0) {
-            return $this->onErrorResponse([
-                'code' => ResponseError::ERROR_400,
-                'message' => __('errors.' . ResponseError::CANT_DELETE_ORDERS, [
-                    'ids' => implode(', #', $result)
-                ], locale: $this->language)
-            ]);
-
+        if (!data_get($result, 'status')) {
+            return $this->onErrorResponse($result);
         }
-        return $this->successResponse('Successfully data');
+
+        /** @var Order $order */
+        $order  = data_get($result, 'data');
+
+        $result = $this->service->orderDriverPerformerPosition(data_get($order->yandex, 'request_id'));
+
+        return $this->successResponse(
+            __('errors.' . ResponseError::SUCCESS, locale: $this->language),
+            $result
+        );
+
     }
 
-    public function fileExport(FilterParamsRequest $request): JsonResponse
+    /**
+     * Display a listing of the resource.
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function orderTrackingLinks(int $id): JsonResponse
     {
-        $fileName = 'export/orders.xls';
+        $result = $this->getOrder($id);
 
-        try {
-            $filter = $request->merge(['shop_id' => $this->shop->id, 'language' => $this->language])->all();
-
-            Excel::store(new OrderExport($filter), $fileName, 'public');
-
-            return $this->successResponse('Successfully exported', [
-                'path' => 'public/export',
-                'file_name' => $fileName
-            ]);
-        } catch (Throwable $e) {
-            $this->error($e);
-            return $this->errorResponse('Error during export');
+        if (!data_get($result, 'status')) {
+            return $this->onErrorResponse($result);
         }
+
+        /** @var Order $order */
+        $order  = data_get($result, 'data');
+
+        $result = $this->service->orderTrackingLinks(data_get($order->yandex, 'request_id'));
+
+        return $this->successResponse(
+            __('errors.' . ResponseError::SUCCESS, locale: $this->language),
+            $result
+        );
+
     }
 
-    public function fileImport(Request $request): JsonResponse
+    /**
+     * Display a listing of the resource.
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function orderPointsEta(int $id): JsonResponse
     {
-        try {
-            Excel::import(new OrderImport($this->language, $this->shop->id), $request->file('file'));
+        $result = $this->getOrder($id);
 
-            return $this->successResponse('Successfully imported');
-        } catch (Throwable $e) {
-            $this->error($e);
-            return $this->errorResponse(
-                ResponseError::ERROR_508,
-                __('errors.' . ResponseError::ERROR_508, locale: $this->language) . ' | ' . $e->getMessage()
-            );
+        if (!data_get($result, 'status')) {
+            return $this->onErrorResponse($result);
         }
+
+        /** @var Order $order */
+        $order  = data_get($result, 'data');
+
+        $result = $this->service->orderPointsEta(data_get($order->yandex, 'request_id'));
+
+        return $this->successResponse(
+            __('errors.' . ResponseError::SUCCESS, locale: $this->language),
+            $result
+        );
+
     }
+
 }
