@@ -53,6 +53,7 @@ class ResponseError
     public const ERROR_401 = 'ERROR_401'; // 'UNAUTHORIZED'
     public const ERROR_403 = 'ERROR_403'; // 'Your project is not activated'
     public const ERROR_404 = 'ERROR_404'; // 'Item\'s not found.'
+    public const ERROR_409 = 'ERROR_409'; // 'Yandex error.'
     public const ERROR_415 = 'ERROR_415'; // 'No connection to database'
     public const ERROR_422 = 'ERROR_422'; // 'Validation Error'
     public const ERROR_429 = 'ERROR_429'; // 'Too many requests'

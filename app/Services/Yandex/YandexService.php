@@ -40,7 +40,7 @@ class YandexService
 
             $items[] = [
                 'cost_currency' => $currency?->title ?? 'RUB',
-                'cost_value'    => (string)(data_get($item, 'total_price') * ($currency?->rate ?? 1)),
+                'cost_value'    => (string)round(data_get($item, 'total_price') * ($currency?->rate ?? 1), 2),
                 'pickup_point'  => 1, //Идентификатор точки, откуда нужно забрать товар.
                 'droppof_point' => 2, //Идентификатор точки, куда нужно доставить товар.
                 'quantity'      => data_get($item, 'quantity'),
@@ -74,7 +74,7 @@ class YandexService
 
             $items[] = [
                 'cost_currency' => $currency?->title ?? 'RUB',
-                'cost_value'    => (string)($orderDetail->total_price * ($currency?->rate ?? 1)),
+                'cost_value'    => (string)round($orderDetail->total_price * ($currency?->rate ?? 1), 2),
                 'pickup_point'  => 1, //Идентификатор точки, откуда нужно забрать товар.
                 'droppof_point' => 2, //Идентификатор точки, куда нужно доставить товар.
                 'quantity'      => $orderDetail->quantity,
@@ -110,7 +110,7 @@ class YandexService
 
                 $items[] = [
                     'cost_currency' => $currency?->title ?? 'RUB',
-                    'cost_value'    => (string)($cartDetail->price * ($currency?->rate ?? 1)),
+                    'cost_value'    => (string)round($cartDetail->price * ($currency?->rate ?? 1), 2),
                     'pickup_point'  => 1, //Идентификатор точки, откуда нужно забрать товар.
                     'droppof_point' => 2, //Идентификатор точки, куда нужно доставить товар.
                     'quantity'      => $cartDetail->quantity,
@@ -162,13 +162,13 @@ class YandexService
             [
                 'coordinates' => [
                     (double)data_get($shopLocation, 'longitude'),
-                    (double)data_get($shopLocation, 'latitude')
+                    (double)data_get($shopLocation, 'latitude'),
                 ]
             ],
             [
                 'coordinates' => [
                     (double)data_get($clientLocation, 'longitude'),
-                    (double)data_get($clientLocation, 'latitude')
+                    (double)data_get($clientLocation, 'latitude'),
                 ]
             ],
         ];
@@ -199,24 +199,26 @@ class YandexService
 
     /**
      * @param Order $order
-     * @param array $shopLocation
-     * @param array $clientLocation
      * @return array
      */
-    public function createOrder(Order $order, array $shopLocation, array $clientLocation): array
+    public function createOrder(Order $order): array
     {
-        $requestId = Str::uuid();
+        $requestId = data_get($order->yandex, 'request_id');
+
+        if (empty($requestId)) {
+            $requestId = Str::uuid();
+        }
 
         $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/create?request_id=$requestId", [
-                'callback_url'  => request()->getSchemeAndHttpHost() . '/api/v1/webhook/yandex/order',
-                'items'         => $this->getItems($order),
-                'route_points'  => [
+                'callback_url'          => request()->getSchemeAndHttpHost() . '/api/v1/webhook/yandex/order',
+                'items'                 => $this->getItems($order),
+                'route_points'          => [
                     [
                         'address' => [
                             'coordinates' => [
-                                (double)data_get($shopLocation, 'longitude'),
-                                (double)data_get($shopLocation, 'latitude')
+                                (double)data_get($order->shop->location, 'longitude'),
+                                (double)data_get($order->shop->location, 'latitude')
                             ],
                             'fullname' => $order->shop?->translation?->address,
                         ],
@@ -232,8 +234,8 @@ class YandexService
                     [
                         'address' => [
                             'coordinates' => [
-                                (double)data_get($clientLocation, 'longitude'),
-                                (double)data_get($clientLocation, 'latitude')
+                                (double)data_get($order->location, 'longitude'),
+                                (double)data_get($order->location, 'latitude')
                             ],
                             'fullname' => data_get($order->address, 'address')
                         ],
@@ -255,125 +257,263 @@ class YandexService
                 'skip_emergency_notify' => false
             ]);
 
+        $data = $request->json();
+
+        $yandex = $order->yandex;
+        $yandex['request_id'] = data_get($data, 'id');
+        $yandex['status'] = data_get($data, 'status');
+        $yandex['corp_client_id'] = data_get($data, 'corp_client_id');
+
         $order->update([
-            'yandex' => collect($order->yandex)->merge(['request_id' => $requestId])->toArray()
+            'yandex' => $yandex
         ]);
 
         return [
             'code' => $request->status(),
-            'data' => $request->json(),
+            'data' => $data,
         ];
     }
 
     /**
-     * @param string $requestId
+     * @param Order $order
      * @return array
      */
-    public function getOrderInfo(string $requestId): array
+    public function getOrderInfo(Order $order): array
     {
+        $requestId = data_get($order->yandex, 'request_id');
+
         $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/info?claim_id=$requestId");
 
+        $data = $request->json();
+
+        $yandex = $order->yandex;
+
+        $defStatus = data_get($order->yandex, 'status');
+
+        $yandex['status'] = data_get($data, 'status', $defStatus);
+
+        $order->update([
+            'yandex' => $yandex
+        ]);
+
         return [
             'code' => $request->status(),
-            'data' => $request->json(),
+            'data' => $data,
         ];
     }
 
     /**
-     * @param string $requestId
+     * @param Order $order
      * @return array
      */
-    public function acceptOrder(string $requestId): array
+    public function acceptOrder(Order $order): array
     {
+        $requestId = data_get($order->yandex, 'request_id');
+
         $request = $this->getBaseHttp()
-            ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/accept?claim_id=$requestId");
+            ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/accept?claim_id=$requestId", [
+                'version' => 1
+            ]);
+
+        $data = $request->json();
+
+        $yandex = $order->yandex;
+
+        $defStatus   = data_get($order->yandex, 'status');
+        $defVersion  = data_get($order->yandex, 'version');
+        $defRVersion = data_get($order->yandex, 'user_request_revision');
+        $defNotify   = data_get($order->yandex, 'skip_client_notify');
+
+        $yandex['status']                = data_get($data, 'status', $defStatus);
+        $yandex['version']               = data_get($data, 'version', $defVersion);
+        $yandex['user_request_revision'] = data_get($data, 'user_request_revision', $defRVersion);
+        $yandex['skip_client_notify']    = data_get($data, 'skip_client_notify', $defNotify);
+
+        $order->update([
+            'yandex' => $yandex
+        ]);
 
         return [
             'code' => $request->status(),
-            'data' => $request->json(),
+            'data' => $data,
         ];
     }
 
     /**
-     * @param string $requestId
+     * @param Order $order
      * @return array
      */
-    public function cancelInfoOrder(string $requestId): array
+    public function cancelInfoOrder(Order $order): array
     {
+        $requestId = data_get($order->yandex, 'request_id');
+
         $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/cancel-info?claim_id=$requestId");
 
+        $data     = $request->json();
+        $yandex   = $order->yandex;
+        $defState = data_get($order->yandex, 'cancel_state');
+
+        $yandex['cancel_state'] = data_get($data, 'cancel_state', $defState);
+
+        $order->update([
+            'yandex' => $yandex
+        ]);
+
         return [
             'code' => $request->status(),
-            'data' => $request->json(),
+            'data' => $data,
         ];
     }
 
     /**
-     * @param string $requestId
+     * @param Order $order
      * @return array
      */
-    public function cancelOrder(string $requestId): array
+    public function cancelOrder(Order $order): array
     {
+        $requestId = data_get($order->yandex, 'request_id');
+
         $state = $this->cancelInfoOrder($requestId);
 
         $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/cancel?claim_id=$requestId", [
-                'cancel_state' => data_get($state, 'cancel_state'),
-                'version'      => 2,
+                'cancel_state' => data_get($state, 'data.cancel_state'),
+                'version'      => 1,
             ]);
+
+        $data = $request->json();
+
+        $yandex = $order->yandex;
+
+        $defStatus   = data_get($order->yandex, 'status');
+        $defVersion  = data_get($order->yandex, 'version');
+        $defRVersion = data_get($order->yandex, 'user_request_revision');
+        $defNotify   = data_get($order->yandex, 'skip_client_notify');
+
+        $yandex['status'] = data_get($data, 'status', $defStatus);
+        $yandex['version'] = data_get($data, 'version', $defVersion);
+        $yandex['user_request_revision'] = data_get($data, 'user_request_revision', $defRVersion);
+        $yandex['skip_client_notify'] = data_get($data, 'skip_client_notify', $defNotify);
+
+        $order->update([
+            'yandex' => $yandex
+        ]);
 
         return [
             'code' => $request->status(),
-            'data' => $request->json(),
+            'data' => $data,
         ];
     }
 
     /**
-     * @param string $requestId
+     * @param Order $order
      * @return array
      */
-    public function orderDriverVoiceForwarding(string $requestId): array
+    public function orderDriverVoiceForwarding(Order $order): array
     {
+        $requestId = data_get($order->yandex, 'request_id');
+
         $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/driver-voiceforwarding", [
                 'claim_id' => $requestId
             ]);
 
+        $data = $request->json();
+
+        $yandex = $order->yandex;
+
+        $defPhone = data_get($order->yandex, 'deliveryman.phone');
+        $defExt   = data_get($order->yandex, 'deliveryman.ext');
+        $defTtl   = data_get($order->yandex, 'deliveryman.ttl_seconds');
+
+        unset($yandex['deliveryman']['phone']);
+        unset($yandex['deliveryman']['ext']);
+        unset($yandex['deliveryman']['ttl_seconds']);
+
+        $yandex['deliveryman'] += [
+            'phone'       => data_get($data, 'phone', $defPhone),
+            'ext'         => data_get($data, 'ext', $defExt),
+            'ttl_seconds' => data_get($data, 'ttl_seconds', $defTtl),
+        ];
+
+        $order->update([
+            'yandex' => $yandex
+        ]);
+
         return [
             'code' => $request->status(),
-            'data' => $request->json(),
+            'data' => $data,
         ];
     }
 
     /**
-     * @param string $requestId
+     * @param Order $order
      * @return array
      */
-    public function orderDriverPerformerPosition(string $requestId): array
+    public function orderDriverPerformerPosition(Order $order): array
     {
+        $requestId = data_get($order->yandex, 'request_id');
+
         $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/performer-position?claim_id=$requestId");
 
+        $data = $request->json();
+
+        $yandex = $order->yandex;
+
+        $defPosition    = data_get($order->yandex, 'position');
+        $defRoutePoints = data_get($order->yandex, 'route_points');
+
+        unset($yandex['deliveryman']['position']);
+        unset($yandex['deliveryman']['route_points']);
+
+        $yandex['deliveryman'] += [
+            'position'      => data_get($data, 'position', $defPosition),
+            'route_points'  => data_get($data, 'route_points', $defRoutePoints),
+        ];
+
+        $order->update([
+            'yandex' => $yandex
+        ]);
+
         return [
             'code' => $request->status(),
-            'data' => $request->json(),
+            'data' => $data,
         ];
     }
 
     /**
-     * @param string $requestId
+     * @param Order $order
      * @return array
      */
-    public function orderTrackingLinks(string $requestId): array
+    public function orderTrackingLinks(Order $order): array
     {
+        $requestId = data_get($order->yandex, 'request_id');
+
         $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/tracking-links?claim_id=$requestId");
 
+        $data = $request->json();
+
+        $yandex = $order->yandex;
+
+        $defRoutePoints = data_get($order->yandex, 'route_points');
+
+        unset($yandex['deliveryman']['route_points']);
+
+        $yandex['deliveryman'] += [
+            'route_points'  => data_get($data, 'route_points', $defRoutePoints),
+        ];
+
+        $order->update([
+            'yandex' => $yandex
+        ]);
+
         return [
             'code' => $request->status(),
-            'data' => $request->json(),
+            'data' => $data,
         ];
     }
 

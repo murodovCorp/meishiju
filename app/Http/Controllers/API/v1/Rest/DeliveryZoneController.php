@@ -40,21 +40,6 @@ class DeliveryZoneController extends RestBaseController
         }
     }
 
-    public function deliveryCalculatePrice(int $deliveryId, Request $request): float|JsonResponse
-    {
-        /** @var DeliveryZone $deliveryZone */
-        $deliveryZone = DeliveryZone::find($deliveryId);
-
-        if (!$deliveryZone) {
-            return $this->onErrorResponse([
-                'code'    => ResponseError::ERROR_404,
-                'message' => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
-            ]);
-        }
-
-        return round(0);
-    }
-
     /**
      * @param DistanceRequest $request
      * @return array

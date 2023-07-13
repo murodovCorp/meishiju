@@ -81,9 +81,7 @@ class CartRepository extends CoreRepository
     /**
      * @param int $id
      * @param array $data
-     *
      * @return array
-     * @throws Exception
      */
     public function calculateByCartId(int $id, array $data): array
     {
@@ -193,6 +191,7 @@ class CartRepository extends CoreRepository
         $coupon = Coupon::checkCoupon(data_get($data, 'coupon'))->first();
 
         $couponPrice = 0;
+        $km = 0;
 
         if (!empty($coupon)) {
             $couponPrice = $this->checkCoupon($coupon, $cart->total_price);
@@ -205,7 +204,12 @@ class CartRepository extends CoreRepository
             $checkPrice    = $yandexService->checkPrice($cart, $cart->shop->location, data_get($data, 'address'));
 
             if (data_get($checkPrice, 'code') !== 200) {
-                throw new Exception(data_get($checkPrice, 'data.message'));
+                return [
+                    'status'  => false,
+                    'code'    => ResponseError::ERROR_409,
+                    'http'    => 409,
+                    'message' => data_get($checkPrice, 'data.message')
+                ];
             }
 
             $currency = Currency::currenciesList()
@@ -214,6 +218,7 @@ class CartRepository extends CoreRepository
 
             $deliveryFee = data_get($checkPrice, 'data.price') / ($currency?->rate ?? 1);
             $deliveryFee = $deliveryFee / ($cart->shop->delivery_price ?: 1) * 100 * $this->currency();
+            $km          = data_get($checkPrice, 'data.distance_meters') / 1000;
         }
 
         $shopTax = max(($totalPrice - $discount) / $rate / 100 * $cart->shop->tax, 0) * $rate;
@@ -229,6 +234,7 @@ class CartRepository extends CoreRepository
                 'total_price'       => max($totalPrice + $deliveryFee + $shopTax, 0),
                 'total_discount'    => $discount,
                 'delivery_fee'      => $deliveryFee,
+                'km'                => $km,
                 'rate'              => $rate,
                 'coupon_price'      => $couponPrice,
                 'receipt_discount'  => $receiptDiscount,

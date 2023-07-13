@@ -104,7 +104,7 @@ class YandexController extends SellerBaseController
         /** @var Order $order */
         $order  = data_get($result, 'data');
 
-        $result = $this->service->createOrder($order, $order->shop?->location, $order->location);
+        $result = $this->service->createOrder($order);
 
         if (data_get($result, 'code') !== 200) {
             return new JsonResponse(data_get($result, 'data'), data_get($result, 'code'));
@@ -134,7 +134,7 @@ class YandexController extends SellerBaseController
         /** @var Order $order */
         $order  = data_get($result, 'data');
 
-        $result = $this->service->getOrderInfo(data_get($order->yandex, 'request_id'));
+        $result = $this->service->getOrderInfo($order);
 
         if (data_get($result, 'code') !== 200) {
             return new JsonResponse(data_get($result, 'data'), data_get($result, 'code'));
@@ -164,7 +164,7 @@ class YandexController extends SellerBaseController
         /** @var Order $order */
         $order  = data_get($result, 'data');
 
-        $result = $this->service->acceptOrder(data_get($order->yandex, 'request_id'));
+        $result = $this->service->acceptOrder($order);
 
         if (data_get($result, 'code') !== 200) {
             return new JsonResponse(data_get($result, 'data'), data_get($result, 'code'));
@@ -224,7 +224,7 @@ class YandexController extends SellerBaseController
         /** @var Order $order */
         $order  = data_get($result, 'data');
 
-        $result = $this->service->cancelOrder(data_get($order->yandex, 'request_id'));
+        $result = $this->service->cancelOrder($order);
 
         if (data_get($result, 'code') !== 200) {
             return new JsonResponse(data_get($result, 'data'), data_get($result, 'code'));
@@ -284,7 +284,7 @@ class YandexController extends SellerBaseController
         /** @var Order $order */
         $order  = data_get($result, 'data');
 
-        $result = $this->service->orderDriverPerformerPosition(data_get($order->yandex, 'request_id'));
+        $result = $this->service->orderDriverPerformerPosition($order);
 
         if (data_get($result, 'code') !== 200) {
             return new JsonResponse(data_get($result, 'data'), data_get($result, 'code'));

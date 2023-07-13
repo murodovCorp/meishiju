@@ -130,7 +130,7 @@ class TestController extends Controller
             'shop.translation' => fn($q) => $q->where('locale', $this->language),
             'user',
         ])
-            ->find(2652);
+            ->find(2653);
 
 //        $order->shop->update([
 //            'location' => [
@@ -274,11 +274,12 @@ class TestController extends Controller
 //  "features" => []
 //  "revision" => 1
 //]
-        $lat = ['latitude' => '55.691862', 'longitude' => '37.578001'];
-        $lon = ['latitude' => '55.691862', 'longitude' => '37.578001'];
+        //{"latitude":"55.691862","longitude":"37.578001"}
+        $lat = ['latitude' => '55.650433', 'longitude' => '37.617288'];
+        $lon = ['latitude' => '55.848572', 'longitude' => '37.582241'];
 
-        $result = (new YandexService)->checkPrice($order, $lat, $lon);
-//        $result = (new YandexService)->createOrder($order, $lat, $lon);
+//        $result = (new YandexService)->checkPrice($order, $lat, $lon);
+        $result = (new YandexService)->createOrder($order);
 //        $result = (new YandexService)->getOrderInfo();
 //        $result = (new YandexService)->acceptOrder();
 //        $result = (new YandexService)->cancelInfoOrder();

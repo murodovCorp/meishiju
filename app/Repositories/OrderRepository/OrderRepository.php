@@ -291,7 +291,12 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
             $checkPrice      = $yandexService->checkPrice($result->toArray(), $shop->location, data_get($filter, 'location'));
 
             if (data_get($checkPrice, 'code') !== 200) {
-                throw new Exception(data_get($checkPrice, 'data.message'));
+                return [
+                    'status'  => false,
+                    'code'    => ResponseError::ERROR_409,
+                    'http'    => 409,
+                    'message' => data_get($checkPrice, 'data.message')
+                ];
             }
 
             $currency = Currency::currenciesList()

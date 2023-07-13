@@ -13,14 +13,6 @@ class Utility
     }
 
     /**
-     * @return float|null
-     */
-    public function getDeliveryFee(): ?float
-    {
-        return round(0);
-    }
-
-    /**
      * @param array $origin, Адрес селлера (откуда)
      * @param array $destination, Адрес клиента (куда)
      * @return float|int|null
