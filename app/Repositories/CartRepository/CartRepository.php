@@ -14,6 +14,7 @@ use App\Repositories\CoreRepository;
 use App\Services\CartService\CartService;
 use App\Services\Yandex\YandexService;
 use App\Traits\SetCurrency;
+use Exception;
 
 class CartRepository extends CoreRepository
 {
@@ -82,6 +83,7 @@ class CartRepository extends CoreRepository
      * @param array $data
      *
      * @return array
+     * @throws Exception
      */
     public function calculateByCartId(int $id, array $data): array
     {
@@ -199,13 +201,18 @@ class CartRepository extends CoreRepository
         }
 
         if (data_get($data, 'type') === Order::DELIVERY) {
-            $yandexService   = new YandexService;
-            $checkPrice      = $yandexService->checkPrice($cart, $cart->shop->location, data_get($data, 'address'));
-            $currency        = Currency::currenciesList()
-                ->where('title', data_get($checkPrice, 'currency_rules.code'))
+            $yandexService = new YandexService;
+            $checkPrice    = $yandexService->checkPrice($cart, $cart->shop->location, data_get($data, 'address'));
+
+            if (data_get($checkPrice, 'code') !== 200) {
+                throw new Exception(data_get($checkPrice, 'data.message'));
+            }
+
+            $currency = Currency::currenciesList()
+                ->where('title', data_get($checkPrice, 'data.currency_rules.code'))
                 ->first();
 
-            $deliveryFee = data_get($checkPrice, 'price') / ($currency?->rate ?? 1);
+            $deliveryFee = data_get($checkPrice, 'data.price') / ($currency?->rate ?? 1);
             $deliveryFee = $deliveryFee / ($cart->shop->delivery_price ?: 1) * 100 * $this->currency();
         }
 

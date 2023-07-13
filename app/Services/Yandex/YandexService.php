@@ -191,7 +191,10 @@ class YandexService
                 'skip_door_to_door' => false,
             ]);
 
-        return $request->json();
+        return [
+            'code' => $request->status(),
+            'data' => $request->json(),
+        ];
     }
 
     /**
@@ -219,8 +222,8 @@ class YandexService
                         ],
                         'contact' => [
                             'name'  => $order->shop?->translation?->title,
-                            'phone' => '+' . str_replace('+', '', $order->shop?->phone)
-                        ] + ($order->shop?->seller?->email ? ['email' => $order->shop->seller->email] : []),
+                            'phone' => '+' . str_replace('+', '', $order->shop?->phone ?? $order->shop?->seller?->phone)
+                        ],
                         'point_id'          => 1,
                         'skip_confirmation' => true,
                         'type'              => 'source',
@@ -235,8 +238,8 @@ class YandexService
                             'fullname' => data_get($order->address, 'address')
                         ],
                         'contact' => [
-                            'name'  => $order->username ?? $order->user?->firstname,
-                            'phone' => "+" . str_replace('+', '', $order->phone ?? $order->user?->phone)
+                            'name'  => $order->username ?? "{$order->user?->firstname} {$order->user?->lastname}",
+                            'phone' => '+' . str_replace('+', '', $order->phone ?? $order->user?->phone)
                         ] + ($order->user?->email ? [$order->user->email] : []),
                         'point_id'          => 2,
                         'skip_confirmation' => true,
@@ -256,7 +259,10 @@ class YandexService
             'yandex' => collect($order->yandex)->merge(['request_id' => $requestId])->toArray()
         ]);
 
-        return $request->json();
+        return [
+            'code' => $request->status(),
+            'data' => $request->json(),
+        ];
     }
 
     /**
@@ -268,7 +274,10 @@ class YandexService
         $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/info?claim_id=$requestId");
 
-        return $request->json();
+        return [
+            'code' => $request->status(),
+            'data' => $request->json(),
+        ];
     }
 
     /**
@@ -280,7 +289,10 @@ class YandexService
         $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/accept?claim_id=$requestId");
 
-        return $request->json();
+        return [
+            'code' => $request->status(),
+            'data' => $request->json(),
+        ];
     }
 
     /**
@@ -292,7 +304,10 @@ class YandexService
         $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/cancel-info?claim_id=$requestId");
 
-        return $request->json();
+        return [
+            'code' => $request->status(),
+            'data' => $request->json(),
+        ];
     }
 
     /**
@@ -309,7 +324,10 @@ class YandexService
                 'version'      => 2,
             ]);
 
-        return $request->json();
+        return [
+            'code' => $request->status(),
+            'data' => $request->json(),
+        ];
     }
 
     /**
@@ -323,7 +341,10 @@ class YandexService
                 'claim_id' => $requestId
             ]);
 
-        return $request->json();
+        return [
+            'code' => $request->status(),
+            'data' => $request->json(),
+        ];
     }
 
     /**
@@ -335,7 +356,10 @@ class YandexService
         $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/performer-position?claim_id=$requestId");
 
-        return $request->json();
+        return [
+            'code' => $request->status(),
+            'data' => $request->json(),
+        ];
     }
 
     /**
@@ -347,7 +371,10 @@ class YandexService
         $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/tracking-links?claim_id=$requestId");
 
-        return $request->json();
+        return [
+            'code' => $request->status(),
+            'data' => $request->json(),
+        ];
     }
 
     /**
@@ -359,7 +386,10 @@ class YandexService
         $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/points-eta?claim_id=$requestId");
 
-        return $request->json();
+        return [
+            'code' => $request->status(),
+            'data' => $request->json(),
+        ];
     }
 
 }

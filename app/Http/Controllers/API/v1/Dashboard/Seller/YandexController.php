@@ -52,11 +52,9 @@ class YandexController extends SellerBaseController
             ];
         }
 
-        $data = $this->service->checkPrice($order, $order->shop?->location, $order->location);
-
         return [
             'status' => true,
-            'data'   => $data
+            'data'   => $order
         ];
     }
 
@@ -79,9 +77,13 @@ class YandexController extends SellerBaseController
 
         $result = $this->service->checkPrice($order, $order->shop?->location, $order->location);
 
+        if (data_get($result, 'code') !== 200) {
+            return new JsonResponse(data_get($result, 'data'), data_get($result, 'code'));
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
-            $result
+            data_get($result, 'data')
         );
     }
 
@@ -104,9 +106,13 @@ class YandexController extends SellerBaseController
 
         $result = $this->service->createOrder($order, $order->shop?->location, $order->location);
 
+        if (data_get($result, 'code') !== 200) {
+            return new JsonResponse(data_get($result, 'data'), data_get($result, 'code'));
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
-            $result
+            data_get($result, 'data')
         );
 
     }
@@ -130,9 +136,13 @@ class YandexController extends SellerBaseController
 
         $result = $this->service->getOrderInfo(data_get($order->yandex, 'request_id'));
 
+        if (data_get($result, 'code') !== 200) {
+            return new JsonResponse(data_get($result, 'data'), data_get($result, 'code'));
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
-            $result
+            data_get($result, 'data')
         );
 
     }
@@ -156,9 +166,13 @@ class YandexController extends SellerBaseController
 
         $result = $this->service->acceptOrder(data_get($order->yandex, 'request_id'));
 
+        if (data_get($result, 'code') !== 200) {
+            return new JsonResponse(data_get($result, 'data'), data_get($result, 'code'));
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
-            $result
+            data_get($result, 'data')
         );
 
     }
@@ -182,9 +196,13 @@ class YandexController extends SellerBaseController
 
         $result = $this->service->cancelInfoOrder(data_get($order->yandex, 'request_id'));
 
+        if (data_get($result, 'code') !== 200) {
+            return new JsonResponse(data_get($result, 'data'), data_get($result, 'code'));
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
-            $result
+            data_get($result, 'data')
         );
 
     }
@@ -208,9 +226,13 @@ class YandexController extends SellerBaseController
 
         $result = $this->service->cancelOrder(data_get($order->yandex, 'request_id'));
 
+        if (data_get($result, 'code') !== 200) {
+            return new JsonResponse(data_get($result, 'data'), data_get($result, 'code'));
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
-            $result
+            data_get($result, 'data')
         );
 
     }
@@ -234,9 +256,13 @@ class YandexController extends SellerBaseController
 
         $result = $this->service->orderDriverVoiceForwarding(data_get($order->yandex, 'request_id'));
 
+        if (data_get($result, 'code') !== 200) {
+            return new JsonResponse(data_get($result, 'data'), data_get($result, 'code'));
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
-            $result
+            data_get($result, 'data')
         );
 
     }
@@ -260,9 +286,13 @@ class YandexController extends SellerBaseController
 
         $result = $this->service->orderDriverPerformerPosition(data_get($order->yandex, 'request_id'));
 
+        if (data_get($result, 'code') !== 200) {
+            return new JsonResponse(data_get($result, 'data'), data_get($result, 'code'));
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
-            $result
+            data_get($result, 'data')
         );
 
     }
@@ -286,9 +316,13 @@ class YandexController extends SellerBaseController
 
         $result = $this->service->orderTrackingLinks(data_get($order->yandex, 'request_id'));
 
+        if (data_get($result, 'code') !== 200) {
+            return new JsonResponse(data_get($result, 'data'), data_get($result, 'code'));
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
-            $result
+            data_get($result, 'data')
         );
 
     }
@@ -312,9 +346,13 @@ class YandexController extends SellerBaseController
 
         $result = $this->service->orderPointsEta(data_get($order->yandex, 'request_id'));
 
+        if (data_get($result, 'code') !== 200) {
+            return new JsonResponse(data_get($result, 'data'), data_get($result, 'code'));
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
-            $result
+            data_get($result, 'data')
         );
 
     }

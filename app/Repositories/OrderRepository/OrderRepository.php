@@ -22,6 +22,7 @@ use App\Repositories\Interfaces\OrderRepoInterface;
 use App\Repositories\ReportRepository\ChartRepository;
 use App\Services\Yandex\YandexService;
 use App\Traits\SetCurrency;
+use Exception;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -90,6 +91,7 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
     /**
      * @param array $filter
      * @return array
+     * @throws Exception
      */
     public function orderStocksCalculate(array $filter): array
     {
@@ -287,13 +289,18 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
         if (data_get($filter, 'type') === Order::DELIVERY) {
             $yandexService   = new YandexService;
             $checkPrice      = $yandexService->checkPrice($result->toArray(), $shop->location, data_get($filter, 'location'));
-            $currency        = Currency::currenciesList()
-                ->where('title', data_get($checkPrice, 'currency_rules.code'))
-                ->first();
-            $deliveryFee     = data_get($checkPrice, 'price') / ($currency?->rate ?? 1);
 
-            $deliveryFee     = $deliveryFee / ($shop->delivery_price ?: 1) * 100 * $this->currency();
-            $km              = data_get($checkPrice, 'distance_meters') / 1000;
+            if (data_get($checkPrice, 'code') !== 200) {
+                throw new Exception(data_get($checkPrice, 'data.message'));
+            }
+
+            $currency = Currency::currenciesList()
+                ->where('title', data_get($checkPrice, 'data.currency_rules.code'))
+                ->first();
+            $deliveryFee = data_get($checkPrice, 'data.price') / ($currency?->rate ?? 1);
+
+            $deliveryFee = $deliveryFee / ($shop->delivery_price ?: 1) * 100 * $this->currency();
+            $km          = data_get($checkPrice, 'data.distance_meters') / 1000;
         }
 
 

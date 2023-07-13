@@ -119,7 +119,7 @@ class OrderService extends CoreService implements OrderServiceInterface
 
             return [
                 'status'    => false,
-                'message'   => __('errors.' . ResponseError::ERROR_501, locale: $this->language),
+                'message'   => $e->getMessage(),
                 'code'      => ResponseError::ERROR_501
             ];
         }
@@ -201,7 +201,7 @@ class OrderService extends CoreService implements OrderServiceInterface
             $this->error($e);
             return [
                 'status'    => false,
-                'message'   => __('errors.' . ResponseError::ERROR_502, locale: $this->language),
+                'message'   => $e->getMessage(),
                 'code'      => ResponseError::ERROR_502
             ];
         }
@@ -249,10 +249,15 @@ class OrderService extends CoreService implements OrderServiceInterface
 
             $yandexService   = new YandexService;
             $checkPrice      = $yandexService->checkPrice($order, $shop->location, data_get($data, 'location'));
+
+            if (data_get($checkPrice, 'code') !== 200) {
+                throw new Exception(data_get($checkPrice, 'data.message'));
+            }
+
             $currency        = Currency::currenciesList()
-                ->where('title', data_get($checkPrice, 'currency_rules.code'))
+                ->where('title', data_get($checkPrice, 'data.currency_rules.code'))
                 ->first();
-            $deliveryFee     = data_get($checkPrice, 'price');
+            $deliveryFee     = data_get($checkPrice, 'data.price');
 
             $deliveryFeeRate = $deliveryFee / ($currency?->rate ?? 1);
             $deliveryFeeRate = $deliveryFeeRate / ($shop->delivery_price ?: 1) * 100;
