@@ -1124,6 +1124,20 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
             Route::get('branches/drop/all',         [Admin\BranchController::class, 'dropAll']);
             Route::get('branches/restore/all',      [Admin\BranchController::class, 'restoreAll']);
             Route::get('branches/truncate/db',      [Admin\BranchController::class, 'truncate']);
+
+            /* Yandex Order */
+            Route::group(['prefix' => 'yandex/order'], function () {
+                Route::post('{id}/check-price',       [Admin\YandexController::class, 'checkPrice']);
+                Route::post('{id}/create',            [Admin\YandexController::class, 'createOrder']);
+                Route::post('{id}/get-info',          [Admin\YandexController::class, 'getOrderInfo']);
+                Route::post('{id}/accept',            [Admin\YandexController::class, 'acceptOrder']);
+                Route::post('{id}/cancel-info',       [Admin\YandexController::class, 'cancelInfoOrder']);
+                Route::post('{id}/cancel',            [Admin\YandexController::class, 'cancelOrder']);
+                Route::post('{id}/driver',            [Admin\YandexController::class, 'orderDriver']);
+                Route::post('{id}/driver-position',   [Admin\YandexController::class, 'orderDriverPosition']);
+                Route::post('{id}/tracking-links',    [Admin\YandexController::class, 'orderTrackingLinks']);
+                Route::post('{id}/points-eta',        [Admin\YandexController::class, 'orderPointsEta']);
+            });
         });
 
     });
