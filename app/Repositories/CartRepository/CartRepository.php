@@ -185,7 +185,7 @@ class CartRepository extends CoreRepository
         // recalculate shop bonus
         $receiptDiscount = (new CartService)->recalculateReceipt($cart, $inReceipts) * $rate;
 
-        $totalPrice  = $cart->rate_total_price;
+        $totalPrice = $cart->rate_total_price;
         $discount   += $receiptDiscount;
 
         $coupon = Coupon::checkCoupon(data_get($data, 'coupon'))->first();
@@ -205,12 +205,11 @@ class CartRepository extends CoreRepository
                 ->where('title', data_get($checkPrice, 'currency_rules.code'))
                 ->first();
 
-            $deliveryFee     = data_get($checkPrice, 'price') / ($currency?->rate ?? 1);
-
-            $deliveryFee     = $deliveryFee * $this->currency();
+            $deliveryFee = data_get($checkPrice, 'price') / ($currency?->rate ?? 1);
+            $deliveryFee = $deliveryFee / ($cart->shop->delivery_price ?: 1) * 100 * $this->currency();
         }
 
-        $shopTax     = max(($totalPrice - $discount) / $rate / 100 * $cart->shop->tax, 0) * $rate;
+        $shopTax = max(($totalPrice - $discount) / $rate / 100 * $cart->shop->tax, 0) * $rate;
 
         return [
             'status' => true,

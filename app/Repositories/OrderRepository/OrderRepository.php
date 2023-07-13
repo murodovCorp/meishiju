@@ -292,7 +292,7 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
                 ->first();
             $deliveryFee     = data_get($checkPrice, 'price') / ($currency?->rate ?? 1);
 
-            $deliveryFee     = $deliveryFee * $this->currency();
+            $deliveryFee     = $deliveryFee / ($shop->delivery_price ?: 1) * 100 * $this->currency();
             $km              = data_get($checkPrice, 'distance_meters') / 1000;
         }
 

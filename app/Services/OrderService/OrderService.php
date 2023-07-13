@@ -255,6 +255,7 @@ class OrderService extends CoreService implements OrderServiceInterface
             $deliveryFee     = data_get($checkPrice, 'price');
 
             $deliveryFeeRate = $deliveryFee / ($currency?->rate ?? 1);
+            $deliveryFeeRate = $deliveryFeeRate / ($shop->delivery_price ?: 1) * 100;
 
         }
 
