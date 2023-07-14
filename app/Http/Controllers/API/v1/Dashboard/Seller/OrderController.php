@@ -290,7 +290,14 @@ class OrderController extends SellerBaseController
 
         $result = $this->orderRepository->orderStocksCalculate($validated);
 
-        return $this->successResponse(__('errors.' . ResponseError::SUCCESS, locale: $this->language), $result);
+        if (!data_get($result, 'status')) {
+            return $this->onErrorResponse($result);
+        }
+
+        return $this->successResponse(
+            __('errors.' . ResponseError::SUCCESS, locale: $this->language),
+            data_get($result, 'data')
+        );
     }
 
     /**

@@ -91,7 +91,6 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
     /**
      * @param array $filter
      * @return array
-     * @throws Exception
      */
     public function orderStocksCalculate(array $filter): array
     {
@@ -288,7 +287,7 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
 
         if (data_get($filter, 'type') === Order::DELIVERY) {
             $yandexService   = new YandexService;
-            $checkPrice      = $yandexService->checkPrice($result->toArray(), $shop->location, data_get($filter, 'location'));
+            $checkPrice      = $yandexService->checkPrice($result->toArray(), $shop->location, data_get($filter, 'address'));
 
             if (data_get($checkPrice, 'code') !== 200) {
                 return [

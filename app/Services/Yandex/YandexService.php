@@ -38,6 +38,10 @@ class YandexService
 
         foreach ($data as $item) {
 
+            if (data_get($item, 'quantity') === 0) {
+                continue;
+            }
+
             $items[] = [
                 'cost_currency' => $currency?->title ?? 'RUB',
                 'cost_value'    => (string)round(data_get($item, 'total_price') * ($currency?->rate ?? 1), 2),
@@ -45,12 +49,12 @@ class YandexService
                 'droppof_point' => 2, //Идентификатор точки, куда нужно доставить товар.
                 'quantity'      => data_get($item, 'quantity'),
                 'size' => [
-                    'height' => 0.15 * data_get($item, 'quantity'),
-                    'length' => 0.15 * data_get($item, 'quantity'),
-                    'width' => 0.15 * data_get($item, 'quantity')
+                    'height' => 0.015 * data_get($item, 'quantity'),
+                    'length' => 0.015 * data_get($item, 'quantity'),
+                    'width' => 0.015 * data_get($item, 'quantity')
                 ],
                 'title' => 'Плюмбус',
-                'weight' => 0.3 * data_get($item, 'quantity')
+                'weight' => 0.03 * data_get($item, 'quantity')
             ];
 
         }
@@ -79,12 +83,12 @@ class YandexService
                 'droppof_point' => 2, //Идентификатор точки, куда нужно доставить товар.
                 'quantity'      => $orderDetail->quantity,
                 'size' => [
-                    'height' => 0.15 * $orderDetail->quantity,
-                    'length' => 0.15 * $orderDetail->quantity,
-                    'width' => 0.15 * $orderDetail->quantity
+                    'height' => 0.015 * $orderDetail->quantity,
+                    'length' => 0.015 * $orderDetail->quantity,
+                    'width' => 0.015 * $orderDetail->quantity
                 ],
                 'title' => 'Плюмбус',
-                'weight' => 0.3 * $orderDetail->quantity
+                'weight' => 0.03 * $orderDetail->quantity
             ];
 
         }
@@ -115,12 +119,12 @@ class YandexService
                     'droppof_point' => 2, //Идентификатор точки, куда нужно доставить товар.
                     'quantity'      => $cartDetail->quantity,
                     'size' => [
-                        'height' => 0.15 * $cartDetail->quantity,
-                        'length' => 0.15 * $cartDetail->quantity,
-                        'width' => 0.15 * $cartDetail->quantity
+                        'height' => 0.015 * $cartDetail->quantity,
+                        'length' => 0.015 * $cartDetail->quantity,
+                        'width' => 0.015 * $cartDetail->quantity
                     ],
                     'title' => 'Плюмбус',
-                    'weight' => 0.3 * $cartDetail->quantity
+                    'weight' => 0.03 * $cartDetail->quantity
                 ];
 
             }
@@ -203,7 +207,7 @@ class YandexService
      */
     public function createOrder(Order $order): array
     {
-        $requestId = data_get($order->yandex, 'request_id');
+        $requestId = data_get($order->yandex, 'id');
 
         if (empty($requestId)) {
             $requestId = Str::uuid();
@@ -211,9 +215,9 @@ class YandexService
 
         $request = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/create?request_id=$requestId", [
-                'callback_url'          => request()->getSchemeAndHttpHost() . '/api/v1/webhook/yandex/order',
-                'items'                 => $this->getItems($order),
-                'route_points'          => [
+                'callback_url' => request()->getSchemeAndHttpHost() . '/api/v1/webhook/yandex/order',
+                'items'        => $this->getItems($order),
+                'route_points' => [
                     [
                         'address' => [
                             'coordinates' => [
@@ -260,8 +264,9 @@ class YandexService
         $data = $request->json();
 
         $yandex = $order->yandex;
-        $yandex['request_id'] = data_get($data, 'id');
-        $yandex['status'] = data_get($data, 'status');
+        $yandex['request_id']     = data_get($data, 'id');
+        $yandex['id']             = $requestId;
+        $yandex['status']         = data_get($data, 'status');
         $yandex['corp_client_id'] = data_get($data, 'corp_client_id');
 
         $order->update([
