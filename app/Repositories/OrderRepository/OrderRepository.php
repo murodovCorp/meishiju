@@ -22,7 +22,6 @@ use App\Repositories\Interfaces\OrderRepoInterface;
 use App\Repositories\ReportRepository\ChartRepository;
 use App\Services\Yandex\YandexService;
 use App\Traits\SetCurrency;
-use Exception;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;

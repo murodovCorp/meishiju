@@ -433,9 +433,11 @@ class YandexService
         $defExt   = data_get($order->yandex, 'deliveryman.ext');
         $defTtl   = data_get($order->yandex, 'deliveryman.ttl_seconds');
 
-        unset($yandex['deliveryman']['phone']);
-        unset($yandex['deliveryman']['ext']);
-        unset($yandex['deliveryman']['ttl_seconds']);
+        if (data_get($yandex, 'deliveryman')) {
+            unset($yandex['deliveryman']['phone']);
+            unset($yandex['deliveryman']['ext']);
+            unset($yandex['deliveryman']['ttl_seconds']);
+        }
 
         $yandex['deliveryman'] += [
             'phone'       => data_get($data, 'phone', $defPhone),

@@ -54,6 +54,7 @@ class AesUtil {
 
         // ext-sodium (default installed on >= PHP 7.2)
         if (function_exists('\sodium_crypto_aead_aes256gcm_is_available') && sodium_crypto_aead_aes256gcm_is_available()) {
+            dd($ciphertext, $associatedData, $nonceStr, $this->aesKey);
             return sodium_crypto_aead_aes256gcm_decrypt($ciphertext, $associatedData, $nonceStr, $this->aesKey);
 		}
 
@@ -61,6 +62,7 @@ class AesUtil {
         if (function_exists('\Sodium\crypto_aead_aes256gcm_is_available') && crypto_aead_aes256gcm_is_available()) {
             return crypto_aead_aes256gcm_decrypt($ciphertext, $associatedData, $nonceStr, $this->aesKey);
 		}
+
 
         // openssl (PHP >= 7.1 support AEAD)
         if (PHP_VERSION_ID >= 70100 && in_array('aes-256-gcm', openssl_get_cipher_methods())) {

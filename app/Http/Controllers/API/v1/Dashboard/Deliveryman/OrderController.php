@@ -45,8 +45,14 @@ class OrderController extends DeliverymanBaseController
         unset($filter['isset-deliveryman']);
 
         if (data_get($filter, 'empty-deliveryman')) {
+
             $filter['shop_ids'] = auth('sanctum')->user()->invitations->pluck('shop_id')->toArray();
+
             unset($filter['deliveryman']);
+
+            if (count($filter['shop_ids']) === 0) {
+                return OrderResource::collection([]);
+            }
         }
 
         $orders = $this->repository->paginate($filter);
