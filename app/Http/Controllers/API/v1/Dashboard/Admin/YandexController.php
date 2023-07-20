@@ -71,7 +71,7 @@ class YandexController extends AdminBaseController
         }
 
         /** @var Order $order */
-        $order  = data_get($result, 'data');
+        $order = data_get($result, 'data');
 
         $result = $this->service->checkPrice($order, $order->shop?->location, $order->location);
 

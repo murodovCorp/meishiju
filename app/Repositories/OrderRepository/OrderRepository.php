@@ -346,7 +346,7 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
      */
     public function orderById(int $id, int $shopId = null): ?Order
     {
-        $locale     = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
+        $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
         return $this->model()
             ->withTrashed()

@@ -14,6 +14,10 @@ class YandexController extends SellerBaseController
         parent::__construct();
     }
 
+    /**
+     * @param int $id
+     * @return array
+     */
     public function getOrder(int $id): array
     {
         /** @var Order $order */
@@ -252,7 +256,7 @@ class YandexController extends SellerBaseController
         }
 
         /** @var Order $order */
-        $order  = data_get($result, 'data');
+        $order = data_get($result, 'data');
 
         $result = $this->service->orderDriverVoiceForwarding(data_get($order->yandex, 'request_id'));
 
@@ -282,7 +286,7 @@ class YandexController extends SellerBaseController
         }
 
         /** @var Order $order */
-        $order  = data_get($result, 'data');
+        $order = data_get($result, 'data');
 
         $result = $this->service->orderDriverPerformerPosition($order);
 
@@ -312,7 +316,7 @@ class YandexController extends SellerBaseController
         }
 
         /** @var Order $order */
-        $order  = data_get($result, 'data');
+        $order = data_get($result, 'data');
 
         $result = $this->service->orderTrackingLinks(data_get($order->yandex, 'request_id'));
 
@@ -342,7 +346,7 @@ class YandexController extends SellerBaseController
         }
 
         /** @var Order $order */
-        $order  = data_get($result, 'data');
+        $order = data_get($result, 'data');
 
         $result = $this->service->orderPointsEta(data_get($order->yandex, 'request_id'));
 

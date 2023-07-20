@@ -243,16 +243,16 @@ class YandexService
         $status     = data_get($yandex, 'status');
 
         if (in_array($status, $this->startStatuses)) {
-            $requestId  = data_get($order->yandex, 'id');
-            $url        = "$this->baseUrl/b2b/cargo/integration/v2/claims/edit?claim_id=$requestId&version=$version";
+            $requestId = data_get($order->yandex, 'id');
+            $url       = "$this->baseUrl/b2b/cargo/integration/v2/claims/edit?claim_id=$requestId&version=$version";
         } else if(!in_array($status, $this->canceledStatuses)) {
-            return $this->cancelOrder($order);
+            $this->cancelOrder($order);
+            $version = 1;
         } else if(!empty($status)) {
             return $this->getOrderInfo($order);
         }
 
-        $request = $this->getBaseHttp()
-            ->post($url, [
+        $request = $this->getBaseHttp()->post($url, [
                 'callback_url'          => request()->getSchemeAndHttpHost() . '/api/v1/webhook/yandex/order',
                 'items'                 => $this->getItems($order),
                 'route_points'          => [
