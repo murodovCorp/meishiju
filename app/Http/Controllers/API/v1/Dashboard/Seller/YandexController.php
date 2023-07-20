@@ -348,7 +348,7 @@ class YandexController extends SellerBaseController
         /** @var Order $order */
         $order = data_get($result, 'data');
 
-        $result = $this->service->orderPointsEta(data_get($order->yandex, 'request_id'));
+        $result = $this->service->orderPointsEta($order);
 
         if (data_get($result, 'code') !== 200) {
             return new JsonResponse(data_get($result, 'data'), data_get($result, 'code'));

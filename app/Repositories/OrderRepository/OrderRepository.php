@@ -384,6 +384,11 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
      */
     public function reDataOrder(?Order $order): OrderResource|null
     {
+        if ($order->status !== Order::STATUS_NEW && !empty($order->yandex)) {
+            (new YandexService)->getOrderInfo($order);
+            $order = $this->orderById($order->id);
+        }
+
         return !empty($order) ? OrderResource::make($order) : null;
     }
 

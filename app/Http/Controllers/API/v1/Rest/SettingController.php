@@ -76,10 +76,12 @@ class SettingController extends Controller
     public function systemInformation(): JsonResponse
     {
         // get MySql version from DataBase
-        $mysql  = DB::selectOne( DB::raw('SHOW VARIABLES LIKE "%innodb_version%"'));
         $error  = '';
         $errors = '';
+        $mysql  = null;
+
         try {
+            $mysql  = DB::selectOne( DB::raw('SHOW VARIABLES LIKE "%innodb_version%"'));
             $node       = exec('node -v');
             $npm        = exec('npm -v');
             $composer   = exec('composer -V');
@@ -121,7 +123,7 @@ class SettingController extends Controller
             'PHP Version'       => phpversion(),
             'Laravel Version'   => app()->version(),
             'OS Version'        => php_uname(),
-            'MySql Version'     => $mysql->Value,
+            'MySql Version'     => data_get($mysql, 'Value'),
             'NodeJs Version'    => $node,
             'NPM Version'       => $npm,
             'Project Version'   => env('PROJECT_V'),
