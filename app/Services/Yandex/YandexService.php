@@ -22,6 +22,7 @@ class YandexService
     ];
 
     private array $canceledStatuses = [
+        'performer_not_found',
         'cancelled',
         'cancelled_with_payment',
         'cancelled_by_taxi',
@@ -83,7 +84,7 @@ class YandexService
                     'length' => 0.015 * data_get($item, 'quantity'),
                     'width' => 0.015 * data_get($item, 'quantity')
                 ],
-                'title' => 'Плюмбус',
+                'title'  => data_get($item, 'stock.countable.translation.title', 'Плюмбус'),
                 'weight' => 0.03 * data_get($item, 'quantity')
             ];
 
@@ -117,7 +118,7 @@ class YandexService
                     'length' => 0.015 * $orderDetail->quantity,
                     'width' => 0.015 * $orderDetail->quantity
                 ],
-                'title' => 'Плюмбус',
+                'title' => $orderDetail->stock?->countable?->translation?->title ?? 'Плюмбус',
                 'weight' => 0.03 * $orderDetail->quantity
             ];
 
@@ -153,7 +154,7 @@ class YandexService
                         'length' => 0.015 * $cartDetail->quantity,
                         'width' => 0.015 * $cartDetail->quantity
                     ],
-                    'title' => 'Плюмбус',
+                    'title' => $cartDetail?->stock?->countable?->translation?->title ?? 'Плюмбус',
                     'weight' => 0.03 * $cartDetail->quantity
                 ];
 
@@ -243,11 +244,14 @@ class YandexService
         $version    = data_get($yandex, 'version', 1);
         $status     = data_get($yandex, 'status');
 
-        if (in_array($status, $this->startStatuses)) {
+        if (!empty($status) && in_array($status, $this->startStatuses)) {
             $requestId = data_get($order->yandex, 'id');
             $url       = "$this->baseUrl/b2b/cargo/integration/v2/claims/edit?claim_id=$requestId&version=$version";
-        } else if(!empty($status) && !in_array($status, $this->canceledStatuses)) {
+        } else if(!empty($status) && in_array($status, $this->canceledStatuses)) {
             $this->cancelOrder($order);
+            $order->update([
+                'yandex' => null
+            ]);
         } else if(!empty($status)) {
             return $this->getOrderInfo($order);
         }
