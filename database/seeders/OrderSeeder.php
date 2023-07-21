@@ -30,12 +30,12 @@ class OrderSeeder extends Seeder
                 'sort'      => 2,
             ],
             [
-                'name'      => 'ready',
+                'name'      => 'cooking',
                 'active'    => 1,
                 'sort'      => 3,
             ],
             [
-                'name'      => 'cooking',
+                'name'      => 'ready',
                 'active'    => 1,
                 'sort'      => 4,
             ],
