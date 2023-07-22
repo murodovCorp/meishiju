@@ -52,8 +52,7 @@ class RestProductRepository extends CoreRepository
                 'shop' => fn($q) => $q->select('id', 'status')
                     ->when(data_get($filter, 'shop_status'), function ($q, $status) {
                         $q->where('status', '=', $status);
-                    }
-                    ),
+                    }),
                 'shop.translation' => fn($q) => $q->where('locale', $this->language)
                     ->select('id', 'locale', 'title', 'shop_id'),
                 'reviews',
