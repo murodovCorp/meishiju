@@ -2,12 +2,13 @@
 
 namespace App\Services\Yandex;
 
+use App\Http\Resources\OrderResource;
 use App\Models\Cart;
 use App\Models\Currency;
 use App\Models\Order;
 use Http;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Log;
 use Str;
 
@@ -186,12 +187,15 @@ class YandexService
         return $this->getArrayItems($model);
     }
 
-    public function list(array $filter): LengthAwarePaginator
+    public function list(array $filter): AnonymousResourceCollection
     {
-        return Order::whereJsonLength('yandex', '>', 0)
+        $orders = Order::with(['user'])
+            ->whereJsonLength('yandex', '>', 0)
             ->when(data_get($filter, 'shop_id'), fn($q, $shopId) => $q->where('shop_id', $shopId))
             ->when(data_get($filter, 'status'),  fn($q, $status) => $q->whereJsonContains('yandex->status', $status))
             ->paginate(data_get($filter, 'perPage'));
+
+        return OrderResource::collection($orders);
     }
 
     /**

@@ -23,6 +23,10 @@ class ModelLogService extends CoreService
                 $createdBy = auth('sanctum')->id() ??
                     (get_class($model) === User::class) ? data_get($model, 'id') : auth('sanctum')->id();
 
+                if (!$createdBy) {
+                    return;
+                }
+
                 ModelLog::create([
                     'model_type' => get_class($model),
                     'model_id'   => data_get($model, 'id'),

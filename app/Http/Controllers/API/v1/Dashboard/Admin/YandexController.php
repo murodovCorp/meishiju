@@ -6,8 +6,8 @@ use App\Helpers\ResponseError;
 use App\Http\Requests\FilterParamsRequest;
 use App\Models\Order;
 use App\Services\Yandex\YandexService;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class YandexController extends AdminBaseController
 {
@@ -62,9 +62,9 @@ class YandexController extends AdminBaseController
      * Display a listing of the resource.
      *
      * @param FilterParamsRequest $request
-     * @return LengthAwarePaginator
+     * @return AnonymousResourceCollection
      */
-    public function list(FilterParamsRequest $request): LengthAwarePaginator
+    public function list(FilterParamsRequest $request): AnonymousResourceCollection
     {
         return $this->service->list($request->all());
     }

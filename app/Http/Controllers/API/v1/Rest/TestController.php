@@ -122,6 +122,7 @@ class TestController extends Controller
 
     public function bosyaTest(Request $request)
     {
+        dd();
         $or = Order::whereJsonContains('yandex->id', '63e22bc68f6f4221a6a711ac23d49dc9')->get();
         dd($or);
         /** @var Order $order */

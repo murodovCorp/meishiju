@@ -725,14 +725,24 @@ class OrderService extends CoreService implements OrderServiceInterface
     {
         $errors = [];
 
-        foreach (Order::when($shopId, fn($q) => $q->where('shop_id', $shopId))->find(is_array($ids) ? $ids : []) as $order) {
+        $orders = Order::when($shopId, fn($q) => $q->where('shop_id', $shopId))
+            ->find(is_array($ids) ? $ids : []);
+
+        foreach ($orders as $order) {
+
             try {
+
+                if(data_get($order->yandex, 'id')) {
+                    (new YandexService)->cancelOrder($order);
+                }
+
                 $order->delete();
             } catch (Throwable $e) {
                 $errors[] = $order->id;
 
                 $this->error($e);
             }
+
         }
 
         return $errors;
