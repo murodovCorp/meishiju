@@ -2,13 +2,10 @@
 
 namespace App\Http\Controllers\API\v1\Rest;
 
-use App\Helpers\ResponseError;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Yandex\CheckPriceRequest;
-use App\Http\Requests\Yandex\DeliveryMethodRequest;
-use App\Services\YandexService\YandexService;
+use App\Models\Order;
+use App\Services\Yandex\YandexService;
 use App\Traits\ApiResponse;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Log;
 
@@ -21,33 +18,53 @@ class YandexController extends Controller
         parent::__construct();
     }
 
-    public function deliveryMethods(DeliveryMethodRequest $request): JsonResponse
-    {
-        $result = $this->service->baseInfoMethods($request->validated(), 'v1/delivery-methods');
-
-        return $this->successResponse(__('errors.' . ResponseError::SUCCESS, locale: $this->language), $result);
-    }
-
-    public function tariffs(DeliveryMethodRequest $request): JsonResponse
-    {
-        $result = $this->service->baseInfoMethods($request->validated(), 'v2/tariffs');
-
-        return $this->successResponse(__('errors.' . ResponseError::SUCCESS, locale: $this->language), $result);
-    }
-
-    public function checkPrice(CheckPriceRequest $request): JsonResponse
-    {
-        $result = $this->service->checkPrice($request->validated());
-
-        return $this->successResponse(__('errors.' . ResponseError::SUCCESS, locale: $this->language), $result);
-    }
-
     /**
      * @param Request $request
      * @return void
      */
     public function webhook(Request $request): void
     {
+        /** @var Order $order */
+        $order = Order::whereJsonContains('yandex->id', $request->input('claim_id'))->first();
+
+        if (empty($order)) {
+            Log::error('empty yandex', $request->all());
+            return;
+        }
+
+        $yandex = $order->yandex;
+        $yandex['status'] = $request->input('status');
+
+        $order->update([
+            'yandex' => $yandex
+        ]);
+
+        if ($request->input('status') === 'ready_for_approval' && $order->status !== Order::STATUS_CANCELED) {
+            (new YandexService)->acceptOrder($order);
+        }
+
+        if ($request->input('status') === 'performer_found' && $order->status !== Order::STATUS_CANCELED) {
+            (new YandexService)->orderDriverVoiceForwarding($order);
+        }
+
+        if ($request->input('status') === 'pickuped' && $order->status !== Order::STATUS_CANCELED) {
+            $order->update([
+                'status' => Order::STATUS_ON_A_WAY
+            ]);
+        }
+
+        if ($request->input('status') === 'delivered' && $order->status !== Order::STATUS_CANCELED) {
+            $order->update([
+                'status' => Order::STATUS_DELIVERED
+            ]);
+        }
+
+        if (in_array($request->input('status'), array_merge( (new YandexService)->canceledStatuses, (new YandexService)->returnedStatuses))) {
+            $order->update([
+                'status' => Order::STATUS_CANCELED
+            ]);
+        }
+
         Log::error('yandex', $request->all());
     }
 

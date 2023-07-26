@@ -152,6 +152,7 @@ class OrderDetailService extends CoreService
                 $stock = $cartDetail->stock;
 
                 if (!$stock) {
+                    $cartDetail->children()->delete();
                     $cartDetail->delete();
                     continue;
                 }
@@ -159,6 +160,7 @@ class OrderDetailService extends CoreService
                 $actualQuantity = $this->actualQuantity($stock, $cartDetail->quantity);
 
                 if (empty($actualQuantity) || $actualQuantity <= 0) {
+                    $cartDetail->children()->delete();
                     $cartDetail->delete();
                     continue;
                 }

@@ -426,6 +426,7 @@ class CartService extends CoreService
                 $cartDetail->price - $cartDetail->discount
             );
 
+            $cartDetail->children()->delete();
             $cartDetail->delete();
 
             CartDetail::where([
@@ -888,6 +889,7 @@ class CartService extends CoreService
             foreach ($userCart->cartDetails as $cartDetail) {
 
                 if (empty($cartDetail?->stock) || $cartDetail?->quantity === 0) {
+                    $cartDetail->children()->delete();
                     $cartDetail->delete();
                     continue;
                 }

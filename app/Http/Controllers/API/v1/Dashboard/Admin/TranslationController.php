@@ -48,7 +48,9 @@ class TranslationController extends AdminBaseController
     public function paginate(FilterParamsRequest $request): JsonResponse
     {
         $translations = Translation::filter($request->all())
-            ->when($request->input('search'), fn ($query, $search) => $query->where('key', 'LIKE', "%$search%"))
+            ->when($request->input('search'), fn ($query, $search) => $query->where(function ($q) use($search) {
+                $q->where('key', 'LIKE', "%$search%")->orWhere('value', "%$search");
+            }))
             ->orderBy($request->input('column', 'id'), $request->input('sort','desc'))
             ->groupBy('key', 'id', 'group', 'locale', 'value')
             ->get();

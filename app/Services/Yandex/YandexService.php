@@ -6,6 +6,7 @@ use App\Models\Cart;
 use App\Models\Currency;
 use App\Models\Order;
 use Http;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Client\PendingRequest;
 use Log;
 use Str;
@@ -14,14 +15,14 @@ class YandexService
 {
     private string $baseUrl = 'https://b2b.taxi.yandex.net';
 
-    private array $startStatuses = [
+    public array $startStatuses = [
         'new',
         'estimating',
-        'estimating_failed',
         'ready_for_approval'
     ];
 
-    private array $canceledStatuses = [
+    public array $canceledStatuses = [
+        'estimating_failed',
         'performer_not_found',
         'cancelled',
         'cancelled_with_payment',
@@ -30,7 +31,7 @@ class YandexService
         'failed',
     ];
 
-    private array $returnedStatuses = [
+    public array $returnedStatuses = [
         'returning',
         'return_arrived',
         'ready_for_return_confirmation',
@@ -38,7 +39,7 @@ class YandexService
         'returned_finish'
     ];
 
-    private array $deliveredStatuses = [
+    public array $deliveredStatuses = [
         //'ready_for_delivery_confirmation',
         'delivered',
         'delivered_finish',
@@ -116,9 +117,9 @@ class YandexService
                 'size' => [
                     'height' => 0.015 * $orderDetail->quantity,
                     'length' => 0.015 * $orderDetail->quantity,
-                    'width' => 0.015 * $orderDetail->quantity
+                    'width'  => 0.015 * $orderDetail->quantity
                 ],
-                'title' => $orderDetail->stock?->countable?->translation?->title ?? 'Плюмбус',
+                'title'  => $orderDetail->stock?->countable?->translation?->title ?? 'Плюмбус',
                 'weight' => 0.03 * $orderDetail->quantity
             ];
 
@@ -152,9 +153,9 @@ class YandexService
                     'size' => [
                         'height' => 0.015 * $cartDetail->quantity,
                         'length' => 0.015 * $cartDetail->quantity,
-                        'width' => 0.015 * $cartDetail->quantity
+                        'width'  => 0.015 * $cartDetail->quantity
                     ],
-                    'title' => $cartDetail?->stock?->countable?->translation?->title ?? 'Плюмбус',
+                    'title'  => $cartDetail?->stock?->countable?->translation?->title ?? 'Плюмбус',
                     'weight' => 0.03 * $cartDetail->quantity
                 ];
 
@@ -183,6 +184,14 @@ class YandexService
         }
 
         return $this->getArrayItems($model);
+    }
+
+    public function list(array $filter): LengthAwarePaginator
+    {
+        return Order::whereJsonLength('yandex', '>', 0)
+            ->when(data_get($filter, 'shop_id'), fn($q, $shopId) => $q->where('shop_id', $shopId))
+            ->when(data_get($filter, 'status'),  fn($q, $status) => $q->whereJsonContains('yandex->status', $status))
+            ->paginate(data_get($filter, 'perPage'));
     }
 
     /**
@@ -257,7 +266,9 @@ class YandexService
         }
 
         $response = $this->getBaseHttp()->post($url, [
-            'callback_url'          => request()->getSchemeAndHttpHost() . '/api/v1/webhook/yandex/order',
+            'callback_properties'   => [
+                'callback_url' => request()->getSchemeAndHttpHost() . '/api/v1/webhook/yandex/order'
+            ],
             'items'                 => $this->getItems($order),
             'route_points'          => [
                 [
@@ -286,9 +297,9 @@ class YandexService
                         'fullname' => data_get($order->address, 'address')
                     ],
                     'contact' => [
-                            'name'  => $order->username ?? "{$order->user?->firstname} {$order->user?->lastname}",
-                            'phone' => '+' . str_replace('+', '', $order->phone ?? $order->user?->phone)
-                        ] + ($order->user?->email ? [$order->user->email] : []),
+                        'name'  => $order->username ?? "{$order->user?->firstname} {$order->user?->lastname}",
+                        'phone' => '+' . str_replace('+', '', $order->phone ?? $order->user?->phone)
+                    ] + ($order->user?->email ? [$order->user->email] : []),
                     'point_id'          => 2,
                     'skip_confirmation' => true,
                     'type'              => 'destination',
@@ -296,6 +307,7 @@ class YandexService
                     'external_order_id' => (string)$order->id
                 ]
             ],
+            'auto_accept'           => true,
             'optional_return'       => false,
             'skip_act'              => true,
             'skip_client_notify'    => false,
@@ -328,29 +340,18 @@ class YandexService
 
         $yandexStatus = data_get($data, 'status', $defStatus);
 
-//        $status = $order->status;
-//
-//        if (in_array($yandexStatus, array_merge($this->canceledStatuses, $this->returnedStatuses))) {
-//            $status = Order::STATUS_CANCELED;
-//        } else if (in_array($yandexStatus, $this->deliveredStatuses)) {
-//            $status = Order::STATUS_DELIVERED;
-//        }
-
         $data = array_merge((!empty($order->yandex) ? (array)$order->yandex : []), $data);
 
-        if (in_array($yandexStatus, ['performer_lookup', 'accepted'])) {
+        if (!in_array($yandexStatus, array_merge($this->returnedStatuses, $this->canceledStatuses))) {
             unset($data['message']);
+            unset($data['error_messages']);
+            unset($data['code']);
+            unset($data['warnings']);
         }
 
         $order->update([
             'yandex' => $data,
-//            'status' => $status
         ]);
-
-        // !empty($status)
-        if ($yandexStatus === 'ready_for_approval' && $order->status !== Order::STATUS_CANCELED) {
-            return $this->acceptOrder($order);
-        }
 
         return [
             'code' => $code,
@@ -371,12 +372,6 @@ class YandexService
                 'version' => data_get($order->yandex, 'version', 1)
         ]);
 
-        Log::error($requestId, [
-            $order->yandex,
-            $response->json(),
-            array_merge((!empty($order->yandex) ? (array)$order->yandex : []), $response->json())
-        ]);
-
         $order->update([
             'yandex' => array_merge((!empty($order->yandex) ? (array)$order->yandex : []), $response->json()),
         ]);
@@ -395,9 +390,13 @@ class YandexService
     {
         $requestId = data_get($order->yandex, 'id');
 
-        $this->getBaseHttp()->post("$this->baseUrl/b2b/cargo/integration/v2/claims/cancel-info?claim_id=$requestId");
+        $response = $this->getBaseHttp()
+            ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/cancel-info?claim_id=$requestId");
 
-        return $this->getOrderInfo($order);
+        return [
+            'code' => $response->status(),
+            'data' => $response->json(),
+        ];
     }
 
     /**
@@ -410,12 +409,20 @@ class YandexService
 
         $state = $this->cancelInfoOrder($order);
 
-        $this->getBaseHttp()->post("$this->baseUrl/b2b/cargo/integration/v2/claims/cancel?claim_id=$requestId", [
-            'cancel_state' => data_get($state, 'data.cancel_state'),
-            'version'      => data_get($order->yandex, 'version', 1),
+        $response = $this->getBaseHttp()
+            ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/cancel?claim_id=$requestId", [
+                'cancel_state' => data_get($state, 'data.cancel_state', 'free'),
+                'version'      => data_get($order->yandex, 'version', 1),
+            ]);
+
+        $order->update([
+            'yandex' => array_merge((!empty($order->yandex) ? (array)$order->yandex : []), $response->json()),
         ]);
 
-        return $this->getOrderInfo($order);
+        return [
+            'code' => $response->status(),
+            'data' => $order
+        ];
     }
 
     /**
@@ -426,11 +433,25 @@ class YandexService
     {
         $requestId = data_get($order->yandex, 'id');
 
-        $this->getBaseHttp()->post("$this->baseUrl/b2b/cargo/integration/v2/driver-voiceforwarding", [
+        $response = $this->getBaseHttp()->post("$this->baseUrl/b2b/cargo/integration/v2/driver-voiceforwarding", [
             'claim_id' => $requestId
         ]);
 
-        return $this->getOrderInfo($order);
+        if ($response->status() === 200) {
+            $order->update([
+                'yandex' => array_merge((!empty($order->yandex) ? (array)$order->yandex : []), ['deliveryman' => $response->json()]),
+            ]);
+        } else {
+            Log::error('orderDriverVoiceForwarding', [
+                'status' => $response->status(),
+                'data'   => $response->json(),
+            ]);
+        }
+
+        return [
+            'code' => $response->status(),
+            'data' => $order
+        ];
     }
 
     /**
@@ -441,10 +462,24 @@ class YandexService
     {
         $requestId = data_get($order->yandex, 'id');
 
-        $this->getBaseHttp()
+        $response = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/performer-position?claim_id=$requestId");
 
-        return $this->getOrderInfo($order);
+        if ($response->status() === 200) {
+            $order->update([
+                'yandex' => array_merge((!empty($order->yandex) ? (array)$order->yandex : []), ['position' => $response->json()]),
+            ]);
+        } else {
+            Log::error('orderDriverPerformerPosition', [
+                'status' => $response->status(),
+                'data'   => $response->json(),
+            ]);
+        }
+
+        return [
+            'code' => $response->status(),
+            'data' => $order
+        ];
     }
 
     /**
@@ -455,16 +490,26 @@ class YandexService
     {
         $requestId = data_get($order->yandex, 'id');
 
-        $request = $this->getBaseHttp()
+        $response = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/tracking-links?claim_id=$requestId");
 
-        $data = $request->json();
+        if ($response->status() === 200) {
 
-        $order->update([
-            'yandex' => $data
-        ]);
+            $order->update([
+                'yandex' => array_merge((!empty($order->yandex) ? (array)$order->yandex : []), ['links' => $response->json()]),
+            ]);
 
-        return $this->getOrderInfo($order);
+        } else {
+            Log::error('orderTrackingLinks', [
+                'status' => $response->status(),
+                'data'   => $response->json(),
+            ]);
+        }
+
+        return [
+            'code' => $response->status(),
+            'data' => $order
+        ];
     }
 
     /**
@@ -475,9 +520,24 @@ class YandexService
     {
         $requestId = data_get($order->yandex, 'id');
 
-        $this->getBaseHttp()->post("$this->baseUrl/b2b/cargo/integration/v2/points-eta?claim_id=$requestId");
+        $response = $this->getBaseHttp()
+            ->post("$this->baseUrl/b2b/cargo/integration/v2/points-eta?claim_id=$requestId");
 
-        return $this->getOrderInfo($order);
+        if ($response->status() === 200) {
+            $order->update([
+                'yandex' => array_merge((!empty($order->yandex) ? (array)$order->yandex : []), ['points' => $response->json()]),
+            ]);
+        } else {
+            Log::error('orderPointsEta', [
+                'status' => $response->status(),
+                'data'   => $response->json(),
+            ]);
+        }
+
+        return [
+            'code' => $response->status(),
+            'data' => $order
+        ];
     }
 
 }

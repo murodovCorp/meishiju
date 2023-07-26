@@ -115,12 +115,14 @@ class GalleryController extends Controller
             return $this->onErrorResponse($result);
         }
 
+        $data = [
+            'title' => data_get($result, 'data'),
+            'type'  => $request->input('type')
+        ];
+
         return $this->successResponse(
-            __('errors.' . ResponseError::IMAGE_SUCCESSFULLY_UPLOADED, [], $this->language),
-            [
-                'title' => data_get($result, 'data'),
-                'type'  => $request->input('type')
-            ]
+            __('errors.' . ResponseError::IMAGE_SUCCESSFULLY_UPLOADED, $data, $this->language),
+            $data
         );
 
     }

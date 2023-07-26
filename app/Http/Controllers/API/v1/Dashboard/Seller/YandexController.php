@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\API\v1\Dashboard\Seller;
 
 use App\Helpers\ResponseError;
+use App\Http\Requests\FilterParamsRequest;
 use App\Models\Order;
 use App\Services\Yandex\YandexService;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 
 class YandexController extends SellerBaseController
@@ -60,6 +62,17 @@ class YandexController extends SellerBaseController
             'status' => true,
             'data'   => $order
         ];
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @param FilterParamsRequest $request
+     * @return LengthAwarePaginator
+     */
+    public function list(FilterParamsRequest $request): LengthAwarePaginator
+    {
+        return $this->service->list($request->merge(['shop_id' => $this->shop->id])->all());
     }
 
     /**

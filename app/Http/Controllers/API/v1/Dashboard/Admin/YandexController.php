@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\API\v1\Dashboard\Admin;
 
 use App\Helpers\ResponseError;
+use App\Http\Requests\FilterParamsRequest;
 use App\Models\Order;
 use App\Services\Yandex\YandexService;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 
 class YandexController extends AdminBaseController
@@ -54,6 +56,17 @@ class YandexController extends AdminBaseController
             'status' => true,
             'data'   => $order
         ];
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @param FilterParamsRequest $request
+     * @return LengthAwarePaginator
+     */
+    public function list(FilterParamsRequest $request): LengthAwarePaginator
+    {
+        return $this->service->list($request->all());
     }
 
     /**

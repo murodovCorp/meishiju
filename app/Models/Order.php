@@ -9,7 +9,6 @@ use App\Traits\Reviewable;
 use Database\Factories\OrderFactory;
 use DB;
 use Eloquent;
-use Facade\Ignition\Tabs\Tab;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

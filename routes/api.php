@@ -85,12 +85,6 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
         Route::get('system/information',            [Rest\SettingController::class, 'systemInformation']);
         Route::get('stat',                          [Rest\SettingController::class, 'stat']);
 
-        Route::group(['prefix' => 'yandex'], function () {
-            Route::get('delivery-methods',          [Rest\YandexController::class, 'deliveryMethods']);
-            Route::get('tariffs',                   [Rest\YandexController::class, 'tariffs']);
-            Route::get('check-price',               [Rest\YandexController::class, 'checkPrice']);
-        });
-
         /* Languages */
         Route::get('languages/default',             [Rest\LanguageController::class, 'default']);
         Route::get('languages/active',              [Rest\LanguageController::class, 'active']);
@@ -403,7 +397,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
             Route::post('order/{id}/attach/me',      [Waiter\OrderController::class, 'orderWaiterUpdate']);
             Route::get('orders/count',               [Waiter\OrderController::class, 'countStatistics']);
 
-            Route::apiResource('orders',  Waiter\OrderController::class)->except('destroy');
+            Route::apiResource('orders',   Waiter\OrderController::class)->except('destroy');
 
             /* Report Orders */
             Route::get('orders/report',              [Waiter\OrderReportController::class, 'report']);
@@ -536,6 +530,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
 
             /* Yandex Order */
             Route::group(['prefix' => 'yandex/order'], function () {
+                Route::post('list',                   [Seller\YandexController::class, 'list']);
                 Route::post('{id}/check-price',       [Seller\YandexController::class, 'checkPrice']);
                 Route::post('{id}/create',            [Seller\YandexController::class, 'createOrder']);
                 Route::post('{id}/get-info',          [Seller\YandexController::class, 'getOrderInfo']);
@@ -1127,6 +1122,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
 
             /* Yandex Order */
             Route::group(['prefix' => 'yandex/order'], function () {
+                Route::post('list',                   [Admin\YandexController::class, 'list']);
                 Route::post('{id}/check-price',       [Admin\YandexController::class, 'checkPrice']);
                 Route::post('{id}/create',            [Admin\YandexController::class, 'createOrder']);
                 Route::post('{id}/get-info',          [Admin\YandexController::class, 'getOrderInfo']);
@@ -1150,7 +1146,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
         Route::any('razorpay/payment',      [Payment\RazorPayController::class,     'paymentWebHook']);
         Route::any('alipay/payment',        [Payment\AliPayController::class,       'paymentWebHook']);
         Route::any('we-chat/payment',       [Payment\WeChatController::class,       'paymentWebHook']);
-        Route::any('webhook/yandex/order',  [Rest\YandexController::class,          'webhook']);
+        Route::any('yandex/order',          [Rest\YandexController::class,          'webhook']);
         Route::any('stripe/payment',        [Payment\StripeController::class,       'paymentWebHook']);
         Route::any('flw/payment',           [Payment\FlutterWaveController::class,  'paymentWebHook']);
         Route::any('mercado-pago/payment',  [Payment\MercadoPagoController::class,  'paymentWebHook']);
