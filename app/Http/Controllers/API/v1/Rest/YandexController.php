@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API\v1\Rest;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\User;
 use App\Services\Yandex\YandexService;
 use App\Traits\ApiResponse;
 use App\Traits\Notification;
@@ -59,7 +58,7 @@ class YandexController extends Controller
         /** @var Order $order */
         $order = Order::whereJsonContains('yandex->id', $request->input('claim_id'))->first();
 
-        if (empty($order)) {
+        if (empty($order) || $request->input('status')) {
             Log::error('empty yandex', $request->all());
             return;
         }

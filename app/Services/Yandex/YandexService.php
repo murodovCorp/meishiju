@@ -374,7 +374,7 @@ class YandexService
         $response = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/accept?claim_id=$requestId", [
                 'version' => data_get($order->yandex, 'version', 1)
-        ]);
+            ]);
 
         $order->update([
             'yandex' => array_merge((!empty($order->yandex) ? (array)$order->yandex : []), $response->json()),
@@ -413,11 +413,33 @@ class YandexService
 
         $state = $this->cancelInfoOrder($order);
 
+        $cancelState = data_get($state, 'data.cancel_state', 'free');
+
+        if ($cancelState === 'unavailable') {
+
+            $yandex = $order->yandex;
+            $yandex['message'] = 'Нельзя отменить заказ. Возможно заказ уже отменен, проверьте статус через личный кабинет или обновите страницу.';
+
+            $order->update([
+                'yandex' => $yandex
+            ]);
+
+            return [
+                'code' => 400,
+                'data' => $order
+            ];
+        }
+
         $response = $this->getBaseHttp()
             ->post("$this->baseUrl/b2b/cargo/integration/v2/claims/cancel?claim_id=$requestId", [
-                'cancel_state' => data_get($state, 'data.cancel_state', 'free'),
+                'cancel_state' => $cancelState,
                 'version'      => data_get($order->yandex, 'version', 1),
             ]);
+
+        $yandex = array_merge((!empty($order->yandex) ? (array)$order->yandex : []), $response->json());
+
+        unset($yandex['code']);
+        unset($yandex['warnings']);
 
         $order->update([
             'yandex' => array_merge((!empty($order->yandex) ? (array)$order->yandex : []), $response->json()),
