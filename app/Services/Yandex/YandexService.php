@@ -418,7 +418,11 @@ class YandexService
         if ($cancelState === 'unavailable') {
 
             $yandex = $order->yandex;
-            $yandex['message'] = 'Нельзя отменить заказ. Возможно заказ уже отменен, проверьте статус через личный кабинет или обновите страницу.';
+
+            unset($yandex['code']);
+            unset($yandex['warnings']);
+
+            $yandex['message'] = 'Нельзя отменить заявку. Возможно заявка уже отменена, проверьте статус через личный кабинет или обновите страницу или создайте создайте новую заявку.';
 
             $order->update([
                 'yandex' => $yandex
@@ -442,7 +446,7 @@ class YandexService
         unset($yandex['warnings']);
 
         $order->update([
-            'yandex' => array_merge((!empty($order->yandex) ? (array)$order->yandex : []), $response->json()),
+            'yandex' => $yandex,
         ]);
 
         return [
