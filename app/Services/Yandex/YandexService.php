@@ -349,6 +349,9 @@ class YandexService
         if (!in_array($yandexStatus, array_merge($this->returnedStatuses, $this->canceledStatuses))) {
             unset($data['message']);
             unset($data['error_messages']);
+        }
+
+        if (in_array($yandexStatus, array_merge($this->returnedStatuses, $this->canceledStatuses))) {
             unset($data['code']);
             unset($data['warnings']);
         }
