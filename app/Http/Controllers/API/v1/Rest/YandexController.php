@@ -58,8 +58,13 @@ class YandexController extends Controller
         /** @var Order $order */
         $order = Order::whereJsonContains('yandex->id', $request->input('claim_id'))->first();
 
-        if (empty($order) || $request->input('status')) {
-            Log::error('empty yandex', $request->all());
+        if (empty($order) || !$request->input('status')) {
+            Log::error('empty yandex', [
+                $request->all(),
+                'order'  => $order->id,
+                'id'     => $request->input('claim_id'),
+                'status' => $request->input('status'),
+            ]);
             return;
         }
 

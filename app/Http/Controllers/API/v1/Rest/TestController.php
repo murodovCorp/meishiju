@@ -123,6 +123,46 @@ class TestController extends Controller
     public function bosyaTest(Request $request)
     {
         dd();
+        $translations = [
+            'yandex.new' => 'Новая заявка.',
+            'yandex.estimating' => 'Идет процесс оценки заявки.',
+            'yandex.estimating_failed' => 'Не удалось оценить заявку',
+            'yandex.ready_for_approval' => 'Заявка успешно оценена и ожидает подтверждения от клиента.',
+            'yandex.accepted' => 'Заявка подтверждена клиентом.',
+            'yandex.performer_lookup' => 'Заявка взята в обработку. Промежуточный статус перед созданием заказа.',
+            'yandex.performer_draft' => 'Идет поиск водителя.',
+            'yandex.performer_found' => 'Водитель найден и едет в точку А.',
+            'yandex.performer_not_found' => 'Не удалось найти водителя. Можно попробовать снова через некоторое время.',
+            'yandex.pickup_arrived' => 'Водитель приехал в точку А.',
+            'yandex.ready_for_pickup_confirmation' => 'Водитель ждет, когда отправитель назовет ему код подтверждения.',
+            'yandex.pickuped' => 'Водитель успешно забрал груз.',
+            'yandex.pay_waiting' => 'Заказ ожидает оплаты (актуально для оплаты при получении).',
+            'yandex.delivery_arrived' => 'Водитель приехал в точку Б.',
+            'yandex.ready_for_delivery_confirmation' => 'Водитель ждет, когда получатель назовет ему код подтверждения.',
+            'yandex.delivered' => 'Водитель успешно доставил груз.',
+            'yandex.delivered_finish' => 'Заказ завершен.',
+            'yandex.returning' => 'Водителю пришлось вернуть груз и он едет в точку возврата.',
+            'yandex.return_arrived' => 'Водитель приехал в точку возврата.',
+            'yandex.ready_for_return_confirmation' => 'Водитель в точке возврата ожидает, когда ему назовут код подтверждения.',
+            'yandex.returned' => 'Водитель успешно вернул груз.',
+            'yandex.returned_finish' => 'Заказ завершен.',
+            'yandex.cancelled' => 'Заказ был отменен клиентом бесплатно.',
+            'yandex.cancelled_with_payment' => 'Заказ был отменен клиентом платно (водитель уже приехал).',
+            'yandex.cancelled_by_taxi' => 'Водитель отменил заказ (до получения груза).',
+            'yandex.cancelled_with_items_on_hands' => 'Клиент платно отменил заявку без необходимости возврата груза (заявка была создана с флагом optional_return).',
+            'yandex.failed' => 'При выполнение заказа произошла ошибка, дальнейшее выполнение невозможно.',
+        ];
+
+        foreach ($translations as $key => $translation) {
+            Translation::updateOrCreate([
+                'status'    => 1,
+                'locale'    => 'en',
+                'group'     => 'web',
+                'key'       => $key,
+                'value'     => $translation,
+            ]);
+        }
+
         $or = Order::whereJsonContains('yandex->id', '63e22bc68f6f4221a6a711ac23d49dc9')->get();
         dd($or);
         /** @var Order $order */
