@@ -284,7 +284,7 @@ class YandexService
                         'fullname' => $order->shop?->translation?->address,
                     ],
                     'contact' => [
-                        'name'  => $order->shop?->translation?->title,
+                        'name'  => $order->shop?->translation?->title ?? 'Не задано',
                         'phone' => '+' . str_replace('+', '', $order->shop?->phone ?? $order->shop?->seller?->phone)
                     ],
                     'point_id'          => 1,
@@ -301,7 +301,7 @@ class YandexService
                         'fullname' => data_get($order->address, 'address')
                     ],
                     'contact' => [
-                        'name'  => $order->username ?? "{$order->user?->firstname} {$order->user?->lastname}",
+                        'name'  => $order->username ?? "{$order->user?->firstname} {$order->user?->lastname}" ?? 'Не задано',
                         'phone' => '+' . str_replace('+', '', $order->phone ?? $order->user?->phone)
                     ] + ($order->user?->email ? [$order->user->email] : []),
                     'point_id'          => 2,
