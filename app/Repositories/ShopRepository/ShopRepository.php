@@ -245,6 +245,7 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
             ->select([
                 'id',
                 'logo_img',
+                'background_img',
                 'status',
             ])
             ->paginate(data_get($filter, 'perPage', 10));
