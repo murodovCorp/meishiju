@@ -381,19 +381,21 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
         $recommended = Product::with([
             'stock' => fn($q) => $q
                 ->with([
-                'bonus' => fn($q) => $q->where('expired_at', '>', now())->select([
-                    'id', 'expired_at', 'bonusable_type', 'bonusable_id',
-                    'bonus_quantity', 'value', 'type', 'status'
-                ]),
-            ])
+                    'bonus' => fn($q) => $q
+                        ->where('expired_at', '>', now())
+                        ->select([
+                            'id', 'expired_at', 'bonusable_type', 'bonusable_id',
+                            'bonus_quantity', 'value', 'type', 'status'
+                        ]),
+                ])
                 ->select([
-                'id',
-                'countable_type',
-                'countable_id',
-                'price',
-                'quantity',
-                'addon',
-            ])
+                    'id',
+                    'countable_type',
+                    'countable_id',
+                    'price',
+                    'quantity',
+                    'addon',
+                ])
                 ->where('addon', false)
                 ->where('quantity', '>', 0),
             'stocks' => fn($q) => $q
@@ -407,19 +409,22 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                 ])
                 ->where('addon', false)
                 ->where('quantity', '>', 0),
-            'stocks.addons.addon' => fn($query) => $query->select([
-                'id',
-                'uuid',
-                'tax',
-                'bar_code',
-                'status',
-                'active',
-                'img',
-                'min_qty',
-                'max_qty',
-            ])->when(data_get($filter, 'addon_status'), fn($q, $status) =>
-                $q->where('active', true)->where('status', '=', $status)
-            ),
+            'stocks.addons.addon' => fn($query) => $query
+                ->select([
+                    'id',
+                    'uuid',
+                    'tax',
+                    'bar_code',
+                    'status',
+                    'active',
+                    'img',
+                    'min_qty',
+                    'max_qty',
+                ])
+                ->when(data_get($filter, 'addon_status'), fn($q, $status) => $q
+                    ->where('active', true)
+                    ->where('status', '=', $status)
+                ),
             'stocks.addons.addon.stock',
             'stocks.addons.addon.translation' => fn($q) => $q->where('locale', $this->language),
             'translation' => fn($q) => $q->where('locale', $this->language),
@@ -432,9 +437,7 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
             ->where('addon', false)
             ->where('status', Product::PUBLISHED)
             ->whereHas('stock', fn($q) => $q->where('addon', false)->where('quantity', '>', 0))
-            ->whereHas('translation',
-                fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale)
-            )
+            ->whereHas('translation', fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale))
             ->select([
                 'id',
                 'uuid',
@@ -444,6 +447,8 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                 'status',
                 'active',
                 'addon',
+                'min_qty',
+                'max_qty',
             ])
             ->find($ids);
 
@@ -457,10 +462,10 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
 
                 'products' => fn($q) => $q
                     ->with([
-                    'discounts' => fn($q) => $q
-                        ->where('start', '<=', today())
-                        ->where('end', '>=', today())
-                        ->where('active', 1),
+                        'discounts' => fn($q) => $q
+                            ->where('start', '<=', today())
+                            ->where('end', '>=', today())
+                            ->where('active', 1),
                 ])
                     ->whereHas('stock', fn($q) => $q->where('quantity', '>', 0)->where('addon', false))
                     ->whereHas('translation',
@@ -507,19 +512,21 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                     ])
                     ->where('addon', false)
                     ->where('quantity', '>', 0),
-                'products.stocks.addons.addon' => fn($query) => $query->select([
-                    'id',
-                    'uuid',
-                    'tax',
-                    'bar_code',
-                    'status',
-                    'active',
-                    'img',
-                    'min_qty',
-                    'max_qty',
-                ])->when(data_get($filter, 'addon_status'), fn($q, $status) =>
-                $q->where('active', true)->where('status', '=', $status)
-                ),
+                'products.stocks.addons.addon' => fn($query) => $query
+                    ->select([
+                        'id',
+                        'uuid',
+                        'tax',
+                        'bar_code',
+                        'status',
+                        'active',
+                        'img',
+                        'min_qty',
+                        'max_qty',
+                    ])
+                    ->when(data_get($filter, 'addon_status'), fn($q, $status) =>
+                        $q->where('active', true)->where('status', '=', $status)
+                    ),
                 'products.stocks.addons.addon.stock',
                 'products.stocks.addons.addon.translation' => fn($q) => $q->where('locale', $this->language),
             ])

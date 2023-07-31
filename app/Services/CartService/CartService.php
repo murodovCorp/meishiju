@@ -911,7 +911,7 @@ class CartService extends CoreService
 
         if ($bonus?->value > $price && $bonus?->type === Bonus::TYPE_SUM) {
 
-            $ids = $cart->userCarts?->pluck('id')?->toArray();
+            $ids = $cart->userCarts->pluck('id')?->toArray();
 
             DB::table('cart_details')
                 ->whereIn('user_cart_id', is_array($ids) ? $ids : [])
