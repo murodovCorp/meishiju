@@ -162,13 +162,13 @@ class TransactionService extends CoreService
         if ($isOrder) {
 
             /** @var Order $model */
-            $changedPrice = data_get($model, 'total_price', 0) - $model?->transaction?->price;
+            $changedPrice = max(data_get($model, 'total_price', 0), 0) - $model?->transaction?->price;
 
             if ($model?->transaction?->status === 'paid' && $changedPrice <= 1) {
                 return ['status' => true, 'code' => ResponseError::NO_ERROR, 'already_payed' => true];
             }
 
-            data_set($model, 'total_price', $changedPrice);
+            data_set($model, 'total_price', max($changedPrice, 0));
         }
 
         /** @var User $user */
@@ -182,7 +182,7 @@ class TransactionService extends CoreService
             ];
         }
 
-        $ratePrice = data_get($model, 'total_price', 0);
+        $ratePrice = max(data_get($model, 'total_price', 0), 0);
 
         if ($user->wallet->price >= $ratePrice) {
 

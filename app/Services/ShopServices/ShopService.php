@@ -158,7 +158,7 @@ class ShopService extends CoreService implements ShopServiceInterface
      */
     public function delete(?array $ids = []): array
     {
-        foreach (Shop::whereIn('id', is_array($ids) ? $ids : [])->get() as $shop) {
+        foreach (Shop::with(['seller'])->whereIn('id', is_array($ids) ? $ids : [])->get() as $shop) {
 
             /** @var Shop $shop */
             FileHelper::deleteFile($shop->logo_img);
