@@ -87,7 +87,7 @@ class OrderStatusUpdateService extends CoreService
                             'note'      => 'cashback',
                         ]);
 
-                        $order->user?->wallet?->increment($point);
+                        $order->user?->wallet?->increment('price', $point);
                     }
 
                     PayReferral::dispatchAfterResponse($order->user, 'increment');
@@ -123,7 +123,7 @@ class OrderStatusUpdateService extends CoreService
                     if ($order->pointHistories?->count() > 0) {
                         foreach ($order->pointHistories as $pointHistory) {
                             /** @var PointHistory $pointHistory */
-                            $order->user?->wallet?->decrement($pointHistory->price);
+                            $user?->wallet?->decrement('price', $pointHistory->price);
                             $pointHistory->delete();
                         }
                     }

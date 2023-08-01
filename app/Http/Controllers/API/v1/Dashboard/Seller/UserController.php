@@ -139,7 +139,10 @@ class UserController extends SellerBaseController
      */
     public function getDeliveryman(FilterParamsRequest $request): AnonymousResourceCollection
     {
-        $users = $this->model->with('roles')
+        $users = $this->model->with([
+            'roles',
+            'invitations' => fn($q) => $q->where('shop_id', $this->shop->id)
+        ])
             ->whereHas('roles', function ($q) {
                 $q->where('name', 'deliveryman');
             })
