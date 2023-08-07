@@ -21,7 +21,7 @@ class CurrencyResource extends JsonResource
             'id'            => $this->id,
             'symbol'        => $this->symbol,
             'title'         => $this->title,
-            'rate'          => $this->when($this->rate, (double) $this->rate),
+            'rate'          => $this->when($this->rate, $this->rate),
             'default'       => $this->when($this->default, (bool) $this->default),
             'position'      => $this->when($this->position, $this->position),
             'active'        => (bool) $this->active,

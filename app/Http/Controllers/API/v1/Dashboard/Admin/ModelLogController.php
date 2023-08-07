@@ -47,7 +47,6 @@ class ModelLogController extends AdminBaseController
     {
         $result = $this->repository->show($id);
 
-        dd($result);
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
             ModelLogResource::make($result)

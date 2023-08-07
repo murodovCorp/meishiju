@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Cache;
  * @property int $id
  * @property string|null $symbol
  * @property string $title
- * @property float $rate
+ * @property double $rate
  * @property string $position
  * @property int $default
  * @property int $active

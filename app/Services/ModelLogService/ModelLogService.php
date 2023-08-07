@@ -37,7 +37,7 @@ class ModelLogService extends CoreService
                 ]);
             }
         } catch (Throwable $e) {
-            $this->error($e);
+//            $this->error($e);
         }
     }
 

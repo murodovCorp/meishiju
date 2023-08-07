@@ -104,75 +104,6 @@ class WeChatService
 //]
         //$this->orderProcessTransaction([]);
     }
-
-    public function curl_post_ssl($url, $vars, $second=30,$aHeader=array()): bool|string
-    {
-        $ch = curl_init();
-        //��ʱʱ��
-        curl_setopt($ch,CURLOPT_TIMEOUT, $second);
-        curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
-        //�������ô�������еĻ�
-        //curl_setopt($ch,CURLOPT_PROXY, '10.206.30.98');
-        //curl_setopt($ch,CURLOPT_PROXYPORT, 8080);
-        curl_setopt($ch,CURLOPT_URL, $url);
-        curl_setopt($ch,CURLOPT_SSL_VERIFYPEER,false);
-        curl_setopt($ch,CURLOPT_SSL_VERIFYHOST,false);
-
-        //�������ַ�ʽ��ѡ��һ��
-
-        //��һ�ַ�����cert �� key �ֱ���������.pem�ļ�
-        //Ĭ�ϸ�ʽΪPEM������ע��
-//        curl_setopt($ch,CURLOPT_SSLCERTTYPE,'PEM');
-//        curl_setopt($ch,CURLOPT_SSLCERT,getcwd().'/cert.pem');
-        //Ĭ�ϸ�ʽΪPEM������ע��
-        curl_setopt($ch,CURLOPT_SSLKEYTYPE,'PEM');
-        curl_setopt($ch,CURLOPT_SSLKEY,getcwd(). '/storage/wechat/apiclient_key.pem');
-
-        //�ڶ��ַ�ʽ�������ļ��ϳ�һ��.pem�ļ�
-        curl_setopt($ch,CURLOPT_SSLCERT, getcwd(). '/storage/wechat/apiclient_cert.pem');
-
-        if( count($aHeader) >= 1 ) {
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $aHeader);
-        }
-
-        $uuid = Str::uuid();
-        // 'mchid'        => $merchantId,
-        //                    'out_trade_no' => Str::uuid(),
-        //                    'appid'        => 'wxfd853ee7ec0c59ef',
-        //                    'description'  => 'Image形象店-深圳腾大-QQ公仔',
-        //                    'notify_url'   => 'https://waimaiapi.meishiju.co/api/v1/webhook/we-chat/payment',
-        //                    'amount'       => [
-        //                        'total'    => 1,
-        //                        'currency' => 'CNY'
-        //                    ],
-        $xml = '<xml version="1">
-                    <total_fee>123</total_fee>
-                    <nonce_str>5K8264ILTKCH16CQ2502SI8ZNMTM77VQ</nonce_str>
-                    <notify_url>https://26e0-213-230-67-195.ngrok-free.app/api/v1/webhook/we-chat/payment</notify_url>
-                    <body>An apple </body>
-                    <trade_type>APP</trade_type>
-                    <out_trade_no>sad213</out_trade_no>
-                    <mch_id>1577963751</mch_id>
-                    <appid>wxfd853ee7ec0c59ef</appid>
-                    <key>HLptcPSOUM95cpILuyio9awKxaud7aa7</key>
-                    <sign>59AADDB4D17302769B3E53A2A8E7C71C</sign>
-                </xml>';
-        curl_setopt($ch,CURLOPT_POST, true);
-        curl_setopt($ch,CURLOPT_POSTFIELDS, $xml);
-
-        $data = curl_exec($ch);
-
-        if($data) {
-            curl_close($ch);
-            return $data;
-        } else {
-            $error1 = curl_error($ch);
-            curl_close($ch);
-            return $error1;
-        }
-
-    }
-
     /**
      * @param array $data
      * @return PaymentProcess|Model
@@ -180,16 +111,7 @@ class WeChatService
      */
     public function orderProcessTransaction(array $data): Model|PaymentProcess
     {
-//        dd(
-//            Http::get('https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx520c15f417810387&redirect_uri=https%3A%2F%2Fchong.qq.com%2Fphp%2Findex.php%3Fd%3D%26c%3DwxAdapter%26m%3DmobileDeal%26showwxpaytitle%3D1%26vb2ctag%3D4_2030_5_1194_60&response_type=code&scope=snsapi_base&state=123#wechat_redirect')
-//            ->json()
-//        );
 //        dd((new AesUtil('HLptcPSOUM95cpILuyio9awKxaud7aa7'))->decryptToString('certificate', 'bd8fc9993d6e', 'ZPlXRz61rQPTgph3JVsQ1ZQsXQq6HvHpn5XOGhGOSylINjcLE7peVmjBTlILe0HMoa987oI1ORkk/Nubi6jjT3sO6K+HqWQoerAgWJPdhB/y6TxbYEKBHeoPKM2iTk6K6gTR4ymnioZUiRjVL2gJuCNxyCi8+0WSoEivZRq/n1aFwrQQfocaBNNs9XNNM+S6pFkS9JY6zEomFpZrBfQq/k0KvayB9XG3N2x3wB35GnbSl59xBUmaT6MG2Sh86sNluSDIOtaVEf2PckYMlvUp5OsV8TCzqbD6EGoyQiaEq/SUmCEpSsyZf3Nyqw1C7ZSjvbHVn0R9rMY0Yw6R8EVbN4A6TycehDn/F1CPPIf+HscXeRaiN+VCd1/hz2uiJRKQhpUJD7tWYAbQINdvQjb+ZSaWW10ZzwtADSbo/RAiiDnUV3jlD9AUH8YE0nr7jbX/MBE69wHOP6peoC1QE/+nDFXL8Ai+e7BVmVQoLqICQHZymsJcuwinG3losTM7bkgrwe6L+CpI8DmRQTUL5bxZK8kZafOgC35m7BZ0Dks9Z2VI6r/2MLnjvZebTjOLHW1AeWmZa+0gxJZAsMeCe/E38yHvusCbvg3WEFY02EQ6MkYvsLZSK/FVwWfnuCSwOIhLSzUt4upB05DwJk7efPsowpPC0wjmsZuz1+ick4+/bBK19poTYnVf0yWmmdSJECJYLvX0CbDXZ3TWpV10eQ6Vy5X/b46/kjf3jJjcQCU1Ww8GlOfwwrjWhENNb4UkYaKWMQFYZVGWvQrEJ7GBEgxdwGkmAIF/O3iOxaml4zoc99GdIM3ecm+qPZlkRb8G7Ft3+6Ap9r0P5jCfweOHNRREIC5g+gfsCaFjazKpJbCHw+GAIgBHpx8pfQskaj8FRumONgyBASb4M78QYHPIRai1y+TH3eRcW+ERSc2Ecrr4SxyQiYzYSSBB1r4OX3Nm35MBL9MMf9hUY7c5/AU5oUFH/E3XuFmewbkbGHuLWa0RvmqkjKXH2RCqwJaZc4NxRKVnqbozPJ/gh/QiZFEumUCnKtfT908QXpHxJNSfMUwfQNOssbSmUW6a3ADnt4zIKepSWKabqEVAWjMc1+HPjLwFni98aUYCZO8oJ6+uacDCtDDYY0Kv5byTra/47Cx0XeO5a3bBlMlxlPmLQ1/9+1ncvatNUUgzVONz3DR3oH68aSUKo7EmZEnHn6QIOCZcFYJ1n1y5H85UyVkvAdCeI4yY1v5V3mZ5EgO5YUQrn6bYiWTSPSjbTiUKktSwNY9K8qG0FEwCoDJ9QSrzfW+cCqX3z+I9KlkNvOP3cBK/MW2qQZsxw4SB5L2GDkGl2w358I+Oxd8E5zztq+v9CXwz+Xf76M9A0criFRr7gHWvbGft0Jy4U75i5Xz9OGUE/Gx1/X6pnYFdPynMU9nbSxl+Q2IsqjmYOrjAoIiiek63hIyZMrlUOluQ5g1ysoBIHo58nT7XdyxqcojDytj1ECRtHI42+KbNKQKCMtcq2v+lOwwHwzndEi+Pf5dm8vsDrmqQWNpeTBQdl7YXlhAyNfcSLDRCxOBD/0iaCXki133S+YoGkceXWEuLpt/7llJgV34wyC30m8ZczgXgZBveAY/92bHTZwclydjpT1mwo8BK5hCTIchDDYtFogPcU+hfs4E30U9r7TnsE/IGDAGs19aNU/In2w9dmyqzf5T3sxjC9cEZ8rTK4dxpPxj11LJwZ9G+dmrZaG9Zio2rG3lQKW9CDhaJ9Yp+S1NrZx70AHMgDDhCFaEaslVqI3mDjfXjdkFS+i9QdTCPFAGz+9suITN3elljcyw9/XairqNR5t0FYSw5mUYMUTLp0Ey0t3QeQwULny/9jwA0NAPNLOaLe2NIELqZ/1PvH9O2dw=='));
-
-        $data = $this->curl_post_ssl('https://api.mch.weixin.qq.com/pay/unifiedorder', '<mch_id>1577963751</mch_id>');
-
-        dd($data);
-
         $payment        = Payment::where('tag', 'klarna')->first();
 
         $paymentPayload = PaymentPayload::where('payment_id', $payment?->id)->first();

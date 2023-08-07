@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->string('symbol')->nullable();
             $table->string('title', 191);
-            $table->double('rate', 9,2)->default(1);
+            $table->double('rate')->default(1);
             $table->enum('position', ['before', 'after'])->default('after');
             $table->boolean('default')->default(0);
             $table->boolean('active')->default(1);

@@ -683,8 +683,9 @@ class OrderService extends CoreService implements OrderServiceInterface
      */
     private function setOrderParams(array $data): array
     {
-        $defaultCurrencyId = Currency::whereDefault(1)->first('id');
-        $currencyId        = data_get($data, 'currency_id', data_get($defaultCurrencyId, 'id'));
+        $defaultCurrencyId  = Currency::whereDefault(1)->first('id');
+        $currencyId         = data_get($data, 'currency_id', data_get($defaultCurrencyId, 'id'));
+        $currency           = Currency::find($currencyId);
 
         return [
             'user_id'           => data_get($data, 'user_id', auth('sanctum')->id()),
@@ -694,8 +695,8 @@ class OrderService extends CoreService implements OrderServiceInterface
             'booking_id'        => data_get($data, 'booking_id'),
             'user_booking_id'   => data_get($data, 'user_booking_id'),
             'total_price'       => 0,
-            'currency_id'       => $currencyId,
-            'rate'              => data_get($data, 'rate'),
+            'currency_id'       => $currency?->id ?? $currencyId,
+            'rate'              => $currency?->rate ?? 1,
             'note'              => data_get($data, 'note'),
             'shop_id'           => data_get($data, 'shop_id'),
             'phone'             => data_get($data, 'phone'),
