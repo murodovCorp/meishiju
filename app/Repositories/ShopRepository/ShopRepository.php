@@ -35,16 +35,24 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
         /** @var Shop $shop */
 
         $shop = $this->model();
+        $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
         return $shop
             ->updatedDate($this->updatedDate)
             ->filter($filter)
             ->with([
-                'translation'   => fn($q) => $q->where('locale', $this->language),
+                'translation'   => fn($q) => $q
+                    ->where('locale', $this->language)
+                    ->orWhere('locale', $locale)
+                    ->orWhereNotNull('locale'),
                 'seller'        => fn($q) => $q->select('id', 'firstname', 'lastname', 'uuid'),
                 'seller.roles',
             ])
-            ->whereHas('translation', fn($q) => $q->where('locale', $this->language))
+            ->whereHas('translation', fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale')
+            )
             ->orderByDesc('id')
             ->limit(data_get($filter, 'perPage', 1))
             ->offset(data_get($filter, 'page', 0))
@@ -60,6 +68,7 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
     {
         /** @var Shop $shop */
         $shop = $this->model();
+        $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
         return $shop
             ->filter($filter)
@@ -84,7 +93,10 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                         'type',
                     ]),
                 'bonus.stock.countable:id,uuid',
-                'bonus.stock.countable.translation' => fn($q) => $q->where('locale', $this->language)
+                'bonus.stock.countable.translation' => fn($q) => $q
+                    ->where('locale', $this->language)
+                    ->orWhere('locale', $locale)
+                    ->orWhereNotNull('locale')
                     ->select('id', 'locale', 'title', 'product_id'),
                 'closedDates',
                 'workingDays' => fn($q) => $q->when(data_get($filter, 'work_24_7'),
@@ -142,15 +154,23 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
     {
         /** @var Shop $shop */
         $shop = $this->model();
+        $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
         return $shop
             ->filter($filter)
             ->updatedDate($this->updatedDate)
             ->with([
-                'translation' => fn($q) => $q->where('locale', $this->language)
+                'translation' => fn($q) => $q
+                    ->where('locale', $this->language)
+                    ->orWhere('locale', $locale)
+                    ->orWhereNotNull('locale')
                     ->select('id', 'locale', 'title', 'shop_id'),
             ])
-            ->whereHas('translation', fn($q) => $q->where('locale', $this->language))
+            ->whereHas('translation', fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale')
+            )
             ->select([
                 'id',
             ])
@@ -168,7 +188,10 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
         $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
         return $shop->with([
-            'translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
+            'translation' => fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale'),
             'workingDays',
             'closedDates',
             'bonus' => fn($q) => $q->where('expired_at', '>=', now())
@@ -182,13 +205,19 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                     'type',
                 ]),
             'bonus.stock.countable' => fn($q) => $q->select('id', 'uuid'),
-            'bonus.stock.countable.translation' => fn($q) => $q->where('locale', $this->language)
+            'bonus.stock.countable.translation' => fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale')
                 ->select('id', 'locale', 'title', 'product_id'),
             'discounts' => fn($q) => $q->where('end', '>=', now())->where('active', 1)
                 ->select('id', 'shop_id', 'end', 'active'),
             'shopPayments:id,payment_id,shop_id,status,client_id,secret_id',
             'shopPayments.payment:id,tag,input,sandbox,active',
-            'categories.translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
+            'categories.translation' => fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale'),
         ])
 //            ->whereHas('translation', fn($q) => $q->where('locale', $this->language))
             ->withAvg('reviews', 'rating')
@@ -202,8 +231,13 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
      */
     public function takes(): Collection|array
     {
+        $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
+
         return ShopTag::with([
-            'translation' => fn($q) => $q->where('locale', $this->language),
+            'translation' => fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale'),
         ])->get();
     }
 
@@ -232,15 +266,23 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
     {
         /** @var Shop $shop */
         $shop = $this->model();
+        $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
         return $shop
             ->filter($filter)
             ->with([
-                'translation'   => fn($q) => $q->where('locale', $this->language),
+                'translation'   => fn($q) => $q
+                    ->where('locale', $this->language)
+                    ->orWhere('locale', $locale)
+                    ->orWhereNotNull('locale'),
                 'discounts'     => fn($q) => $q->where('end', '>=', now())->where('active', 1)
                     ->select('id', 'shop_id', 'end', 'active'),
             ])
-            ->whereHas('translation', fn($q) => $q->where('locale', $this->language))
+            ->whereHas('translation', fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale')
+            )
             ->latest()
             ->select([
                 'id',
@@ -259,13 +301,20 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
     {
         /** @var Shop $shop */
         $shop = $this->model();
+        $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
         return $shop->with([
-            'translation'   => fn($q) => $q->where('locale', $this->language),
+            'translation'   => fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale'),
             'discounts'     => fn($q) => $q->where('end', '>=', now())->where('active', 1)
                 ->select('id', 'shop_id', 'end', 'active'),
             'tags:id,img',
-            'tags.translation' => fn($q) => $q->where('locale', $this->language),
+            'tags.translation' => fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale'),
         ])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
@@ -280,6 +329,7 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
 //        }
 
         $recommendedCount = (int)(Settings::adminSettings()->where('key', 'recommended_count')->first()?->value ?? 2);
+        $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
         $shops = Shop::filter($filter)
             ->with([
@@ -301,7 +351,9 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                     ->whereStatus(Order::STATUS_DELIVERED)
                     ->where('created_at', '>=', date('Y-m-d 00:00:01', strtotime('-30 days'))),
                 'translation' => fn($q) => $q
-                    ->where('locale', $this->language),
+                    ->where('locale', $this->language)
+                    ->orWhere('locale', $locale)
+                    ->orWhereNotNull('locale'),
             ])
             ->whereHas('orders', fn($q) => $q
                 ->whereStatus(Order::STATUS_DELIVERED)
@@ -426,8 +478,14 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                     ->where('status', '=', $status)
                 ),
             'stocks.addons.addon.stock',
-            'stocks.addons.addon.translation' => fn($q) => $q->where('locale', $this->language),
-            'translation' => fn($q) => $q->where('locale', $this->language),
+            'stocks.addons.addon.translation' => fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale'),
+            'translation' => fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale'),
             'discounts' => fn($q) => $q
                 ->where('start', '<=', today())
                 ->where('end', '>=', today())
@@ -437,7 +495,11 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
             ->where('addon', false)
             ->where('status', Product::PUBLISHED)
             ->whereHas('stock', fn($q) => $q->where('addon', false)->where('quantity', '>', 0))
-            ->whereHas('translation', fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale))
+            ->whereHas('translation', fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale')
+            )
             ->select([
                 'id',
                 'uuid',
@@ -457,7 +519,10 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
             ['active', true],
         ])
             ->with([
-                'translation' => fn($q) => $q->where('locale', $this->language)
+                'translation' => fn($q) => $q
+                    ->where('locale', $this->language)
+                    ->orWhere('locale', $locale)
+                    ->orWhereNotNull('locale')
                     ->select('id', 'locale', 'title', 'category_id'),
 
                 'products' => fn($q) => $q
@@ -469,7 +534,10 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                 ])
                     ->whereHas('stock', fn($q) => $q->where('quantity', '>', 0)->where('addon', false))
                     ->whereHas('translation',
-                        fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale)
+                        fn($q) => $q
+                            ->where('locale', $this->language)
+                            ->orWhere('locale', $locale)
+                            ->orWhereNotNull('locale')
                     )
                     ->where('active', true)
                     ->where('addon', false)
@@ -488,7 +556,10 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                         'min_qty',
                         'addon',
                     ]),
-                'products.translation' => fn($q) => $q->where('locale', $this->language),
+                'products.translation' => fn($q) => $q
+                    ->where('locale', $this->language)
+                    ->orWhere('locale', $locale)
+                    ->orWhereNotNull('locale'),
                 'products.stock' => fn($q) => $q
                     ->with([
                     'bonus' => fn($q) => $q->where('expired_at', '>', now())->select([
@@ -528,7 +599,10 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                         $q->where('active', true)->where('status', '=', $status)
                     ),
                 'products.stocks.addons.addon.stock',
-                'products.stocks.addons.addon.translation' => fn($q) => $q->where('locale', $this->language),
+                'products.stocks.addons.addon.translation' => fn($q) => $q
+                    ->where('locale', $this->language)
+                    ->orWhere('locale', $locale)
+                    ->orWhereNotNull('locale'),
             ])
             ->whereHas('products', fn($q) => $q
                 ->select([
@@ -543,7 +617,11 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                 ->where('status', Product::PUBLISHED)
                 ->where('shop_id', $shopId)
             )
-            ->whereHas('translation', fn($q) => $q->where('locale', $this->language))
+            ->whereHas('translation', fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale')
+            )
             ->select([
                 'id',
                 'uuid',
@@ -565,6 +643,7 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
     public function categories(array $filter): LengthAwarePaginator
     {
         $shopId = data_get($filter, 'shop_id');
+        $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
         return Category::where([
             ['type', Category::MAIN],
@@ -572,9 +651,15 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
         ])
             ->with([
                 'translation' => fn($q) => $q->where('locale', $this->language)
+                    ->orWhere('locale', $locale)
+                    ->orWhereNotNull('locale')
                     ->select('id', 'locale', 'title', 'category_id'),
             ])
-            ->whereHas('translation', fn($q) => $q->where('locale', $this->language))
+            ->whereHas('translation', fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale')
+            )
             ->whereHas('products', fn($q) => $q
                 ->select('id', 'category_id', 'active', 'shop_id', 'status', 'addon')
                 ->where('active', true)
@@ -600,9 +685,13 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
     public function productsPaginate(array $filter): LengthAwarePaginator
     {
         $shopId = data_get($filter, 'shop_id');
+        $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
         return Product::with([
-            'translation' => fn($q) => $q->where('locale', $this->language),
+            'translation' => fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale'),
             'stocks' => fn($q) => $q->select('id', 'countable_type', 'countable_id', 'price', 'quantity', 'addon')
                 ->with([
                     'bonus' => fn($q) => $q->where('expired_at', '>', now())->select([
@@ -616,7 +705,11 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                 ->where('active', 1),
 
         ])
-            ->whereHas('translation', fn($q) => $q->where('locale', $this->language))
+            ->whereHas('translation', fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale')
+            )
             ->whereHas('stocks', fn($q) => $q->where('quantity', '>', 0))
             ->select([
                 'id',
@@ -650,13 +743,17 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
     public function productsRecommendedPaginate(array $filter): LengthAwarePaginator
     {
         $shopId = data_get($filter, 'shop_id');
+        $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
         $ids = !empty($shopId) ? data_get(Cache::get('shop-recommended-ids'), $shopId, []) : [];
 
         return Product::with([
             'stocks' => fn($q) => $q->select('id', 'countable_type', 'countable_id', 'price', 'quantity', 'addon')
                 ->where('quantity', '>', 0),
-            'translation' => fn($q) => $q->where('locale', $this->language),
+            'translation' => fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale'),
             'stocks.addons.addon' => fn($query) => $query->select([
                 'id',
                 'uuid',
@@ -671,7 +768,10 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                 $q->where('active', true)->where('status', '=', $status)
             ),
             'stocks.addons.addon.stock',
-            'stocks.addons.addon.translation' => fn($q) => $q->where('locale', $this->language),
+            'stocks.addons.addon.translation' => fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale'),
             'stocks.bonus' => fn($q) => $q->where('expired_at', '>', now())->select([
                 'id', 'expired_at', 'bonusable_type', 'bonusable_id',
                 'bonus_quantity', 'value', 'type', 'status'
@@ -679,7 +779,10 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
             'stocks.bonus.stock',
             'stocks.bonus.stock.countable:id,uuid,tax,bar_code,status,active,img,min_qty,max_qty',
             'stocks.bonus.stock.countable.translation' => fn($q) => $q->select('id', 'product_id', 'title', 'locale'),
-            'stocks.stockExtras.group.translation' => fn($q) => $q->where('locale', $this->language),
+            'stocks.stockExtras.group.translation' => fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale'),
             'discounts' => fn($q) => $q->where('start', '<=', today())->where('end', '>=', today())->where('active', 1),
         ])
             ->whereHas('stocks', fn($q) => $q->where('quantity', '>', 0))
@@ -701,7 +804,11 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
                 ['active',  true],
                 ['addon',  false],
             ])
-            ->whereHas('translation', fn($q) => $q->where('locale', $this->language))
+            ->whereHas('translation', fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->orWhereNotNull('locale')
+            )
             ->whereIn('id', $ids)
             ->paginate(data_get($filter, 'perPage', 10));
     }

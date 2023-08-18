@@ -31,10 +31,10 @@ class RestProductRepository extends CoreRepository
                 'stocks.addons.addon' => fn($query) => $query->when(data_get($filter, 'addon_status'),
                     fn($q, $status) => $q->with([
                         'stock'         => fn($q) => $q->where('addon', true)->where('quantity', '>', 0),
-                        'translation'   => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
+                        'translation'   => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale)->orWhereNotNull('locale'),
                     ])
                         ->whereHas('stock', fn($q) => $q->where('addon', true)->where('quantity', '>', 0))
-                        ->whereHas('translation', fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale))
+                        ->whereHas('translation', fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale)->orWhereNotNull('locale'))
                         ->where('active', true)
                         ->where('status', '=', $status)
                 ),
@@ -46,9 +46,9 @@ class RestProductRepository extends CoreRepository
                 'stocks.bonus.stock.stockExtras',
                 'stocks.bonus.stock.countable:id,uuid,tax,bar_code,status,active,img,min_qty,max_qty',
                 'stocks.bonus.stock.countable.translation' => fn($q) => $q->select('id', 'product_id', 'title', 'locale'),
-                'stocks.stockExtras.group.translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
+                'stocks.stockExtras.group.translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale)->orWhereNotNull('locale'),
                 'discounts' => fn($q) => $q->where('start', '<=', today())->where('end', '>=', today())->where('active', 1),
-                'translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
+                'translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale)->orWhereNotNull('locale'),
                 'shop' => fn($q) => $q->select('id', 'status')
                     ->when(data_get($filter, 'shop_status'), function ($q, $status) {
                         $q->where('status', '=', $status);
@@ -61,7 +61,7 @@ class RestProductRepository extends CoreRepository
                 'category.translation' => fn($q) => $q->where('locale', $this->language)
                     ->select('id', 'category_id', 'locale', 'title'),
             ])
-            ->whereHas('translation', fn($query) => $query->where('locale', $this->language)->orWhere('locale', $locale))
+            ->whereHas('translation', fn($query) => $query->where('locale', $this->language)->orWhere('locale', $locale)->orWhereNotNull('locale'))
             ->when(data_get($filter, 'shop_status'), function ($q, $status) {
                 $q->whereHas('shop', function (Builder $query) use ($status) {
                     $query->where('status', '=', $status);
@@ -194,7 +194,7 @@ class RestProductRepository extends CoreRepository
 
         return $product
             ->whereHas('translation',
-                fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale)
+                fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale)->orWhereNotNull('locale')
             )
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
@@ -206,12 +206,12 @@ class RestProductRepository extends CoreRepository
                     ]),
                 ]),
                 'stocks.stockExtras.group.translation' => fn($q) => $q->where('locale', $this->language)
-                    ->orWhere('locale', $locale),
+                    ->orWhere('locale', $locale)->orWhereNotNull('locale'),
                 'stocks.addons' => fn($q) => $q->whereHas('addon', fn($a) => $a->whereHas('stock')),
                 'stocks.addons.addon' => fn($q) => $q
                     ->with([
                         'stock',
-                        'translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale)
+                        'translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale)->orWhereNotNull('locale')
                     ])
                     ->whereHas('stock')
                     ->select([
@@ -229,7 +229,7 @@ class RestProductRepository extends CoreRepository
                     ->where('addon', true)
                     ->where('status', Product::PUBLISHED),
                 'discounts',
-                'translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
+                'translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale)->orWhereNotNull('locale'),
                 'translations',
             ])
             ->where('active', true)

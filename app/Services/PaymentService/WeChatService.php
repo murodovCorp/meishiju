@@ -21,7 +21,7 @@ use WeChatPay\Builder;
 use WeChatPay\Crypto\Rsa;
 use WeChatPay\Util\PemUtil;
 
-class WeChatService
+class WeChatService extends BaseService
 {
     private array $currencies =  [
         'AUD' => 'en-AU',
