@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Models\Settings;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -15,11 +16,15 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-         $schedule->command('email:send:by:time')->hourly();
-         $schedule->command('remove:expired:closed:dates')->daily();
-         $schedule->command('remove:expired:stories')->daily();
+        $time = Settings::adminSettings()->where('key', 'order_auto_remove')->first()?->value ?? 5;
+
+        $schedule->command('email:send:by:time')->hourly();
+        $schedule->command('remove:expired:closed:dates')->daily();
+        $schedule->command('remove:expired:stories')->daily();
+        $schedule->command('order:auto:remove')->hourlyAt("*/$time");
+
 //         $schedule->command('truncate:telescope')->daily();
-         $schedule->command('update:products:galleries')->hourly()->withoutOverlapping()->runInBackground();
+        $schedule->command('update:products:galleries')->hourly()->withoutOverlapping()->runInBackground();
     }
 
     /**

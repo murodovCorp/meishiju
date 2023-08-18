@@ -49,6 +49,7 @@ class OrderController extends CookBaseController
             'currency'              => fn($q) => $q->select('id', 'title', 'symbol'),
             'user:id,firstname,lastname,img',
             'table:id,name,shop_section_id,chair_count,tax,active',
+            'transaction.paymentSystem',
         ]);
 
         return OrderResource::collection($orders);

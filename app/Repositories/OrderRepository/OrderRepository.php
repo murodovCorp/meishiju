@@ -52,6 +52,7 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
         return $this->model()->with([
             'orderDetails.stock',
             'deliveryMan',
+            'transaction.paymentSystem',
         ])
             ->updatedDate($this->updatedDate)
             ->filter($filter)
@@ -76,6 +77,7 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
                 'shop.translation'      => fn($q) => $q->where('locale', $this->language),
                 'currency'              => fn($q) => $q->select('id', 'title', 'symbol'),
                 'user:id,firstname,lastname,uuid,img,phone',
+                'transaction.paymentSystem',
             ];
         }
 
@@ -298,13 +300,14 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
                 ];
             }
 
-            $currency = Currency::currenciesList()
+            $rub = Currency::currenciesList()
                 ->where('title', data_get($checkPrice, 'data.currency_rules.code'))
                 ->first();
 
-            $deliveryFee = data_get($checkPrice, 'data.price') * ((int)Settings::adminSettings()->where('key', 'yandex_fee')->first()?->value ?? 1) / ($currency?->rate ?? 1);
-
+            $deliveryFee = data_get($checkPrice, 'data.price') / 100 * ((int)Settings::adminSettings()->where('key', 'yandex_fee')->first()?->value ?? 1);
+            $deliveryFee = (data_get($checkPrice, 'data.price') + $deliveryFee) * $rub?->rate;
             $deliveryFee = $deliveryFee / ($shop->delivery_price ?: 1) * 100 * $this->currency();
+
             $km          = data_get($checkPrice, 'data.distance_meters') / 1000;
         }
 

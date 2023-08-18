@@ -222,20 +222,18 @@ class OrderService extends CoreService implements OrderServiceInterface
         $totalPrice     = $order->orderDetails->sum('total_price');
         $totalDiscount  = $order->orderDetails->sum('discount');
 
+        $shopTax        = max($totalPrice / 100 * $shop?->tax, 0);
+
+        $totalPrice     += $shopTax;
+        $totalDiscount  += $this->recalculateReceipt($order);
+
         $coupon = Coupon::checkCoupon(data_get($data, 'coupon'))->first();
 
         if ($coupon) {
-            $totalPrice -= $this->checkCoupon($coupon, $order, $totalPrice);
+            $totalPrice -= $this->checkCoupon($coupon, $order, $totalPrice - $totalDiscount);
         }
 
-        $shopTax        = max($totalPrice / 100 * $shop?->tax, 0);
-
-
-        $totalDiscount += $this->recalculateReceipt($order);
-
         $isSubscribe = (int)Settings::adminSettings()->where('key', 'by_subscription')->first()?->value;
-
-        $totalPrice     += $shopTax;
 
         $waiterFeeRate = $order->waiter_fee;
 
@@ -254,13 +252,14 @@ class OrderService extends CoreService implements OrderServiceInterface
                 throw new Exception(data_get($checkPrice, 'data.message'));
             }
 
-            $currency = Currency::currenciesList()
+            $rub = Currency::currenciesList()
                 ->where('title', data_get($checkPrice, 'data.currency_rules.code'))
                 ->first();
 
-            $deliveryFee     = data_get($checkPrice, 'data.price') * ((int)Settings::adminSettings()->where('key', 'yandex_fee')->first()?->value ?? 1);
+            $deliveryFee = data_get($checkPrice, 'data.price') / 100 * ((int)Settings::adminSettings()->where('key', 'yandex_fee')->first()?->value ?? 1);
+            $deliveryFee = data_get($checkPrice, 'data.price') + $deliveryFee;
 
-            $deliveryFeeRate = $deliveryFee / ($currency?->rate ?? 1);
+            $deliveryFeeRate = $deliveryFee / ($rub?->rate ?? 1);
             $deliveryFeeRate = $deliveryFeeRate / ($shop->delivery_price ?: 1) * 100;
 
         }

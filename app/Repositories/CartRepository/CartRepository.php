@@ -213,12 +213,10 @@ class CartRepository extends CoreRepository
                 ];
             }
 
-            $currency = Currency::currenciesList()
-                ->where('title', data_get($checkPrice, 'data.currency_rules.code'))
-                ->first();
-
-            $deliveryFee = data_get($checkPrice, 'data.price') * ((int)Settings::adminSettings()->where('key', 'yandex_fee')->first()?->value ?? 1) / ($currency?->rate ?? 1);
+            $deliveryFee = data_get($checkPrice, 'data.price') / 100 * ((int)Settings::adminSettings()->where('key', 'yandex_fee')->first()?->value ?? 1);
+            $deliveryFee = (data_get($checkPrice, 'data.price') + $deliveryFee) * $rate;
             $deliveryFee = $deliveryFee / ($cart->shop->delivery_price ?: 1) * 100 * $this->currency();
+
             $km          = data_get($checkPrice, 'data.distance_meters') / 1000;
         }
 

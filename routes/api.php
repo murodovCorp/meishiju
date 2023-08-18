@@ -348,7 +348,8 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
             Route::get('order-alipay-process', [Payment\AliPayV2Controller::class, 'prepay']);
             Route::get('subscription-alipay-process', [Payment\AliPayController::class, 'subscriptionProcessTransaction']);
 
-            Route::get('order-we-chat-process', [Payment\WeChatController::class, 'orderProcessTransaction']);
+//            Route::get('order-we-chat-process', [Payment\WeChatController::class, 'orderProcessTransaction']);
+            Route::get('order-we-chat-process', [Payment\WechatPayV2Controller::class, 'prepay']);
             Route::get('subscription-we-chat-process', [Payment\WeChatController::class, 'subscriptionProcessTransaction']);
 
             Route::get('order-razorpay-process', [Payment\RazorPayController::class, 'orderProcessTransaction']);

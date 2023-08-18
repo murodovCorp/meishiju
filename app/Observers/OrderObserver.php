@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Settings;
 use App\Services\ModelLogService\ModelLogService;
 use App\Traits\Notification;
+use Throwable;
 
 class OrderObserver
 {
@@ -51,6 +52,15 @@ class OrderObserver
      */
     public function deleted(Order $order): void
     {
+        try {
+            $order->transactions()->delete();
+            $order->reviews()->delete();
+            $order->galleries()->delete();
+            $order->coupon()->delete();
+            $order->pointHistories()->delete();
+            $order->orderDetails()->delete();
+        } catch (Throwable) {}
+
         (new ModelLogService)->logging($order, $order->getAttributes(), 'deleted');
     }
 

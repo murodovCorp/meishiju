@@ -52,6 +52,7 @@ class OrderController extends WaiterBaseController
             'currency'              => fn($q) => $q->select('id', 'title', 'symbol'),
             'user:id,firstname,lastname,img',
             'table:id,name,shop_section_id,chair_count,tax,active',
+            'transaction.paymentSystem',
         ]);
 
         $statistic = (new DashboardRepository)->orderByStatusStatistics($filter);
