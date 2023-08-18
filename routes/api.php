@@ -537,6 +537,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
 
             /* Yandex Order */
             Route::group(['prefix' => 'yandex/order'], function () {
+                Route::post('list',                   [Seller\YandexController::class, 'list']);
                 Route::post('{id}/check-price',       [Seller\YandexController::class, 'checkPrice']);
                 Route::post('{id}/create',            [Seller\YandexController::class, 'createOrder']);
                 Route::post('{id}/get-info',          [Seller\YandexController::class, 'getOrderInfo']);
@@ -1128,6 +1129,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
 
             /* Yandex Order */
             Route::group(['prefix' => 'yandex/order'], function () {
+                Route::post('list',                   [Admin\YandexController::class, 'list']);
                 Route::post('{id}/check-price',       [Admin\YandexController::class, 'checkPrice']);
                 Route::post('{id}/create',            [Admin\YandexController::class, 'createOrder']);
                 Route::post('{id}/get-info',          [Admin\YandexController::class, 'getOrderInfo']);
@@ -1151,7 +1153,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
         Route::any('razorpay/payment',      [Payment\RazorPayController::class,     'paymentWebHook']);
         Route::any('alipay/payment',        [Payment\AliPayController::class,       'paymentWebHook']);
         Route::any('we-chat/payment',       [Payment\WeChatController::class,       'paymentWebHook']);
-        Route::any('webhook/yandex/order',  [Rest\YandexController::class,          'webhook']);
+        Route::any('yandex/order',          [Rest\YandexController::class,          'webhook']);
         Route::any('stripe/payment',        [Payment\StripeController::class,       'paymentWebHook']);
         Route::any('flw/payment',           [Payment\FlutterWaveController::class,  'paymentWebHook']);
         Route::any('mercado-pago/payment',  [Payment\MercadoPagoController::class,  'paymentWebHook']);

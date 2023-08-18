@@ -271,11 +271,11 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
         return $shop
             ->filter($filter)
             ->with([
-                'translation'   => fn($q) => $q
+                'translation' => fn($q) => $q
                     ->where('locale', $this->language)
                     ->orWhere('locale', $locale)
                     ->orWhereNotNull('locale'),
-                'discounts'     => fn($q) => $q->where('end', '>=', now())->where('active', 1)
+                'discounts' => fn($q) => $q->where('end', '>=', now())->where('active', 1)
                     ->select('id', 'shop_id', 'end', 'active'),
             ])
             ->whereHas('translation', fn($q) => $q

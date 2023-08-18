@@ -30,13 +30,9 @@ class AliPayServiceV2
 
         $totalPrice = ceil($cny->id == $order->currency_id ? $order->total_price : $order->total_price * ($cny?->rate ?: 1));
 
-        $data['order_number'] = Helper::generateNumber("HE", 20);
+        $data['order_number'] = Helper::generateNumber('HE', 20);
         $data['pay_amount']   = $totalPrice;
         $data['title']        = "按訂單付款";
-
-        $order->update([
-            'total_price' => $totalPrice,
-        ]);
 
         return [
             'status' => true,
