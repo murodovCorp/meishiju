@@ -306,7 +306,7 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
 
             $deliveryFee = data_get($checkPrice, 'data.price') / 100 * ((int)Settings::adminSettings()->where('key', 'yandex_fee')->first()?->value ?? 1);
             $deliveryFee = (data_get($checkPrice, 'data.price') + $deliveryFee) * $rub?->rate;
-            $deliveryFee = $deliveryFee / ($shop->delivery_price ?: 1) * 100 * $this->currency();
+            $deliveryFee += ($deliveryFee / ($shop->delivery_price ?: 1) * 100 * $this->currency());
 
             $km          = data_get($checkPrice, 'data.distance_meters') / 1000;
         }

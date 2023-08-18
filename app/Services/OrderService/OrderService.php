@@ -260,7 +260,7 @@ class OrderService extends CoreService implements OrderServiceInterface
             $deliveryFee = data_get($checkPrice, 'data.price') + $deliveryFee;
 
             $deliveryFeeRate = $deliveryFee / ($rub?->rate ?? 1);
-            $deliveryFeeRate = $deliveryFeeRate / ($shop->delivery_price ?: 1) * 100;
+            $deliveryFeeRate += $deliveryFeeRate / ($shop->delivery_price ?: 1) * 100;
 
         }
 
