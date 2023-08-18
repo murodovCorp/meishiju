@@ -15,6 +15,7 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\Product;
 use App\Models\ProductTranslation;
+use App\Models\Settings;
 use App\Models\Shop;
 use App\Models\Stock;
 use App\Repositories\CoreRepository;
@@ -300,7 +301,8 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
             $currency = Currency::currenciesList()
                 ->where('title', data_get($checkPrice, 'data.currency_rules.code'))
                 ->first();
-            $deliveryFee = data_get($checkPrice, 'data.price') / ($currency?->rate ?? 1);
+
+            $deliveryFee = data_get($checkPrice, 'data.price') * ((int)Settings::adminSettings()->where('key', 'yandex_fee')->first()?->value ?? 1) / ($currency?->rate ?? 1);
 
             $deliveryFee = $deliveryFee / ($shop->delivery_price ?: 1) * 100 * $this->currency();
             $km          = data_get($checkPrice, 'data.distance_meters') / 1000;

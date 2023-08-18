@@ -10,6 +10,7 @@ use App\Models\Coupon;
 use App\Models\Currency;
 use App\Models\Language;
 use App\Models\Order;
+use App\Models\Settings;
 use App\Repositories\CoreRepository;
 use App\Services\CartService\CartService;
 use App\Services\Yandex\YandexService;
@@ -216,7 +217,7 @@ class CartRepository extends CoreRepository
                 ->where('title', data_get($checkPrice, 'data.currency_rules.code'))
                 ->first();
 
-            $deliveryFee = data_get($checkPrice, 'data.price') / ($currency?->rate ?? 1);
+            $deliveryFee = data_get($checkPrice, 'data.price') * ((int)Settings::adminSettings()->where('key', 'yandex_fee')->first()?->value ?? 1) / ($currency?->rate ?? 1);
             $deliveryFee = $deliveryFee / ($cart->shop->delivery_price ?: 1) * 100 * $this->currency();
             $km          = data_get($checkPrice, 'data.distance_meters') / 1000;
         }

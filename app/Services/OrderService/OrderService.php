@@ -254,10 +254,11 @@ class OrderService extends CoreService implements OrderServiceInterface
                 throw new Exception(data_get($checkPrice, 'data.message'));
             }
 
-            $currency        = Currency::currenciesList()
+            $currency = Currency::currenciesList()
                 ->where('title', data_get($checkPrice, 'data.currency_rules.code'))
                 ->first();
-            $deliveryFee     = data_get($checkPrice, 'data.price');
+
+            $deliveryFee     = data_get($checkPrice, 'data.price') * ((int)Settings::adminSettings()->where('key', 'yandex_fee')->first()?->value ?? 1);
 
             $deliveryFeeRate = $deliveryFee / ($currency?->rate ?? 1);
             $deliveryFeeRate = $deliveryFeeRate / ($shop->delivery_price ?: 1) * 100;
