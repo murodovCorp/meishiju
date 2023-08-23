@@ -15,7 +15,6 @@ use App\Repositories\CoreRepository;
 use App\Services\CartService\CartService;
 use App\Services\Yandex\YandexService;
 use App\Traits\SetCurrency;
-use Exception;
 
 class CartRepository extends CoreRepository
 {

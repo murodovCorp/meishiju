@@ -561,7 +561,14 @@ class CartService extends CoreService
             ];
         }
 
-        $cart = $this->model()->with([
+        $cart = $this->model()
+            ->firstOrCreate([
+                'owner_id'  => $userId,
+                'shop_id'   => data_get($data, 'shop_id', 0)
+            ], $data);
+
+        /** @var Cart $cart */
+        $cart = $cart->fresh([
             'shop',
             'userCarts.cartDetails' => fn($q) => $q->whereNull('parent_id'),
             'userCarts.cartDetails.stock.countable.discounts' => fn($q) => $q->where('start', '<=', today())
@@ -569,31 +576,23 @@ class CartService extends CoreService
                 ->where('active', 1),
             'userCarts.cartDetails.stock.countable:id,status,shop_id,min_qty,max_qty,tax,img',
             'userCarts.cartDetails.children.stock.countable:id,status,shop_id,min_qty,max_qty,tax',
-        ])
-            ->firstOrCreate([
-                'owner_id'  => $userId,
-                'shop_id'   => data_get($data, 'shop_id', 0)
-            ], $data);
-
-        return $this->cartDetailsUpdate($data, $cart, $userId);
-    }
-
-    /**
-     * @param array $data
-     * @param Cart $cart
-     * @param int $userId
-     * @return array
-     */
-    private function cartDetailsUpdate(array $data, Cart $cart, int $userId): array
-    {
+        ]);
 
         /** @var UserCart $userCart */
-        $userCart = $cart->userCarts()->firstOrCreate([
-            'user_id' => $userId,
-            'cart_id' => $cart->id,
-        ], [
-            'uuid'    => Str::uuid()
-        ]);
+        $userCart = $cart->userCarts()
+            ->where([
+                'user_id' => $userId,
+                'cart_id' => $cart->id,
+            ])
+            ->first();
+
+        if (empty($userCart)) {
+            $userCart = $cart->userCarts()->create([
+                'user_id' => $userId,
+                'cart_id' => $cart->id,
+                'uuid'    => Str::uuid()
+            ]);
+        }
 
         $cartId = $this->collectProducts($data, $cart, $userCart);
 
