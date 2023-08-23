@@ -44,7 +44,9 @@ class OrderAutoRemove extends Command
 		$time = Settings::adminSettings()->where('key', 'order_auto_remove')->first()?->value ?? 5;
 		$time = date('Y-m-d 23:59:59', strtotime("-$time minute"));
 
-        $orders = Order::where('created_at', '<=', $time)->get();
+        $orders = Order::where('created_at', '<=', $time)
+            ->where('status', Order::STATUS_NEW)
+            ->get();
 
         foreach ($orders as $order) {
 

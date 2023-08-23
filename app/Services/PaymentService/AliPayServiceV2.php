@@ -52,7 +52,11 @@ class AliPayServiceV2
             '_config'       => 'default',
         ];
 
-        return Pay::alipay($config)->wap($order);
+        return Pay::alipay($config)->app([
+            'out_trade_no' => time(),
+            'total_amount' => '0.01',
+            'subject' => 'yansongda 测试 - 01',
+        ]);
     }
 
 }

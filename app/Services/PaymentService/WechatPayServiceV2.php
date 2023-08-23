@@ -2,7 +2,13 @@
 
 namespace App\Services\PaymentService;
 
+use App\Helpers\Helper;
+use App\Helpers\ResponseError;
+use App\Models\Currency;
+use App\Models\Order;
+use Log;
 use Yansongda\Pay\Pay;
+use Yansongda\Supports\Collection;
 
 /**
  * Class WechatPayServiceV2
@@ -15,57 +21,37 @@ class WechatPayServiceV2
      * 公众号h5支付
      *
      * @param $data
-     * @return \Yansongda\Supports\Collection
+     * @return array|Collection
      */
-    public function pay($data)
+    public function pay($data): Collection|array
     {
-        $order = [
-            'out_trade_no' => $data['order_number'],
-            'description' => $data['title'],
-            'amount' => [
-                'total' => $data['pay_amount'],
-            ],
-            // 'payer' => [
-            //     'openid' => $data['openid'],
-            // ],
-              'scene_info' => [
-                    'payer_client_ip' => $_SERVER["REMOTE_ADDR"],
-                    'h5_info' => [
-                        'type' => 'Wap',
-                    ]       
-                 ],
-            '_config' => 'default',
+        $order = Order::find(data_get($data, 'order_id'));
+
+        if (empty($order)) {
+            return [
+                'status'  => false,
+                'code'    => ResponseError::ERROR_404,
+                'message' => 'Order not found'
+            ];
+        }
+
+        $data = [];
+
+        $cny = Currency::where('title', 'CNY')->first();
+
+        $totalPrice = ceil($cny->id == $order->currency_id ? $order->total_price : $order->total_price * ($cny?->rate ?: 1));
+
+        $data['order_number']   = Helper::generateNumber("HE", 20);
+        $data['title']          = "测试微信付款";
+        $data['out_trade_no']   = time().'';
+        $data['pay_amount']     = $totalPrice;
+        $data['description']    = "按訂單付款";
+        $data['amount']         = [
+            'total' => $totalPrice,
         ];
-        
 
-        // return Pay::wechat(config('pay.wechat'))->wap($order);
-        return Pay::wechat(config('pay.wechat'))->wap($order);
+        Log::error('data', $data);
+        return Pay::wechat(config('pay.wechat'))->app($data);
     }
-
-    /* public function miniPay($data)
-     {
-         $config = [];
-         // 判断支付来源
-         if ($data['pay_source'] == LogPay::PAY_SOURCE_SBL_XCX) {
-             // 圣贝拉
-             $config = config('pay.sblminipay');
-         } elseif ($data['pay_source'] == LogPay::PAY_SOURCE_BBL_XCX) {
-             // 小贝拉
-             $config = config('pay.xblminipay');
-         }
-         $order = [
-             'out_trade_no' => $data['order_number'],
-             'body' => $data['title'],
-             'total_fee' => $data['pay_amount'],
-             'openid' => $data['openid'],
-         ];
-
-         try {
-             return Pay::wechat($config)->miniapp($order);
-         } catch (\Exception $e) {
-             throw new RestfulException($e->getMessage(), 422);
-         }
-
-     }*/
 
 }

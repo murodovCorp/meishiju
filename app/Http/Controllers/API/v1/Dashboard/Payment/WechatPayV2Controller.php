@@ -9,10 +9,11 @@ use App\Services\PaymentService\WechatPayServiceV2;
 use App\Traits\ApiResponse;
 use App\Traits\OnResponse;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Throwable;
+use Yansongda\Pay\Exception\ContainerException;
+use Yansongda\Pay\Exception\InvalidParamsException;
 use Yansongda\Pay\Pay;
 
 class WechatPayV2Controller extends Controller
@@ -33,12 +34,7 @@ class WechatPayV2Controller extends Controller
     public function prepay(Request $request): JsonResponse
     {
         try {
-            $arr['order_number'] = Helper::generateNumber("HE", 20);;
-            $arr['pay_amount'] = 1;
-            $arr['title'] = "测试微信付款";
-            $arr['openid'] = $request->openId;
-
-            $result = $this->service->pay($arr);
+            $result = $this->service->pay($request->all());
 
             return $this->successResponse('success', $result);
         } catch (Throwable $e) {
@@ -52,34 +48,43 @@ class WechatPayV2Controller extends Controller
 
     /**
      * @param Request $request
+     * @return JsonResponse
+     * @throws ContainerException
+     * @throws InvalidParamsException
      */
-    public function notify(Request $request)
+    public function notify(Request $request): JsonResponse
     {
         $config = config('pay.wechat.default');
         $wechat = Pay::wechat($config);
-        $data = $wechat->callback(); // 是的，验签就这么简单！
-        Log::info('微信回调：notify', [$data]);
+        $data = $wechat->callback();
+        Log::info('微信回调：notify', [$data, 'req' => $request->all()]);
+
         return $this->successResponse('success', $data);
     }
 
-
-    //拿到code
+    /**
+     * @param Request $request
+     * @return JsonResponse|void
+     */
     public function getOpenId(Request $request)
     {
-        $appId = getenv('WX_APPID');
+        $appId  = getenv('WX_APPID');
         $secret = getenv('WX_SECRET');
-        $code = $request->code;
-        //获取code,在获取openId
+        $code   = $request->input('code');
+
         if (empty($code)) {
+
             $redirectUri = urlencode(getenv("APP_URL") . "/api/wechat-getOpenId");
             $url = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' . $appId . '&redirect_uri=' . $redirectUri . '&response_type=code&scope=snsapi_userinfo&state=STATE#wechat_redirect';
             header("location:$url");
             exit;
-        } else {
-            $url = 'https://api.weixin.qq.com/sns/oauth2/access_token?appid=' . $appId . '&secret=' . $secret . '&code=' . $code . '&grant_type=authorization_code';
-            $data = Helper::requestGet($url);
-            return $this->successResponse('success', $data);
+
         }
+
+        $url = 'https://api.weixin.qq.com/sns/oauth2/access_token?appid=' . $appId . '&secret=' . $secret . '&code=' . $code . '&grant_type=authorization_code';
+        $data = Helper::requestGet($url);
+
+        return $this->successResponse('success', $data);
     }
 
 
