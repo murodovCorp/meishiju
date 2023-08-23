@@ -545,9 +545,7 @@ class CartService extends CoreService
      */
     public function insertProducts(array $data): array
     {
-        /** @var User $user */
-        $user             = auth('sanctum')->user();
-        $userId           = $user->id;
+        $userId           = auth('sanctum')->id();
         $data['owner_id'] = $userId;
         $data['user_id']  = $userId;
         $data['rate']     = Currency::find($data['currency_id'])->rate;
@@ -577,20 +575,21 @@ class CartService extends CoreService
                 'shop_id'   => data_get($data, 'shop_id', 0)
             ], $data);
 
-        return $this->cartDetailsUpdate($data, $cart);
+        return $this->cartDetailsUpdate($data, $cart, $userId);
     }
 
     /**
      * @param array $data
      * @param Cart $cart
+     * @param int $userId
      * @return array
      */
-    private function cartDetailsUpdate(array $data, Cart $cart): array
+    private function cartDetailsUpdate(array $data, Cart $cart, int $userId): array
     {
-        /** @var UserCart $userCart */
 
+        /** @var UserCart $userCart */
         $userCart = $cart->userCarts()->firstOrCreate([
-            'user_id' => auth('sanctum')->id(),
+            'user_id' => $userId,
             'cart_id' => $cart->id,
         ], [
             'uuid'    => Str::uuid()
