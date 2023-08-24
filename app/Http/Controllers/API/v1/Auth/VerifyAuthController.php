@@ -125,7 +125,7 @@ class VerifyAuthController extends Controller
             'active' => true
         ]);
 
-        if(empty($user->wallet)) {
+        if(empty($user->wallet?->uuid)) {
             $user = (new UserWalletService)->create($user);
         }
 

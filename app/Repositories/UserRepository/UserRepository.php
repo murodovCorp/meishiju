@@ -45,7 +45,7 @@ class UserRepository extends CoreRepository
             ->withAvg('assignReviews', 'rating')
             ->find($id);
 
-        if (empty($user) || empty($user->wallet)) {
+        if (empty($user) || empty($user->wallet?->uuid)) {
             return $user;
         }
 

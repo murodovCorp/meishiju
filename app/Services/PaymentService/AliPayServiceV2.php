@@ -28,7 +28,7 @@ class AliPayServiceV2 extends BaseService
 
         $cny = Currency::where('title', 'CNY')->first();
 
-        $totalPrice = ceil($cny->id == $order->currency_id ? $order->total_price : $order->total_price * ($cny?->rate ?: 1));
+        $totalPrice = ceil($cny->id == $order->currency_id ? $order->total_price * $order->rate : $order->total_price * $cny->rate);
 
         $data['order_number'] = Helper::generateNumber("HE", 20);
         $data['pay_amount']   = $totalPrice;
@@ -49,6 +49,7 @@ class AliPayServiceV2 extends BaseService
             'out_trade_no'  => $data['order_number'],
             'total_amount'  => $data['pay_amount'],
             'subject'       => rawurlencode($data['title']),
+            '_config'       => 'default',
         ];
 
         return Pay::alipay($config)->app($order);

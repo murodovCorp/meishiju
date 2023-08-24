@@ -6,8 +6,10 @@ use App\Helpers\ResponseError;
 use App\Http\Requests\FilterParamsRequest;
 use App\Http\Resources\WalletHistoryResource;
 use App\Models\PointHistory;
+use App\Models\User;
 use App\Models\WalletHistory;
 use App\Repositories\WalletRepository\WalletHistoryRepository;
+use App\Services\UserServices\UserWalletService;
 use App\Services\WalletHistoryService\WalletHistoryService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
@@ -38,14 +40,14 @@ class WalletController extends UserBaseController
     public function walletHistories(FilterParamsRequest $request): JsonResponse|AnonymousResourceCollection
     {
 
-        if (empty(auth('sanctum')->user()->wallet)) {
-            return $this->onErrorResponse([
-                'code'    => ResponseError::ERROR_404,
-                'message' => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
-            ]);
+        /** @var User $user */
+        $user = auth('sanctum')->user();
+
+        if (empty($user->wallet?->uuid)) {
+            $user = (new UserWalletService)->create($user);
         }
 
-        $data = $request->merge(['wallet_uuid' => auth('sanctum')->user()->wallet->uuid])->all();
+        $data = $request->merge(['wallet_uuid' => $user->wallet->uuid])->all();
 
         $histories = $this->walletHistoryRepository->walletHistoryPaginate($data);
 
@@ -60,7 +62,7 @@ class WalletController extends UserBaseController
     {
         $user = auth('sanctum')->user();
 
-        if (empty($user->wallet) || $user->wallet->price < $request->input('price')) {
+        if (empty($user->wallet?->uuid) || $user->wallet->price < $request->input('price')) {
             return $this->onErrorResponse(['code' => ResponseError::ERROR_109]);
         }
 

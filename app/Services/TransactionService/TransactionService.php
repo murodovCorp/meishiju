@@ -174,7 +174,7 @@ class TransactionService extends CoreService
         /** @var User $user */
         $user = User::with('wallet')->find(data_get($model, 'user_id'));
 
-        if (empty($user->wallet)) {
+        if (empty($user->wallet?->uuid)) {
             return [
                 'status'  => false,
                 'code'    => ResponseError::ERROR_108,

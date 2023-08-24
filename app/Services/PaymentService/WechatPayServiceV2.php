@@ -35,12 +35,12 @@ class WechatPayServiceV2 extends BaseService
 
         $cny = Currency::where('title', 'CNY')->first();
 
-        $totalPrice = ceil($cny->id == $order->currency_id ? $order->total_price : $order->total_price * ($cny?->rate ?: 1));
+        $totalPrice = ceil($cny->id == $order->currency_id ? $order->total_price * $order->rate : $order->total_price * $cny->rate);
 
         $data['out_trade_no']   = time().'';
         $data['description']    = "按訂單付款";
         $data['amount']         = [
-            'total' => $totalPrice,
+            'total' => ceil($totalPrice * 100),
         ];
 
         return Pay::wechat(config('pay.wechat'))->app($data);

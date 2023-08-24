@@ -138,7 +138,7 @@ class AuthByMobilePhone extends CoreService
             $user->syncRoles('user');
         }
 
-        if(empty($user->wallet)) {
+        if(empty($user->wallet?->uuid)) {
             $user = (new UserWalletService)->create($user);
         }
 

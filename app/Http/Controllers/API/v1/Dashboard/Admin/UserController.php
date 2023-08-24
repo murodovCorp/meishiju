@@ -307,6 +307,7 @@ class UserController extends AdminBaseController
      */
     public function walletHistories(string $uuid): JsonResponse|AnonymousResourceCollection
     {
+        /** @var User $user */
         $user = User::with('wallet')->firstWhere('uuid', $uuid);
 
         if (empty($user)) {
@@ -316,7 +317,10 @@ class UserController extends AdminBaseController
             ]);
         }
 
-        /** @var User $user */
+        if (empty($user->wallet?->uuid)) {
+            $user = (new UserWalletService)->create($user);
+        }
+
         $histories = (new WalletHistoryRepository)->walletHistoryPaginate(
             ['wallet_uuid' => $user->wallet?->uuid],
         );
