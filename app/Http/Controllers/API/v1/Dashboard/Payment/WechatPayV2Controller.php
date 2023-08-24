@@ -36,6 +36,10 @@ class WechatPayV2Controller extends Controller
         try {
             $result = $this->service->pay($request->all());
 
+            if (data_get($result, 'status')) {
+                return $this->onErrorResponse($result);
+            }
+
             return $this->successResponse('success', $result);
         } catch (Throwable $e) {
             $this->error($e);

@@ -9,7 +9,7 @@ use App\Models\Order;
 use Psr\Http\Message\ResponseInterface;
 use Yansongda\Pay\Pay;
 
-class AliPayServiceV2
+class AliPayServiceV2 extends BaseService
 {
 
     public function preparePay(array $data): array
@@ -20,7 +20,7 @@ class AliPayServiceV2
             return [
                 'status'  => false,
                 'code'    => ResponseError::ERROR_404,
-                'message' => 'Order not found'
+                'message' => __('errors.' . ResponseError::ORDER_NOT_FOUND, locale: $this->language)
             ];
         }
 
@@ -30,7 +30,7 @@ class AliPayServiceV2
 
         $totalPrice = ceil($cny->id == $order->currency_id ? $order->total_price : $order->total_price * ($cny?->rate ?: 1));
 
-        $data['order_number'] = Helper::generateNumber('HE', 20);
+        $data['order_number'] = Helper::generateNumber("HE", 20);
         $data['pay_amount']   = $totalPrice;
         $data['title']        = "按訂單付款";
 
@@ -49,14 +49,9 @@ class AliPayServiceV2
             'out_trade_no'  => $data['order_number'],
             'total_amount'  => $data['pay_amount'],
             'subject'       => rawurlencode($data['title']),
-            '_config'       => 'default',
         ];
 
-        return Pay::alipay($config)->app([
-            'out_trade_no' => time(),
-            'total_amount' => '0.01',
-            'subject' => 'yansongda 测试 - 01',
-        ]);
+        return Pay::alipay($config)->app($order);
     }
 
 }

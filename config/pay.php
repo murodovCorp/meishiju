@@ -54,7 +54,6 @@ return [
         //    // 选填-默认为正常模式。可选为： MODE_NORMAL, MODE_SANDBOX, MODE_SERVICE
         //    'mode' => Pay::MODE_SANDBOX,
         //],
-
         /*'default' => [
             // 必填-支付宝分配的 app_id
             'app_id' => '2016082000295641',
@@ -78,13 +77,13 @@ return [
             'mode' => Pay::MODE_SANDBOX,
         ],*/
     ],
-   'wechat' => [
+    'wechat' => [
         'default' => [
-          /*
-                v1：2E1641C482B5B5B0B29E15131881DF5768B16A63
-                v2：4FXyBb3NgYSTfxsFyicS57jxOLDS2TlG
-                v3：4FXyBb3NgYSTfxsFyicS57jxOLDS2TlG
-          */
+            /*
+                  v1：2E1641C482B5B5B0B29E15131881DF5768B16A63
+                  v2：4FXyBb3NgYSTfxsFyicS57jxOLDS2TlG
+                  v3：4FXyBb3NgYSTfxsFyicS57jxOLDS2TlG
+            */
             // 必填-商户号，服务商模式下为服务商商户号
             'mch_id' => '1650190961',
             // 选填-v2商户私钥

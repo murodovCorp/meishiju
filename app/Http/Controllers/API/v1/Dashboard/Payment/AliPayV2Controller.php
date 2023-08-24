@@ -33,13 +33,13 @@ class AliPayV2Controller extends Controller
     public function prepay(StripeRequest $request): JsonResponse
     {
         try {
-            $result = $this->service->preparePay($request->validated());
+            $result = $this->service->preparePay($request->all());
 
             if (!data_get($result, 'status')) {
                 return $this->onErrorResponse($result);
             }
 
-            return $this->successResponse('success', $result);
+            return $this->successResponse('success', data_get($result, 'data'));
         } catch (Throwable $e) {
 
             $this->error($e);
@@ -58,13 +58,13 @@ class AliPayV2Controller extends Controller
 
         try {
             $data = $alipay->callback();
-            Log::info('支付宝回调：notify',[$data]);
+            Log::info('bosya tr：notify',[$data]);
 
         } catch (ContainerException|InvalidParamsException $e) {
 
             $message = $e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine() . ' ' . $e->getCode();
 
-            Log::error($message, $request->all());
+            Log::error("bosya: $message", $request->all());
 
             return $this->onErrorResponse(['message' => $message]);
         }

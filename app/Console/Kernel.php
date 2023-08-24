@@ -18,13 +18,13 @@ class Kernel extends ConsoleKernel
     {
         $time = Settings::adminSettings()->where('key', 'order_auto_remove')->first()?->value ?? 5;
 
-        $schedule->command('email:send:by:time')->hourly();
+//        $schedule->command('email:send:by:time')->hourly();
         $schedule->command('remove:expired:closed:dates')->daily();
         $schedule->command('remove:expired:stories')->daily();
         $schedule->command('order:auto:remove')->hourlyAt("*/$time");
 
 //         $schedule->command('truncate:telescope')->daily();
-        $schedule->command('update:products:galleries')->hourly()->withoutOverlapping()->runInBackground();
+//        $schedule->command('update:products:galleries')->hourly()->withoutOverlapping()->runInBackground();
     }
 
     /**
