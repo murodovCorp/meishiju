@@ -18,6 +18,7 @@ use App\Models\ProductTranslation;
 use App\Models\Settings;
 use App\Models\Shop;
 use App\Models\Stock;
+use App\Models\Transaction;
 use App\Repositories\CoreRepository;
 use App\Repositories\Interfaces\OrderRepoInterface;
 use App\Repositories\ReportRepository\ChartRepository;
@@ -64,9 +65,10 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
      * @param array $filter
      * @param string $paginate
      * @param array $with
+     * @param bool $isUser
      * @return Paginator
      */
-    public function ordersPaginate(array $filter = [], string $paginate = 'simplePaginate', array $with = []): Paginator
+    public function ordersPaginate(array $filter = [], string $paginate = 'simplePaginate', array $with = [], bool $isUser = false): Paginator
     {
         /** @var Order $order */
         $order = $this->model();
@@ -86,6 +88,10 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
             ->with($with)
             ->filter($filter)
             ->updatedDate($this->updatedDate)
+            ->when(
+                !$isUser,
+                fn($q) => $q->whereHas('transactions', fn($q) => $q->where('status', Transaction::STATUS_PAID))
+            )
             ->orderBy(data_get($filter, 'column', 'id'), data_get($filter, 'sort', 'desc'))
             ->$paginate(data_get($filter, 'perPage', 10));
     }

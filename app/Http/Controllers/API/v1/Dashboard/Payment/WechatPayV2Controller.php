@@ -61,7 +61,7 @@ class WechatPayV2Controller extends Controller
         $config = config('pay.wechat.default');
         $wechat = Pay::wechat($config);
         $data = $wechat->callback();
-        Log::info('微信回调：notify', [$data, 'req' => $request->all()]);
+        Log::info('wechat：', [$data, 'req' => $request->all()]);
 
         return $this->successResponse('success', $data);
     }

@@ -102,7 +102,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read Collection|PaymentProcess[] $paymentProcess
  * @property-read int $payment_process_count
  * @property-read int|null $tokens_count
- * @property-read Wallet|null $wallet
+ * @property-read Wallet|null|Builder $wallet
  * @property static|void $create
  * @property Collection|Activity[] $activities
  * @property int $activities_count

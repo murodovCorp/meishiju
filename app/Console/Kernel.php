@@ -16,7 +16,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        $time = Settings::adminSettings()->where('key', 'order_auto_remove')->first()?->value ?? 5;
+        $time = Settings::adminSettings()->where('key', 'order_auto_remove')->first()?->value ?? 15;
 
 //        $schedule->command('email:send:by:time')->hourly();
         $schedule->command('remove:expired:closed:dates')->daily();

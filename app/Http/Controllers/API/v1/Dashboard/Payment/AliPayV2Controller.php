@@ -10,6 +10,7 @@ use App\Traits\OnResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Psr\Http\Message\ResponseInterface;
 use Throwable;
 use Yansongda\Pay\Exception\ContainerException;
 use Yansongda\Pay\Exception\InvalidParamsException;
@@ -33,13 +34,25 @@ class AliPayV2Controller extends Controller
     public function prepay(StripeRequest $request): JsonResponse
     {
         try {
+            
             $result = $this->service->preparePay($request->all());
 
             if (!data_get($result, 'status')) {
                 return $this->onErrorResponse($result);
             }
 
-            return $this->successResponse('success', data_get($result, 'data'));
+            /** @var ResponseInterface $data */
+            $data = $result['data'];
+
+            $responseBody = $data->getBody()->getContents();
+
+            parse_str($responseBody, $json);
+
+            $bizContent = json_decode(urldecode(data_get($json, 'biz_content')), true);
+
+            $json['biz_content'] = $bizContent;
+
+            return $this->successResponse('success', $json);
         } catch (Throwable $e) {
 
             $this->error($e);
@@ -47,7 +60,6 @@ class AliPayV2Controller extends Controller
             return $this->onErrorResponse([
                 'message' => $e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine() . ' ' . $e->getCode(),
             ]);
-
         }
     }
 

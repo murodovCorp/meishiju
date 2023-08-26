@@ -9,9 +9,7 @@ use App\Http\Requests\Order\UserStoreRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Cart;
 use App\Models\Order;
-use App\Models\PushNotification;
 use App\Models\Settings;
-use App\Models\User;
 use App\Repositories\Interfaces\OrderRepoInterface;
 use App\Services\Interfaces\OrderServiceInterface;
 use App\Services\OrderService\OrderReviewService;
@@ -48,7 +46,7 @@ class OrderController extends UserBaseController
     {
         $filter = $request->merge(['user_id' => auth('sanctum')->id()])->all();
 
-        $orders = $this->orderRepository->ordersPaginate($filter, 'paginate');
+        $orders = $this->orderRepository->ordersPaginate($filter, 'paginate', isUser: true);
 
         return OrderResource::collection($orders);
     }
@@ -104,55 +102,10 @@ class OrderController extends UserBaseController
             return $this->onErrorResponse($result);
         }
 
-        $tokens = $this->tokens($result);
-
-        $this->sendNotification(
-            data_get($tokens, 'tokens'),
-            "New order was created",
-            data_get($result, 'data.id'),
-            data_get($result, 'data')?->setAttribute('type', PushNotification::NEW_ORDER)?->only(['id', 'status', 'type']),
-            data_get($tokens, 'ids', [])
-        );
-
         return $this->successResponse(
             __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_CREATED, locale: $this->language),
             $this->orderRepository->reDataOrder(data_get($result, 'data'))
         );
-    }
-
-    public function tokens($result): array
-    {
-        $adminFirebaseTokens = User::with([
-            'roles' => fn($q) => $q->where('name', 'admin')
-        ])
-            ->whereHas('roles', fn($q) => $q->where('name', 'admin') )
-            ->whereNotNull('firebase_token')
-            ->pluck('firebase_token', 'id')
-            ->toArray();
-
-        $sellersFirebaseTokens = User::with([
-            'shop' => fn($q) => $q->where('id', data_get($result, 'data.shop_id'))
-        ])
-            ->whereHas('shop', fn($q) => $q->where('id', data_get($result, 'data.shop_id')))
-            ->whereNotNull('firebase_token')
-            ->pluck('firebase_token', 'id')
-            ->toArray();
-
-        $aTokens = [];
-        $sTokens = [];
-
-        foreach ($adminFirebaseTokens as $adminToken) {
-            $aTokens = array_merge($aTokens, is_array($adminToken) ? array_values($adminToken) : [$adminToken]);
-        }
-
-        foreach ($sellersFirebaseTokens as $sellerToken) {
-            $sTokens = array_merge($sTokens, is_array($sellerToken) ? array_values($sellerToken) : [$sellerToken]);
-        }
-
-        return [
-            'tokens' => array_values(array_unique(array_merge($aTokens, $sTokens))),
-            'ids'    => array_merge(array_keys($adminFirebaseTokens), array_keys($sellersFirebaseTokens))
-        ];
     }
 
     /**

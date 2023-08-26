@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Order;
 use App\Models\Settings;
+use App\Models\Transaction;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -41,13 +42,18 @@ class OrderAutoRemove extends Command
      */
     public function handle(): int
     {
-		$time = Settings::adminSettings()->where('key', 'order_auto_remove')->first()?->value ?? 5;
+		$time = Settings::adminSettings()->where('key', 'order_auto_remove')->first()?->value ?? 15;
 		$time = date('Y-m-d 23:59:59', strtotime("-$time minute"));
 
-        $orders = Order::where('created_at', '<=', $time)
+        $orders = Order::whereDoesntHave('transactions', fn($q) => $q->where('status', Transaction::STATUS_PAID))
+            ->where('created_at', '<=', $time)
             ->where('status', Order::STATUS_NEW)
             ->get();
 
+        Log::error('count', [
+            count($orders),
+            $orders->pluck('id')->toArray()
+        ]);
         foreach ($orders as $order) {
 
             try {

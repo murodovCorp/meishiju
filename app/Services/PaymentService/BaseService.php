@@ -2,18 +2,24 @@
 
 namespace App\Services\PaymentService;
 
+use App\Models\Order;
 use App\Models\PaymentProcess;
 use App\Models\Payout;
+use App\Models\PushNotification;
 use App\Models\Shop;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WalletHistory;
 use App\Services\CoreService;
 use App\Services\SubscriptionService\SubscriptionService;
+use App\Traits\Notification;
 use Illuminate\Support\Str;
 
 class BaseService extends CoreService
 {
+
+    use Notification;
+
     protected function getModelClass(): string
     {
         return Payout::class;
@@ -56,6 +62,16 @@ class BaseService extends CoreService
                 'status'         => $status,
             ]);
 
+            $tokens = $this->tokens($paymentProcess->order);
+
+            $this->sendNotification(
+                data_get($tokens, 'tokens'),
+                "New order was created",
+                $paymentProcess->order->id,
+                $paymentProcess->order?->setAttribute('type', PushNotification::NEW_ORDER)?->only(['id', 'status', 'type']),
+                data_get($tokens, 'ids', [])
+            );
+
             return;
         }
 
@@ -93,4 +109,41 @@ class BaseService extends CoreService
         }
 
     }
+
+
+    public function tokens(Order $order): array
+    {
+        $adminFirebaseTokens = User::with([
+            'roles' => fn($q) => $q->where('name', 'admin')
+        ])
+            ->whereHas('roles', fn($q) => $q->where('name', 'admin') )
+            ->whereNotNull('firebase_token')
+            ->pluck('firebase_token', 'id')
+            ->toArray();
+
+        $sellersFirebaseTokens = User::with([
+            'shop' => fn($q) => $q->where('id', $order->shop_id)
+        ])
+            ->whereHas('shop', fn($q) => $q->where('id', $order->shop_id))
+            ->whereNotNull('firebase_token')
+            ->pluck('firebase_token', 'id')
+            ->toArray();
+
+        $aTokens = [];
+        $sTokens = [];
+
+        foreach ($adminFirebaseTokens as $adminToken) {
+            $aTokens = array_merge($aTokens, is_array($adminToken) ? array_values($adminToken) : [$adminToken]);
+        }
+
+        foreach ($sellersFirebaseTokens as $sellerToken) {
+            $sTokens = array_merge($sTokens, is_array($sellerToken) ? array_values($sellerToken) : [$sellerToken]);
+        }
+
+        return [
+            'tokens' => array_values(array_unique(array_merge($aTokens, $sTokens))),
+            'ids'    => array_merge(array_keys($adminFirebaseTokens), array_keys($sellersFirebaseTokens))
+        ];
+    }
+
 }
