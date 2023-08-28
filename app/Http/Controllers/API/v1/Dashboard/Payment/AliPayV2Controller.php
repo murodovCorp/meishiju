@@ -52,7 +52,7 @@ class AliPayV2Controller extends Controller
 
             $json['biz_content'] = $bizContent;
 
-            return $this->successResponse('success', $json);
+            return $this->successResponse('success', $responseBody);
         } catch (Throwable $e) {
 
             $this->error($e);
@@ -60,6 +60,7 @@ class AliPayV2Controller extends Controller
             return $this->onErrorResponse([
                 'message' => $e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine() . ' ' . $e->getCode(),
             ]);
+
         }
     }
 

@@ -28,7 +28,7 @@ return [
             // 选填-服务商模式下的服务商 id，当 mode 为 Pay::MODE_SERVICE 时使用该参数
             'service_provider_id' => '',
             // 选填-默认为正常模式。可选为： MODE_NORMAL, MODE_SANDBOX, MODE_SERVICE
-            'mode' => Pay::MODE_NORMAL,
+            'mode' => Pay::MODE_SANDBOX,
         ],
         //沙箱配置
         //'default' => [
@@ -119,7 +119,7 @@ return [
                 //'45F59D4DABF31918AFCEC556D5D2C6E376675D57' => __DIR__.'/Cert/wechatPublicKey.crt',
             ],
             // 选填-默认为正常模式。可选为： MODE_NORMAL, MODE_SERVICE
-            'mode' => Pay::MODE_NORMAL,
+            'mode' => Pay::MODE_SANDBOX,
         ],
     ],
 //    'unipay' => [
