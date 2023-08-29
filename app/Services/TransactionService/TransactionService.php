@@ -125,6 +125,7 @@ class TransactionService extends CoreService
             return $payment;
         }
 
+        /** @var Transaction $transaction */
         $transaction = $subscription->createTransaction([
             'price'              => $subscription->price,
             'user_id'            => auth('sanctum')->id(),

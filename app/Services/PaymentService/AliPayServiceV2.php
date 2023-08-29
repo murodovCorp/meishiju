@@ -6,6 +6,7 @@ use App\Helpers\Helper;
 use App\Helpers\ResponseError;
 use App\Models\Currency;
 use App\Models\Order;
+use App\Models\Payment;
 use Psr\Http\Message\ResponseInterface;
 use Yansongda\Pay\Pay;
 
@@ -31,8 +32,18 @@ class AliPayServiceV2 extends BaseService
         $totalPrice = ceil($cny->id == $order->currency_id ? $order->total_price * $order->rate : $order->total_price * $cny->rate);
 
         $data['order_number'] = Helper::generateNumber("HE", 20);
-        $data['pay_amount']   = $totalPrice;
+        $data['pay_amount']   = 0.01;
         $data['title']        = "按訂單付款";
+
+        $order->createTransaction([
+            'payment_trx_id'        => $data['order_number'],
+            'price'                 => $totalPrice,
+            'user_id'               => $order->user_id,
+            'payment_sys_id'        => Payment::where('tag', 'alipay')->first()?->id,
+            'note'                  => $order->id,
+            'perform_time'          => now(),
+            'status_description'    => 'Transaction for order #' . $order->id
+        ]);
 
         return [
             'status' => true,

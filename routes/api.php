@@ -1166,9 +1166,11 @@ Route::group(['prefix' => 'v1', 'middleware' => ['block.ip']], function () {
 //支付宝支付
 Route::get('alipay-prepay', [Payment\AliPayV2Controller::class, 'prepay']);
 Route::get('alipay-notify', [Payment\AliPayV2Controller::class, 'notify']);
+Route::get('alipay-paid', [Payment\AliPayV2Controller::class, 'paid']);
 //微信支付
 Route::get('wechat-prepay', [Payment\WechatPayV2Controller::class, 'prepay']);
 Route::get('wechat-notify', [Payment\WechatPayV2Controller::class, 'notify']);
+Route::get('wechat-paid', [Payment\WechatPayV2Controller::class, 'paid']);
 Route::get('wechat-getOpenId', [Payment\WechatPayV2Controller::class, 'getOpenId']);
 
 if (file_exists(__DIR__ . '/booking.php')) {

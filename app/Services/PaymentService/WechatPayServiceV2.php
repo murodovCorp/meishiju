@@ -5,6 +5,7 @@ namespace App\Services\PaymentService;
 use App\Helpers\ResponseError;
 use App\Models\Currency;
 use App\Models\Order;
+use App\Models\Payment;
 use Yansongda\Pay\Pay;
 use Yansongda\Supports\Collection;
 
@@ -40,8 +41,18 @@ class WechatPayServiceV2 extends BaseService
         $data['out_trade_no']   = time().'';
         $data['description']    = "按訂單付款";
         $data['amount']         = [
-            'total' => ceil($totalPrice * 100),
+            'total' => ceil(0.1 * 100),
         ];
+
+        $order->createTransaction([
+            'payment_trx_id'        => $data['out_trade_no'],
+            'price'                 => $totalPrice,
+            'user_id'               => $order->user_id,
+            'payment_sys_id'        => Payment::where('tag', 'we-chat')->first()?->id,
+            'note'                  => $order->id,
+            'perform_time'          => now(),
+            'status_description'    => 'Transaction for order #' . $order->id
+        ]);
 
         return Pay::wechat(config('pay.wechat'))->app($data);
     }
