@@ -43,17 +43,13 @@ class OrderAutoRemove extends Command
     public function handle(): int
     {
 		$time = Settings::adminSettings()->where('key', 'order_auto_remove')->first()?->value ?? 15;
-		$time = date('Y-m-d 23:59:59', strtotime("-$time minute"));
+		$time = date('Y-m-d H:i:s', strtotime("-$time minute"));
 
         $orders = Order::whereDoesntHave('transactions', fn($q) => $q->where('status', Transaction::STATUS_PAID))
             ->where('created_at', '<=', $time)
             ->where('status', Order::STATUS_NEW)
             ->get();
 
-        Log::error('count', [
-            count($orders),
-            $orders->pluck('id')->toArray()
-        ]);
         foreach ($orders as $order) {
 
             try {
