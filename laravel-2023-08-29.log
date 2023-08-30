@@ -72,3 +72,52 @@
 [2023-08-29 15:19:32] local1.ERROR: $result [{"Yansongda\\Supports\\Collection":{"msg":"Business Failed","code":"40004","sub_msg":"参数无效：支付宝订单号和外部订单号不能同时为空","sub_code":"ACQ.INVALID_PARAMETER","receipt_amount":"0.00","point_amount":"0.00","buyer_pay_amount":"0.00","invoice_amount":"0.00"}}] 
 [2023-08-29 15:21:06] local1.ERROR: alipay {"order_id":"2824"} 
 [2023-08-29 15:21:08] local1.ERROR: $result [{"Yansongda\\Supports\\Collection":{"msg":"Business Failed","code":"40004","out_trade_no":"1693320334","sub_msg":"交易不存在","sub_code":"ACQ.TRADE_NOT_EXIST","receipt_amount":"0.00","point_amount":"0.00","buyer_pay_amount":"0.00","invoice_amount":"0.00"}}] 
+[2023-08-29 15:23:54] local1.ERROR: alipay {"order_id":"2824"} 
+[2023-08-29 15:23:56] local1.ERROR: $result [{"Yansongda\\Supports\\Collection":{"msg":"Business Failed","code":"40004","sub_msg":"参数无效：支付宝订单号和外部订单号不能同时为空","sub_code":"ACQ.INVALID_PARAMETER","receipt_amount":"0.00","point_amount":"0.00","buyer_pay_amount":"0.00","invoice_amount":"0.00"}}] 
+[2023-08-29 15:24:04] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:24:06] local1.ERROR: wechat:  /var/www/backend/vendor/yansongda/pay/src/Functions.php 203 5003 {"order_id":"2824"} 
+[2023-08-29 15:24:25] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:24:25] local1.ERROR: wechat: Params Error /var/www/backend/vendor/yansongda/pay/src/Plugin/Wechat/Pay/Common/QueryPlugin.php 40 4006 {"order_id":"2824"} 
+[2023-08-29 15:24:34] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:24:34] local1.ERROR: wechat: Params Error /var/www/backend/vendor/yansongda/pay/src/Plugin/Wechat/Pay/Common/QueryPlugin.php 40 4006 {"order_id":"2824"} 
+[2023-08-29 15:24:45] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:24:45] local1.ERROR: wechat: Params Error /var/www/backend/vendor/yansongda/pay/src/Plugin/Wechat/Pay/Common/QueryPlugin.php 40 4006 {"order_id":"2824"} 
+[2023-08-29 15:24:57] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:25:13] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:28:10] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:28:10] local1.ERROR: wechat: Params Error /var/www/backend/vendor/yansongda/pay/src/Plugin/Wechat/Pay/Common/QueryPlugin.php 40 4006 {"order_id":"2824"} 
+[2023-08-29 15:28:19] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:28:19] local1.ERROR: wechat: Params Error /var/www/backend/vendor/yansongda/pay/src/Plugin/Wechat/Pay/Common/QueryPlugin.php 40 4006 {"order_id":"2824"} 
+[2023-08-29 15:28:32] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:28:49] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:29:05] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:29:29] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:29:37] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:29:40] local1.ERROR: $result [{"Yansongda\\Supports\\Collection":{"amount":{"currency":"CNY","payer_currency":"CNY","payer_total":10,"total":10},"appid":"wx1a246ef9635faea5","attach":"","bank_type":"ABC_DEBIT","mchid":"1650190961","out_trade_no":"1693320334","payer":{"openid":"o_NcG5-U80jAyUNza3EkgaKNeDfU"},"promotion_detail":[],"success_time":"2023-08-29T22:45:44+08:00","trade_state":"SUCCESS","trade_state_desc":"支付成功","trade_type":"APP","transaction_id":"4200001927202308295104908641"}}] 
+[2023-08-29 15:29:46] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:29:48] local1.ERROR: $result [{"Yansongda\\Supports\\Collection":{"amount":{"currency":"CNY","payer_currency":"CNY","payer_total":10,"total":10},"appid":"wx1a246ef9635faea5","attach":"","bank_type":"ABC_DEBIT","mchid":"1650190961","out_trade_no":"1693320334","payer":{"openid":"o_NcG5-U80jAyUNza3EkgaKNeDfU"},"promotion_detail":[],"success_time":"2023-08-29T22:45:44+08:00","trade_state":"SUCCESS","trade_state_desc":"支付成功","trade_type":"APP","transaction_id":"4200001927202308295104908641"}}] 
+[2023-08-29 15:31:45] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:31:49] local1.ERROR: $result [{"Yansongda\\Supports\\Collection":{"amount":{"currency":"CNY","payer_currency":"CNY","payer_total":10,"total":10},"appid":"wx1a246ef9635faea5","attach":"","bank_type":"ABC_DEBIT","mchid":"1650190961","out_trade_no":"1693320334","payer":{"openid":"o_NcG5-U80jAyUNza3EkgaKNeDfU"},"promotion_detail":[],"success_time":"2023-08-29T22:45:44+08:00","trade_state":"SUCCESS","trade_state_desc":"支付成功","trade_type":"APP","transaction_id":"4200001927202308295104908641"}}] 
+[2023-08-29 15:32:03] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:32:09] local1.ERROR: wechat: cURL error 28: Operation timed out after 5001 milliseconds with 0 bytes received (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for https://api.mch.weixin.qq.com/v3/certificates /var/www/backend/vendor/yansongda/pay/src/Provider/AbstractProvider.php 128 5001 {"order_id":"2824"} 
+[2023-08-29 15:32:20] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:32:28] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:33:09] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:42:42] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:42:42] local1.ERROR: wechat: Params Error /var/www/backend/vendor/yansongda/pay/src/Plugin/Wechat/Pay/Common/QueryPlugin.php 40 4006 {"order_id":"2824"} 
+[2023-08-29 15:43:02] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:43:02] local1.ERROR: wechat: Params Error /var/www/backend/vendor/yansongda/pay/src/Plugin/Wechat/Pay/Common/QueryPlugin.php 40 4006 {"order_id":"2824"} 
+[2023-08-29 15:43:03] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:43:03] local1.ERROR: wechat: Params Error /var/www/backend/vendor/yansongda/pay/src/Plugin/Wechat/Pay/Common/QueryPlugin.php 40 4006 {"order_id":"2824"} 
+[2023-08-29 15:43:15] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:43:19] local1.ERROR: $result [{"Yansongda\\Supports\\Collection":{"amount":{"currency":"CNY","payer_currency":"CNY","payer_total":10,"total":10},"appid":"wx1a246ef9635faea5","attach":"","bank_type":"ABC_DEBIT","mchid":"1650190961","out_trade_no":"1693320334","payer":{"openid":"o_NcG5-U80jAyUNza3EkgaKNeDfU"},"promotion_detail":[],"success_time":"2023-08-29T22:45:44+08:00","trade_state":"SUCCESS","trade_state_desc":"支付成功","trade_type":"APP","transaction_id":"4200001927202308295104908641"}}] 
+[2023-08-29 15:43:35] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:43:37] local1.ERROR: $result [{"Yansongda\\Supports\\Collection":{"amount":{"currency":"CNY","payer_currency":"CNY","payer_total":10,"total":10},"appid":"wx1a246ef9635faea5","attach":"","bank_type":"ABC_DEBIT","mchid":"1650190961","out_trade_no":"1693320334","payer":{"openid":"o_NcG5-U80jAyUNza3EkgaKNeDfU"},"promotion_detail":[],"success_time":"2023-08-29T22:45:44+08:00","trade_state":"SUCCESS","trade_state_desc":"支付成功","trade_type":"APP","transaction_id":"4200001927202308295104908641"}}] 
+[2023-08-29 15:43:54] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:43:56] local1.ERROR: $result [{"Yansongda\\Supports\\Collection":{"amount":{"currency":"CNY","payer_currency":"CNY","payer_total":10,"total":10},"appid":"wx1a246ef9635faea5","attach":"","bank_type":"ABC_DEBIT","mchid":"1650190961","out_trade_no":"1693320334","payer":{"openid":"o_NcG5-U80jAyUNza3EkgaKNeDfU"},"promotion_detail":[],"success_time":"2023-08-29T22:45:44+08:00","trade_state":"SUCCESS","trade_state_desc":"支付成功","trade_type":"APP","transaction_id":"4200001927202308295104908641"}}] 
+[2023-08-29 15:45:21] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:45:24] local1.ERROR: $result [{"Yansongda\\Supports\\Collection":{"amount":{"currency":"CNY","payer_currency":"CNY","payer_total":10,"total":10},"appid":"wx1a246ef9635faea5","attach":"","bank_type":"ABC_DEBIT","mchid":"1650190961","out_trade_no":"1693320334","payer":{"openid":"o_NcG5-U80jAyUNza3EkgaKNeDfU"},"promotion_detail":[],"success_time":"2023-08-29T22:45:44+08:00","trade_state":"SUCCESS","trade_state_desc":"支付成功","trade_type":"APP","transaction_id":"4200001927202308295104908641"}}] 
+[2023-08-29 15:47:00] local1.ERROR: wechat {"order_id":"2824"} 
+[2023-08-29 15:47:04] local1.ERROR: $result [{"Yansongda\\Supports\\Collection":{"amount":{"currency":"CNY","payer_currency":"CNY","payer_total":10,"total":10},"appid":"wx1a246ef9635faea5","attach":"","bank_type":"ABC_DEBIT","mchid":"1650190961","out_trade_no":"1693320334","payer":{"openid":"o_NcG5-U80jAyUNza3EkgaKNeDfU"},"promotion_detail":[],"success_time":"2023-08-29T22:45:44+08:00","trade_state":"SUCCESS","trade_state_desc":"支付成功","trade_type":"APP","transaction_id":"4200001927202308295104908641"}}] 
+[2023-08-29 15:47:06] local1.ERROR: alipay {"order_id":"2824"} 
+[2023-08-29 15:47:08] local1.ERROR: $result [{"Yansongda\\Supports\\Collection":{"msg":"Business Failed","code":"40004","out_trade_no":"1693320334","sub_msg":"交易不存在","sub_code":"ACQ.TRADE_NOT_EXIST","receipt_amount":"0.00","point_amount":"0.00","buyer_pay_amount":"0.00","invoice_amount":"0.00"}}] 

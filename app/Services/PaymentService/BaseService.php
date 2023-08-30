@@ -2,6 +2,7 @@
 
 namespace App\Services\PaymentService;
 
+use App\Helpers\ResponseError;
 use App\Models\Order;
 use App\Models\PaymentProcess;
 use App\Models\Payout;
@@ -13,11 +14,14 @@ use App\Models\WalletHistory;
 use App\Services\CoreService;
 use App\Services\SubscriptionService\SubscriptionService;
 use App\Traits\Notification;
+use Exception;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
+use Yansongda\Pay\Pay;
 
 class BaseService extends CoreService
 {
-
     use Notification;
 
     protected function getModelClass(): string
@@ -110,7 +114,6 @@ class BaseService extends CoreService
 
     }
 
-
     public function tokens(Order $order): array
     {
         $adminFirebaseTokens = User::with([
@@ -146,4 +149,90 @@ class BaseService extends CoreService
         ];
     }
 
+    public function notify(array $data): array
+    {
+
+        try {
+            Log::error('alipay', $data);
+        } catch (Throwable) {}
+
+        try {
+
+            $id = data_get($data, 'out_trade_no');
+
+            if (empty($id) && data_get($data, 'order_id')) {
+
+                /** @var Order|null $order */
+                $order = Order::with(['transaction'])->find(data_get($data, 'order_id'));
+
+                $id = $order?->transaction?->payment_trx_id;
+
+            }
+
+            if (empty($order)) {
+                $order = Order::with([
+                    'transaction' => fn($q) => $q->where('payment_trx_id', $id)->whereNotNull('payment_trx_id')
+                ])
+                    ->whereHas('transactions', fn($q) => $q->where('payment_trx_id', $id)->whereNotNull('payment_trx_id'))
+                    ->first();
+            }
+
+            if ($order?->transaction?->paymentSystem?->tag === 'alipay') {
+
+                $config = config('pay.alipay.default');
+
+                $result = Pay::alipay($config)->find(['out_trade_no' => $id]);
+
+            } else if ($order?->transaction?->paymentSystem?->tag === 'we-chat') {
+
+                $config = config('pay.wechat.default');
+
+                $result = Pay::wechat($config)->find(['out_trade_no' => $id]);
+
+            } else {
+                throw new Exception("not alipay or wechat: {$order?->transaction?->paymentSystem?->tag}");
+            }
+
+            try {
+                Log::error('$result', [$result]);
+            } catch (Throwable){}
+
+            if (
+                data_get($result, 'trade_status') === 'TRADE_SUCCESS' ||
+                data_get($result, 'trade_state') === 'SUCCESS'
+            ) {
+
+                $order->transaction?->update([
+                    'status' => Transaction::STATUS_PAID,
+                ]);
+
+            } else if (data_get($result, 'trade_status') === 'NOTPAY') {
+
+                $order->transaction?->update([
+                    'status' => Transaction::STATUS_CANCELED,
+                ]);
+
+            }
+
+            return [
+                'status'  => true,
+                'message' => __('errors.' . ResponseError::NO_ERROR, locale: $this->language),
+                'data'    => $order,
+            ];
+        } catch (Throwable $e) {
+
+            $message = $e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine() . ' ' . $e->getCode();
+
+            try {
+                Log::error("alipay: $message", $data);
+            } catch (Throwable) {}
+
+            return [
+                'status'  => false,
+                'code'    => ResponseError::ERROR_400,
+                'message' => __('errors.' . ResponseError::ERROR_400, locale: $this->language),
+            ];
+        }
+
+    }
 }

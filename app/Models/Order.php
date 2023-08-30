@@ -367,14 +367,14 @@ class Order extends Model
             ->when(data_get($filter, 'delivery_type'), fn($q, $deliveryType) => $q->where('delivery_type', $deliveryType))
             ->when(data_get($filter, 'date_from'), function (Builder $query, $dateFrom) use ($filter) {
 
-                $dateFrom = date('Y-m-d', strtotime($dateFrom . ' -1 day'));
+                $dateFrom = date('Y-m-d', strtotime($dateFrom));
                 $dateTo = data_get($filter, 'date_to', date('Y-m-d'));
 
-                $dateTo = date('Y-m-d', strtotime($dateTo . ' +1 day'));
+                $dateTo = date('Y-m-d', strtotime($dateTo));
 
                 $query->where([
-                    ['created_at', '>', $dateFrom],
-                    ['created_at', '<', $dateTo],
+                    ['created_at', '>=', $dateFrom],
+                    ['created_at', '<=', $dateTo],
                 ]);
             })
             ->when(data_get($filter, 'delivery_date_from'), function (Builder $query, $dateFrom) use ($filter) {

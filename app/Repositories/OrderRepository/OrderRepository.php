@@ -22,6 +22,7 @@ use App\Models\Transaction;
 use App\Repositories\CoreRepository;
 use App\Repositories\Interfaces\OrderRepoInterface;
 use App\Repositories\ReportRepository\ChartRepository;
+use App\Services\PaymentService\BaseService;
 use App\Services\Yandex\YandexService;
 use App\Traits\SetCurrency;
 use Illuminate\Contracts\Pagination\Paginator;
@@ -359,34 +360,47 @@ class OrderRepository extends CoreRepository implements OrderRepoInterface
     {
         $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
-        return $this->model()
+        /** @var Order $order */
+        $order = $this->model()
             ->withTrashed()
-            ->with([
-                'user' => fn($u) => $u->withCount(['orders' => fn($u) => $u->where('status', Order::STATUS_DELIVERED)])
-                    ->withSum(['orders' => fn($u) => $u->where('status', Order::STATUS_DELIVERED)], 'total_price'),
-                'review',
-                'pointHistories',
-                'currency' => fn($c) => $c->select('id', 'title', 'symbol'),
-                'deliveryMan' => fn($d) => $d->withAvg('assignReviews', 'rating'),
-                'deliveryMan.deliveryManSetting',
-                'coupon',
-                'shop:id,location,tax,background_img,logo_img,uuid,phone,delivery_price',
-                'shop.translation' => fn($st) => $st->where('locale', $this->language)->orWhere('locale', $locale),
-                'orderDetails' => fn($od) => $od->whereNull('parent_id'),
-                'orderDetails.stock.countable.translation' => fn($ct) => $ct->where('locale', $this->language)->orWhere('locale', $locale),
-                'orderDetails.children.stock.countable.translation' => fn($ct) => $ct->where('locale', $this->language)->orWhere('locale', $locale),
-                'orderDetails.stock.stockExtras.group.translation' => function ($cgt) use($locale) {
-                    $cgt->select('id', 'extra_group_id', 'locale', 'title')
-                        ->where('locale', $this->language)
-                        ->orWhere('locale', $locale);
-                },
-                'orderRefunds',
-                'transaction.paymentSystem',
-                'galleries',
-                'myAddress',
-            ])
+            ->with(['transaction.paymentSystem'])
             ->when($shopId, fn($q) => $q->where('shop_id', $shopId))
             ->find($id);
+
+        $statuses   = [Transaction::STATUS_CANCELED, Transaction::STATUS_PAID];
+        $status     = $order?->transaction?->status;
+        $tag        = $order?->transaction?->paymentSystem?->tag;
+
+        if ($tag === 'alipay' && !in_array($status, $statuses)) {
+            (new BaseService)->notify(['order_id' => $order->id]);
+        } else if($tag === 'we-chat' && !in_array($status, $statuses)) {
+            (new BaseService)->notify(['order_id' => $order->id]);
+        }
+
+        return $order->loadMissing([
+            'transaction.paymentSystem',
+            'user' => fn($u) => $u->withCount(['orders' => fn($u) => $u->where('status', Order::STATUS_DELIVERED)])
+                ->withSum(['orders' => fn($u) => $u->where('status', Order::STATUS_DELIVERED)], 'total_price'),
+            'review',
+            'pointHistories',
+            'currency' => fn($c) => $c->select('id', 'title', 'symbol'),
+            'deliveryMan' => fn($d) => $d->withAvg('assignReviews', 'rating'),
+            'deliveryMan.deliveryManSetting',
+            'coupon',
+            'shop:id,location,tax,background_img,logo_img,uuid,phone,delivery_price',
+            'shop.translation' => fn($st) => $st->where('locale', $this->language)->orWhere('locale', $locale),
+            'orderDetails' => fn($od) => $od->whereNull('parent_id'),
+            'orderDetails.stock.countable.translation' => fn($ct) => $ct->where('locale', $this->language)->orWhere('locale', $locale),
+            'orderDetails.children.stock.countable.translation' => fn($ct) => $ct->where('locale', $this->language)->orWhere('locale', $locale),
+            'orderDetails.stock.stockExtras.group.translation' => function ($cgt) use($locale) {
+                $cgt->select('id', 'extra_group_id', 'locale', 'title')
+                    ->where('locale', $this->language)
+                    ->orWhere('locale', $locale);
+            },
+            'orderRefunds',
+            'galleries',
+            'myAddress',
+        ]);
     }
 
     /**
