@@ -19,6 +19,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Throwable;
 
 class ShopRepository extends CoreRepository implements ShopRepoInterface
 {
@@ -414,7 +415,11 @@ class ShopRepository extends CoreRepository implements ShopRepoInterface
 
         $result = collect($result)->toArray();
 
-        Cache::put('shop-recommended-ids', $cache, 86400); // 1 day
+        try {
+            Cache::put('shop-recommended-ids', $cache, 86400); // 1 day
+        } catch (Throwable $e) {
+
+        }
 
         return array_values($result);
     }

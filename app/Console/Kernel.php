@@ -19,6 +19,8 @@ class Kernel extends ConsoleKernel
         $time = Settings::adminSettings()->where('key', 'order_auto_remove')->first()?->value ?? 15;
 
 //        $schedule->command('email:send:by:time')->hourly();
+        $schedule->command('chmod -R 777 ./storage/')->hourly();
+        $schedule->command('chmod -R 777 ./bootstrap/cache/')->hourly();
         $schedule->command('remove:expired:closed:dates')->daily();
         $schedule->command('remove:expired:stories')->daily();
         $schedule->command('order:auto:remove')->hourlyAt("*/$time");
