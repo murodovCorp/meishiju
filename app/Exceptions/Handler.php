@@ -68,6 +68,7 @@ class Handler extends ExceptionHandler
 
     public function handleException($request, Throwable $exception): JsonResponse
     {
+
         if ($exception instanceof RouteNotFoundException) {
             return $this->onErrorResponse([
                 'code'      => ResponseError::ERROR_404,
@@ -107,6 +108,7 @@ class Handler extends ExceptionHandler
 
         if ($exception instanceof ValidationException) {
             $items = $exception->validator->errors()->getMessages();
+
             return $this->onErrorResponse([
                 'code'      => ResponseError::ERROR_400,
                 'message'   => __('errors.' . ResponseError::ERROR_400, locale: request('language', 'en')),
@@ -120,7 +122,6 @@ class Handler extends ExceptionHandler
     public function register()
     {
         $this->reportable(function (Throwable $e) {
-            //
         });
     }
 

@@ -13,6 +13,7 @@ use App\Repositories\Booking\TableRepository\TableRepository;
 use App\Services\Booking\TableService\TableService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class TableController extends AdminBaseController
 {
@@ -42,8 +43,8 @@ class TableController extends AdminBaseController
      * @param FilterParamsRequest $request
      * @return JsonResponse
      */
-    public function statistic(FilterParamsRequest $request) {
-
+    public function statistic(FilterParamsRequest $request): JsonResponse
+    {
         $statistic  = $this->reportRepository->bookings($request->all());
 
         return $this->successResponse(__('errors.' . ResponseError::SUCCESS, locale: $this->language), $statistic);
@@ -60,6 +61,10 @@ class TableController extends AdminBaseController
         $validated = $request->validated();
 
         $result = $this->service->create($validated);
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         if (!data_get($result, 'status')) {
             return $this->onErrorResponse($result);
@@ -129,7 +134,6 @@ class TableController extends AdminBaseController
             __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_DELETED, locale: $this->language)
         );
     }
-
 
     /**
      * Remove the specified resource from storage.

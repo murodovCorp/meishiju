@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Models\Blog;
 use App\Models\Order;
+use App\Models\ParcelOrder;
 use App\Models\Product;
 use App\Models\Review;
 use App\Models\Shop;
@@ -43,6 +44,10 @@ class ReviewResource extends JsonResource
             'order' => $this->when(
                 $this->reviewable_type === Order::class,
                 OrderResource::make($this->whenLoaded('reviewable'))
+            ),
+            'parcel_order' => $this->when(
+                $this->reviewable_type === ParcelOrder::class,
+                ParcelOrderResource::make($this->whenLoaded('reviewable'))
             ),
             'product' => $this->when(
                 $this->reviewable_type === Product::class,

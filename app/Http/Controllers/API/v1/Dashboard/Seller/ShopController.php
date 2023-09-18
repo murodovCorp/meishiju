@@ -10,7 +10,9 @@ use App\Models\Shop;
 use App\Repositories\Interfaces\ShopRepoInterface;
 use App\Services\Interfaces\ShopServiceInterface;
 use App\Services\ShopServices\ShopActivityService;
+use DB;
 use Illuminate\Http\JsonResponse;
+use Throwable;
 
 class ShopController extends SellerBaseController
 {
@@ -30,7 +32,7 @@ class ShopController extends SellerBaseController
      * Store a newly created resource in storage.
      *
      * @param StoreRequest $request
-     * @return JsonResponse|
+     * @return JsonResponse
      */
     public function shopCreate(StoreRequest $request): JsonResponse
     {
@@ -74,15 +76,22 @@ class ShopController extends SellerBaseController
             ]);
         }
 
-        /** @var Shop $shop */
+		/** @var Shop $shop */
+		try {
+			DB::table('shop_subscriptions')
+				->where('shop_id', $shop->id)
+				->whereDate('expired_at', '<=', now())
+				->delete();
+		} catch (Throwable) {}
+
         return $this->successResponse(
             __('errors.' . ResponseError::NO_ERROR),
-            ShopResource::make($shop->loadMissing([
-                'translations',
-                'seller.wallet',
-                'subscription.subscription',
-                'tags.translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
-            ]))
+            ShopResource::make($shop->load([
+				'translations',
+				'seller.wallet',
+				'subscription.subscription' => fn($q) => $q->where('expired_at', '>=', now())->where('active', true),
+				'tags.translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
+			]))
         );
     }
 

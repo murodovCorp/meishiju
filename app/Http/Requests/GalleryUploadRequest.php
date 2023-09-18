@@ -15,7 +15,7 @@ class GalleryUploadRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'image' => ['required', 'file'],
+            'image' => ['nullable'],
             'type'  => ['required', 'string', Rule::in(Gallery::TYPES)],
         ];
     }

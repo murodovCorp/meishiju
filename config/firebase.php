@@ -153,7 +153,7 @@ return [
              * Log channels are defined in config/logging.php
              *
              * Successful HTTP messages are logged with the log level 'info'.
-             * Failed HTTP messages are logged with the the log level 'notice'.
+             * Failed HTTP messages are logged with the log level 'notice'.
              *
              * Note: Using the same channel for simple and debug logs will result in
              * two entries per request and response.

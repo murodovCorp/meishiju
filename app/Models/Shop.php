@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\Utility;
 use App\Traits\Loadable;
 use App\Traits\Reviewable;
 use App\Traits\SetCurrency;
@@ -35,6 +36,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $show_type
  * @property boolean $open
  * @property boolean $visibility
+ * @property boolean $verify
  * @property string|null $background_img
  * @property string|null $logo_img
  * @property float $min_amount
@@ -124,19 +126,6 @@ class Shop extends Model
         'approved',
         'rejected',
         'inactive'
-    ];
-
-    const TYPE_SHOP         = 1;
-    const TYPE_RESTAURANT   = 2;
-
-    const TYPES = [
-        self::TYPE_SHOP         => 'shop',
-        self::TYPE_RESTAURANT   => 'restaurant',
-    ];
-
-    const TYPES_BY = [
-        'shop'          => self::TYPE_SHOP,
-        'restaurant'    => self::TYPE_RESTAURANT,
     ];
 
     const DELIVERY_TIME_MINUTE  = 'minute';
@@ -273,6 +262,41 @@ class Shop extends Model
 
     public function scopeFilter($query, $filter)
     {
+        $orders  = [];
+
+        if (data_get($filter, 'address.latitude') && data_get($filter, 'address.longitude')) {
+            DeliveryZone::list()->map(function (DeliveryZone $deliveryZone) use ($filter, &$orders) {
+
+                if (!$deliveryZone->shop_id) {
+                    return null;
+                }
+
+                $shop       = $deliveryZone->shop;
+
+                $location   = data_get($deliveryZone->shop, 'location', []);
+
+                $km         = (new Utility)->getDistance($location, data_get($filter, 'address', []));
+                $rate       = data_get($filter, 'currency.rate', 1);
+
+                $orders[$deliveryZone->shop_id] = (new Utility)->getPriceByDistance($km, $shop, $rate);
+
+                if (
+                    Utility::pointInPolygon(data_get($filter, 'address'), $deliveryZone->address)
+                    && $orders[$deliveryZone->shop_id] > 0
+                ) {
+                    return $deliveryZone->shop_id;
+                }
+
+                unset($orders[$deliveryZone->shop_id]);
+
+                return null;
+            })
+                ->reject(fn($data) => empty($data))
+                ->toArray();
+
+            arsort($orders);
+        }
+
         $query
             ->when(data_get($filter, 'user_id'), function ($q, $userId) {
                 $q->where('user_id', $userId);
@@ -280,14 +304,14 @@ class Shop extends Model
             ->when(data_get($filter, 'status'), function ($q, $status) {
                 $q->where('status', $status);
             })
-            ->when(data_get($filter, 'type'), function ($q, $type) {
-                $q->where('type', data_get(self::TYPES_BY, $type));
-            })
             ->when(isset($filter['open']), function ($q) use($filter) {
                 $q->where('open', $filter['open']);
             })
             ->when(isset($filter['visibility']), function ($q, $visibility) {
                 $q->where('visibility', $visibility);
+            })
+            ->when(isset($filter['verify']), function ($q) use($filter) {
+                $q->where('verify', $filter['verify']);
             })
             ->when(isset($filter['show_type']), function ($q, $showType) {
                 $q->where('show_type', $showType);
@@ -299,13 +323,13 @@ class Shop extends Model
             })
             ->when(data_get($filter, 'bonus'), function (Builder $query) {
                 $query->whereHas('bonus', function ($q) {
-                    $q->where('expired_at', '>=', now());
+                    $q->where('expired_at', '>', now())->where('status', true);
                 });
             })
             ->when(data_get($filter, 'deals'), function (Builder $query) {
                 $query->where(function ($query) {
                     $query->whereHas('bonus', function ($q) {
-                        $q->where('expired_at', '>=', now());
+                        $q->where('expired_at', '>', now())->where('status', true);
                     })->orWhereHas('discounts', function ($q) {
                         $q->where('end', '>=', now())->where('active', 1);
                     });
@@ -317,8 +341,22 @@ class Shop extends Model
                     ->where('to', '>=', '23-00')
                 );
             })
-            ->when(data_get($filter, 'address'), function ($query) use ($filter) {
-                $query->whereHas('deliveryZone');
+            ->when(data_get($filter, 'address'), function ($query) use ($filter, $orders) {
+                $orderBys = ['new', 'old', 'best_sale', 'low_sale', 'high_rating', 'low_rating', 'trust_you'];
+                $orderByIds = implode(',', array_keys($orders));
+
+                $query
+                    ->whereHas('deliveryZone')
+                    ->when($orderByIds, function ($builder) use ($filter, $orderByIds, $orders, $orderBys) {
+
+                        $builder->whereIn('id', array_keys($orders));
+
+                        if (!in_array(data_get($filter, 'order_by'), $orderBys)) {
+                            $builder->orderByRaw("FIELD(shops.id, $orderByIds) ASC");
+                        }
+
+                    });
+
             })
             ->when(data_get($filter, 'search'), function ($query, $search) {
                 $query->where(function ($query) use ($search) {
@@ -338,12 +376,25 @@ class Shop extends Model
                 });
 
             })
+            ->when(data_get($filter, 'free_delivery'), function (Builder $q) {
+                $q->where([
+                    ['delivery_price', '=', 0],
+                ]);
+            })
             ->when(data_get($filter, 'fast_delivery'), function (Builder $q) {
                 $q
                     ->where('delivery_time->type','minute')
                     ->orWhere('delivery_time->type','day')
                     ->orWhere('delivery_time->type','month')
                     ->orderByRaw('CAST(JSON_EXTRACT(delivery_time, "$.from") AS from)', 'desc');
+            })
+            ->when(data_get($filter, 'has_discount'), function (Builder $query) {
+                $query->whereHas('discounts', function ($q) {
+                    $q
+                        ->where('end', '>=', now())
+                        ->where('active', 1)
+                        ->whereNull('deleted_at');
+                });
             })
             ->when(isset($filter['deleted_at']), fn($q) => $q->onlyTrashed());
     }

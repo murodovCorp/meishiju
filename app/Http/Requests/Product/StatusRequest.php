@@ -20,6 +20,11 @@ class StatusRequest extends BaseRequest
                 'required',
                 Rule::in(Product::STATUSES)
             ],
+			'status_note' => [
+				'string',
+				'max:255',
+				'required_if:status,' . Product::UNPUBLISHED
+			],
         ];
     }
 }

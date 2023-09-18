@@ -8,6 +8,7 @@ use App\Models\Blog;
 use App\Models\Booking\Table;
 use App\Models\Booking\UserBooking;
 use App\Models\Order;
+use App\Models\OrderRefund;
 use App\Models\PushNotification;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -59,6 +60,18 @@ class PushNotificationResource extends JsonResource
             $referral = User::find($this->title);
         }
 
+        $seller = null;
+
+        if ($this->type === PushNotification::SHOP_APPROVED) {
+			$seller = User::find($this->title);
+        }
+
+        $orderRefund = null;
+
+        if ($this->type === PushNotification::ORDER_REFUNDED) {
+			$orderRefund = OrderRefund::find($this->title);
+        }
+
         return [
             'id'            => $this->when($this->id,          $this->id),
             'type'          => $this->when($this->type,        $this->type),
@@ -71,8 +84,10 @@ class PushNotificationResource extends JsonResource
             'read_at'       => $this->when($this->read_at,     $this->read_at . 'Z'),
 
             'user'          => UserResource::make($this->whenLoaded('user')),
+            'seller'        => UserResource::make($seller),
             'client'        => $this->when(!empty($order), UserResource::make($order?->user)),
             'order'         => $this->when(!empty($order), OrderResource::make($order)),
+            'order_refund'	=> $this->when(!empty($orderRefund), OrderRefundResource::make($orderRefund)),
             'blog'          => $this->when(!empty($blog), BlogResource::make($blog)),
             'user_booking'  => $this->when(!empty($userBooking), UserBookingResource::make($userBooking)),
             'referral'      => $this->when(!empty($referral), UserResource::make($referral)),

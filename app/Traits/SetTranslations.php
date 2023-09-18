@@ -18,8 +18,9 @@ trait SetTranslations
     public function setTranslations(Model $model, array $data, bool $hasDesc = true, bool $hasAddress = false): void
     {
         try {
+
             /** @var Category $model */
-            if (is_array(data_get($data, 'title'))) {
+			if (is_array(data_get($data, 'title'))) {
                 $model->translations()->forceDelete();
             }
 

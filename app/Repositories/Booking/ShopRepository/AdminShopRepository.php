@@ -5,7 +5,7 @@ namespace App\Repositories\Booking\ShopRepository;
 use App\Models\Booking\BookingShop;
 use App\Models\Language;
 use App\Repositories\CoreRepository;
-use Cache;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -54,12 +54,10 @@ class AdminShopRepository extends CoreRepository
                 'id',
                 'uuid',
                 'background_img',
-                'delivery_type',
                 'logo_img',
                 'open',
                 'tax',
                 'status',
-                'type',
                 'user_id',
                 'deleted_at',
             ])
@@ -77,7 +75,7 @@ class AdminShopRepository extends CoreRepository
         $shop = $this->model();
         $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
-        if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
             abort(403);
         }
 
@@ -91,7 +89,7 @@ class AdminShopRepository extends CoreRepository
             'categories:id',
             'categories.translation' => fn($q) => $q->select('category_id', 'id', 'locale', 'title')
                 ->where('locale', $this->language)->orWhere('locale', $locale),
-            'bonus' => fn($q) => $q->where('expired_at', '>=', now())
+            'bonus' => fn($q) => $q->where('expired_at', '>', now())->where('status', true)
                 ->select([
                     'bonusable_type',
                     'bonusable_id',
@@ -129,8 +127,8 @@ class AdminShopRepository extends CoreRepository
         return $shop
             ->filter($filter)
             ->with([
-                'translation' => fn($q) => $q->where('locale', $this->language),
-                'discounts'   => fn($q) => $q->where('end', '>=', now())->select('id', 'shop_id', 'end'),
+                'translation'   => fn($q) => $q->where('locale', $this->language),
+                'discounts'     => fn($q) => $q->where('end', '>=', now())->select('id', 'shop_id', 'end'),
             ])
             ->whereHas('translation', fn($q) => $q->where('locale', $this->language))
             ->latest()
@@ -138,7 +136,6 @@ class AdminShopRepository extends CoreRepository
                 'id',
                 'logo_img',
                 'status',
-                'delivery_price',
             ])
             ->paginate(data_get($filter, 'perPage', 10));
     }

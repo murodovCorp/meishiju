@@ -39,10 +39,13 @@ class PayTabsService extends BaseService
         $totalPrice     = ceil($order->rate_total_price * 2 * 100) / 2;
 
         $order->update([
-            'total_price' => ($totalPrice / $order->rate) / 100
+            'total_price' => ($totalPrice / ($order->rate <= 0 ? 1 : $order->rate)) / 100
         ]);
 
         $host = request()->getSchemeAndHttpHost();
+        $url  = "$host/order-stripe-success?" . (
+            data_get($data, 'parcel_id') ? "parcel_id=$order->id" : "order_id=$order->id"
+        );
 
         $headers = [
             'Accept' => 'application/json',
@@ -62,8 +65,8 @@ class PayTabsService extends BaseService
             'amount'                    => $totalPrice,
             'currency'                  => $currency,
             'site_url'                  => config('app.front_url'),
-            'return_url'                => "$host/order-razorpay-success?order_id=$order->id",
-            'cancel_url'                => "$host/order-razorpay-success?order_id=$order->id",
+            'return_url'                => $url,
+            'cancel_url'                => $url,
             'max_amount'                => $totalPrice,
             'min_amount'                => $totalPrice,
             'consumers_email'           => $order->user?->email,
@@ -76,7 +79,7 @@ class PayTabsService extends BaseService
             'merchant_id'       => '105345',
             'secret_key'        => 'SZJN6JRB6R-JGGWW29DD9-RWKLJNWNGR',
             'site_url'          => config('app.front_url'),
-            'return_url'        => "$host/order-razorpay-success?order_id=$order->id",
+            'return_url'        => $url,
             'cc_first_name'     => $order->username ?? $order->user?->firstname,
             'cc_last_name'      => $order->username ?? $order->user?->lastname,
             'cc_phone_number'   => $order->phone ?? $order->user?->phone,
@@ -86,8 +89,7 @@ class PayTabsService extends BaseService
             'msg_lang'          => $this->language,
         ]);
 
-        dd($request);
-        $body = json_decode($request->body());
+        $body = $request->json();
 
         dd($body);
         if (data_get($body, 'status') === 'error') {

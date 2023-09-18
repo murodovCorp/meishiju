@@ -43,8 +43,8 @@ class TableController extends WaiterBaseController
      * @param FilterParamsRequest $request
      * @return JsonResponse
      */
-    public function statistic(FilterParamsRequest $request) {
-
+    public function statistic(FilterParamsRequest $request): JsonResponse
+    {
         $filter     = $request->merge(['shop_id' => auth('sanctum')->user()->invite?->shop_id])->all();
         $statistic  = $this->reportRepository->bookings($filter);
 

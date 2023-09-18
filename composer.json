@@ -16,10 +16,10 @@
         "ext-zip": "*",
         "aws/aws-sdk-php": "^3.0",
         "barryvdh/laravel-dompdf": "^2.0",
-        "barryvdh/laravel-snappy": "^1.0",
         "botman/botman": "^2.8",
         "botman/driver-telegram": "^2.0",
         "cboden/ratchet": "^0.4.4",
+        "doctrine/dbal": "^3.6",
         "fomvasss/laravel-meta-tags": "^3.5",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
@@ -45,9 +45,7 @@
         "srmklive/paypal": "^3.0",
         "stripe/stripe-php": "^10.6",
         "twilio/sdk": "^6.40",
-        "vonage/client": "^3.0",
-        "wechatpay/wechatpay": "^1.4",
-        "yansongda/laravel-pay": "^3.3"
+        "vonage/client": "^3.0"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.6",

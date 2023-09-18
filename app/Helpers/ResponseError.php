@@ -4,7 +4,7 @@ namespace App\Helpers;
 
 class ResponseError
 {
-    public const NO_ERROR = 'NO_ERROR'; // 'OK'
+    public const NO_ERROR  = 'NO_ERROR'; // 'OK'
     public const ERROR_100 = 'ERROR_100'; // 'User is not logged in.'
     public const ERROR_101 = 'ERROR_101'; // 'User does not have the right roles.'
     public const ERROR_102 = 'ERROR_102'; // 'Login or password is incorrect.'
@@ -21,6 +21,10 @@ class ResponseError
     public const ERROR_113 = 'ERROR_113'; // 'Deliveryman doesn't have Wallet'
     public const ERROR_114 = 'ERROR_114'; // 'Seller doesn't have Wallet'
     public const ERROR_115 = 'ERROR_115'; // 'Phone not found'
+    public const ERROR_116 = 'ERROR_116'; // 'Ads already activated'
+    public const ERROR_117 = 'ERROR_117'; // 'Phone is required'
+    public const ERROR_118 = 'ERROR_118'; // 'Shop is closed'
+    public const ERROR_119 = 'ERROR_119'; // 'Duplicate stock'
 
     public const ERROR_201 = 'ERROR_201'; // 'Wrong OTP Code'
     public const ERROR_202 = 'ERROR_202'; // 'Too many request, try later'
@@ -61,6 +65,7 @@ class ResponseError
     public const ERROR_431 = 'ERROR_431'; // 'Active default currency not found'
     public const ERROR_432 = 'ERROR_432'; // 'Undefined Type'
     public const ERROR_433 = 'ERROR_433'; // 'Not in polygon'
+    public const ERROR_434 = 'ERROR_434'; // 'Payment type must be only wallet or cash'
 
     public const ERROR_501 = 'ERROR_501'; // 'Error during created.'
     public const ERROR_502 = 'ERROR_502'; // 'Error during updated.'
@@ -73,49 +78,50 @@ class ResponseError
     public const ERROR_509 = 'ERROR_509'; // 'Invalid date format.'
     public const ERROR_510 = 'ERROR_510'; // 'Address in correct.'
 
-    public const NEW_ORDER = 'NEW_ORDER';
-    public const CONFIRMATION_CODE = 'CONFIRMATION_CODE';
-    public const PHONE_OR_EMAIL_NOT_FOUND = 'PHONE_OR_EMAIL_NOT_FOUND';
-    public const ORDER_NOT_FOUND = 'ORDER_NOT_FOUND';
-    public const ORDER_REFUNDED = 'ORDER_REFUNDED';
-    public const ORDER_PICKUP = 'ORDER_PICKUP';
-    public const SHOP_NOT_FOUND = 'SHOP_NOT_FOUND';
-    public const OTHER_SHOP = 'OTHER_SHOP';
-    public const SHOP_OR_DELIVERY_ZONE = 'SHOP_OR_DELIVERY_ZONE';
-    public const NOT_IN_POLYGON = 'NOT_IN_POLYGON';
-    public const CURRENCY_NOT_FOUND = 'CURRENCY_NOT_FOUND';
-    public const LANGUAGE_NOT_FOUND = 'LANGUAGE_NOT_FOUND';
-    public const CANT_DELETE_ORDERS = 'CANT_DELETE_ORDERS';
-    public const CANT_UPDATE_ORDERS = 'CANT_UPDATE_ORDERS';
-    public const STATUS_CHANGED = 'STATUS_CHANGED';
-    public const ADD_CASHBACK = 'ADD_CASHBACK';
-    public const BOOKING_STATUS_CHANGED = 'BOOKING_STATUS_CHANGED';
-    public const PAYOUT_ACCEPTED = 'PAYOUT_ACCEPTED';
-    public const CANT_DELETE_IDS = 'CANT_DELETE_IDS';
-    public const USER_NOT_FOUND = 'USER_NOT_FOUND';
-    public const USER_IS_BANNED = 'USER_IS_BANNED';
-    public const INCORRECT_LOGIN_PROVIDER = 'INCORRECT_LOGIN_PROVIDER';
-    public const FIN_FO = 'FIN_FO';
-    public const USER_SUCCESSFULLY_REGISTERED = 'USER_SUCCESSFULLY_REGISTERED';
-    public const USER_CARTS_IS_EMPTY = 'USER_CARTS_IS_EMPTY';
-    public const PRODUCTS_IS_EMPTY = 'PRODUCTS_IS_EMPTY';
-    public const RECORD_WAS_SUCCESSFULLY_CREATED = 'RECORD_WAS_SUCCESSFULLY_CREATED';
-    public const RECORD_WAS_SUCCESSFULLY_UPDATED = 'RECORD_WAS_SUCCESSFULLY_UPDATED';
-    public const RECORD_WAS_SUCCESSFULLY_DELETED = 'RECORD_WAS_SUCCESSFULLY_DELETED';
-    public const IMAGE_SUCCESSFULLY_UPLOADED = 'IMAGE_SUCCESSFULLY_UPLOADED';
-    public const EMPTY_STATUS = 'EMPTY_STATUS';
-    public const SUCCESS = 'SUCCESS';
-    public const DELIVERYMAN_IS_NOT_CHANGED = 'DELIVERYMAN_IS_NOT_CHANGED';
-    public const CATEGORY_IS_PARENT = 'CATEGORY_IS_PARENT';
-    public const ATTACH_FOR_ADDON = 'ATTACH_FOR_ADDON';
-    public const TYPE_PRICE_USER = 'TYPE_PRICE_USER';
-    public const NOTHING_TO_UPDATE = 'NOTHING_TO_UPDATE';
-    public const WAITER_NOT_EMPTY = 'WAITER_NOT_EMPTY';
-    public const COOKER_NOT_EMPTY = 'COOKER_NOT_EMPTY';
-    public const EMPTY = 'EMPTY';
-    public const ORDER_OR_DELIVERYMAN_IS_EMPTY = 'ORDER_OR_DELIVERYMAN_IS_EMPTY';
-    public const TABLE_BOOKING_EXISTS = 'TABLE_BOOKING_EXISTS';
-    public const DELIVERYMAN_SETTING_EMPTY = 'DELIVERYMAN_SETTING_EMPTY';
-    public const NEW_BOOKING = 'NEW_BOOKING';
-
+    public const NEW_ORDER                          = 'NEW_ORDER';
+    public const CONFIRMATION_CODE                  = 'CONFIRMATION_CODE';
+    public const PHONE_OR_EMAIL_NOT_FOUND           = 'PHONE_OR_EMAIL_NOT_FOUND';
+    public const ORDER_NOT_FOUND                    = 'ORDER_NOT_FOUND';
+    public const ORDER_REFUNDED                     = 'ORDER_REFUNDED';
+    public const ORDER_PICKUP                       = 'ORDER_PICKUP';
+    public const SHOP_NOT_FOUND                     = 'SHOP_NOT_FOUND';
+    public const OTHER_SHOP                         = 'OTHER_SHOP';
+    public const SHOP_OR_DELIVERY_ZONE              = 'SHOP_OR_DELIVERY_ZONE';
+    public const NOT_IN_POLYGON                     = 'NOT_IN_POLYGON';
+    public const NOT_IN_PARCEL_POLYGON              = 'NOT_IN_PARCEL_POLYGON';
+    public const CURRENCY_NOT_FOUND                 = 'CURRENCY_NOT_FOUND';
+    public const LANGUAGE_NOT_FOUND                 = 'LANGUAGE_NOT_FOUND';
+    public const CANT_DELETE_ORDERS                 = 'CANT_DELETE_ORDERS';
+    public const CANT_UPDATE_ORDERS                 = 'CANT_UPDATE_ORDERS';
+    public const STATUS_CHANGED                     = 'STATUS_CHANGED';
+    public const SHOP_APPROVED                      = 'SHOP_APPROVED';
+    public const ADD_CASHBACK                       = 'ADD_CASHBACK';
+    public const BOOKING_STATUS_CHANGED             = 'BOOKING_STATUS_CHANGED';
+    public const PAYOUT_ACCEPTED                    = 'PAYOUT_ACCEPTED';
+    public const CANT_DELETE_IDS                    = 'CANT_DELETE_IDS';
+    public const USER_NOT_FOUND                     = 'USER_NOT_FOUND';
+    public const USER_IS_BANNED                     = 'USER_IS_BANNED';
+    public const INCORRECT_LOGIN_PROVIDER           = 'INCORRECT_LOGIN_PROVIDER';
+    public const FIN_FO                             = 'FIN_FO';
+    public const USER_SUCCESSFULLY_REGISTERED       = 'USER_SUCCESSFULLY_REGISTERED';
+    public const USER_CARTS_IS_EMPTY                = 'USER_CARTS_IS_EMPTY';
+    public const PRODUCTS_IS_EMPTY                  = 'PRODUCTS_IS_EMPTY';
+    public const RECORD_WAS_SUCCESSFULLY_CREATED    = 'RECORD_WAS_SUCCESSFULLY_CREATED';
+    public const RECORD_WAS_SUCCESSFULLY_UPDATED    = 'RECORD_WAS_SUCCESSFULLY_UPDATED';
+    public const RECORD_WAS_SUCCESSFULLY_DELETED    = 'RECORD_WAS_SUCCESSFULLY_DELETED';
+    public const IMAGE_SUCCESSFULLY_UPLOADED        = 'IMAGE_SUCCESSFULLY_UPLOADED';
+    public const EMPTY_STATUS                       = 'EMPTY_STATUS';
+    public const SUCCESS                            = 'SUCCESS';
+    public const DELIVERYMAN_IS_NOT_CHANGED         = 'DELIVERYMAN_IS_NOT_CHANGED';
+    public const CATEGORY_IS_PARENT                 = 'CATEGORY_IS_PARENT';
+    public const ATTACH_FOR_ADDON                   = 'ATTACH_FOR_ADDON';
+    public const TYPE_PRICE_USER                    = 'TYPE_PRICE_USER';
+    public const NOTHING_TO_UPDATE                  = 'NOTHING_TO_UPDATE';
+    public const WAITER_NOT_EMPTY                   = 'WAITER_NOT_EMPTY';
+    public const COOKER_NOT_EMPTY                   = 'COOKER_NOT_EMPTY';
+    public const EMPTY                              = 'EMPTY';
+    public const ORDER_OR_DELIVERYMAN_IS_EMPTY      = 'ORDER_OR_DELIVERYMAN_IS_EMPTY';
+    public const TABLE_BOOKING_EXISTS               = 'TABLE_BOOKING_EXISTS';
+    public const DELIVERYMAN_SETTING_EMPTY          = 'DELIVERYMAN_SETTING_EMPTY';
+    public const NEW_BOOKING                        = 'NEW_BOOKING';
 }

@@ -442,6 +442,8 @@ return [
   ['id' => '794','status' => '1','locale' => 'en','group' => 'web','key' => 'delivery_time_to','value' => 'Delivery time to','created_at' => '2023-01-30 14:36:39','updated_at' => '2023-01-30 14:36:39','deleted_at' => NULL],
   ['id' => '795','status' => '1','locale' => 'ru','group' => 'web','key' => 'start_price','value' => 'Стартовая цена','created_at' => '2023-01-30 14:37:05','updated_at' => '2023-01-30 14:37:05','deleted_at' => NULL],
   ['id' => '796','status' => '1','locale' => 'en','group' => 'web','key' => 'start_price','value' => 'Start price','created_at' => '2023-01-30 14:37:05','updated_at' => '2023-01-30 14:37:05','deleted_at' => NULL],
+  ['id' => '797','status' => '1','locale' => 'ru','group' => 'web','key' => 'price_per_km','value' => 'Цена за км','created_at' => '2023-01-30 14:37:31','updated_at' => '2023-01-30 14:37:31','deleted_at' => NULL],
+  ['id' => '798','status' => '1','locale' => 'en','group' => 'web','key' => 'price_per_km','value' => 'Price per km','created_at' => '2023-01-30 14:37:31','updated_at' => '2023-01-30 14:37:31','deleted_at' => NULL],
   ['id' => '799','status' => '1','locale' => 'ru','group' => 'web','key' => 'address','value' => 'Адрес','created_at' => '2023-01-30 15:13:57','updated_at' => '2023-01-30 15:13:57','deleted_at' => NULL],
   ['id' => '800','status' => '1','locale' => 'en','group' => 'web','key' => 'address','value' => 'Address','created_at' => '2023-01-30 15:13:57','updated_at' => '2023-04-25 07:04:44','deleted_at' => NULL],
   ['id' => '801','status' => '1','locale' => 'ar','group' => 'web','key' => 'restore.all','value' => 'Restore all','created_at' => '2023-01-30 18:43:07','updated_at' => '2023-01-30 18:43:07','deleted_at' => NULL],

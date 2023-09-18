@@ -18,6 +18,9 @@ class FilterParamsRequest extends BaseRequest
             'column'        => 'regex:/^[a-zA-Z-_]+$/',
             'status'        => 'string',
             'perPage'       => 'integer|min:1|max:100',
+            'pPerPage'      => 'integer|min:1|max:100', //in with product paginate perPage
+            'page'		    => 'integer',
+            'pPage'		    => 'integer', //in with product paginate page
             'shop_id'       => [
                 'integer',
                 Rule::exists('shops', 'id')->whereNull('deleted_at')

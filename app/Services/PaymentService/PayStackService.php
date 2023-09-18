@@ -2,6 +2,7 @@
 namespace App\Services\PaymentService;
 
 use App\Models\Order;
+use App\Models\ParcelOrder;
 use App\Models\Payment;
 use App\Models\PaymentPayload;
 use App\Models\PaymentProcess;
@@ -35,7 +36,11 @@ class PayStackService extends BaseService
 
         $transaction    = new Transaction(data_get($payload, 'paystack_sk'));
 
-        $order          = Order::find(data_get($data, 'order_id'));
+        /** @var ParcelOrder $order */
+        $order = data_get($data, 'parcel_id')
+            ? ParcelOrder::find(data_get($data, 'parcel_id'))
+            : Order::find(data_get($data, 'order_id'));
+
         $totalPrice     = ceil($order->rate_total_price * 2 * 100) / 2;
 
         $order->update([
@@ -43,30 +48,31 @@ class PayStackService extends BaseService
         ]);
 
         $host = request()->getSchemeAndHttpHost();
+        $url  = "$host/order-stripe-success?" . (
+            data_get($data, 'parcel_id') ? "parcel_id=$order->id" : "order_id=$order->id"
+        );
 
         $data = [
-            'email'     => $order->user?->email,
-            'amount'    => $totalPrice,
-            'currency'  => Str::upper($order->currency?->title ?? data_get($payload, 'currency')),
+            'email'    => $order->user?->email,
+            'amount'   => $totalPrice,
+            'currency' => Str::upper($order->currency?->title ?? data_get($payload, 'currency')),
         ];
 
-        $response = $transaction
-            ->setCallbackUrl("$host/order-paystack-success?order_id=$order->id")
-            ->initialize($data);
+        $response = $transaction->setCallbackUrl($url)->initialize($data);
 
         if (isset($response?->status) && !data_get($response, 'status')) {
             throw new Exception(data_get($response, 'message', 'PayStack server error'));
         }
 
         return PaymentProcess::updateOrCreate([
-            'user_id'   => auth('sanctum')->id(),
-            'order_id'  => $order->id,
+            'user_id'    => auth('sanctum')->id(),
+            'model_id'   => $order->id,
+            'model_type' => get_class($order)
         ], [
             'id' => data_get($response, 'reference'),
             'data' => [
                 'url'   => data_get($response, 'authorizationUrl'),
-                'price' => $totalPrice,
-                'order_id' => $order->id
+                'price' => $totalPrice
             ]
         ]);
     }
@@ -106,8 +112,9 @@ class PayStackService extends BaseService
         }
 
         return PaymentProcess::updateOrCreate([
-            'user_id'           => auth('sanctum')->id(),
-            'subscription_id'   => $subscription->id,
+            'user_id'    => auth('sanctum')->id(),
+			'model_id'   => $subscription->id,
+			'model_type' => get_class($subscription)
         ], [
             'id' => data_get($response, 'reference'),
             'data' => [

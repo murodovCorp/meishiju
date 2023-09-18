@@ -18,13 +18,13 @@ class AdminRequest extends BaseRequest
         return [
             'shops'         => 'array',
             'shops.*'       => [
-                'required',
                 'integer',
                 Rule::exists('shops', 'id')->whereNull('deleted_at')
             ],
             'type'          => Rule::in(Banner::TYPES),
             'url'           => 'required|string',
             'clickable'     => 'boolean',
+            'input'         => 'boolean',
             'active'        => 'boolean',
             'images'        => ['array'],
             'images.*'      => ['string'],

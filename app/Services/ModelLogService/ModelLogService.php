@@ -23,21 +23,19 @@ class ModelLogService extends CoreService
                 $createdBy = auth('sanctum')->id() ??
                     (get_class($model) === User::class) ? data_get($model, 'id') : auth('sanctum')->id();
 
-                if (!$createdBy) {
-                    return;
+                if ($createdBy) {
+                    ModelLog::create([
+                        'model_type' => get_class($model),
+                        'model_id'   => data_get($model, 'id'),
+                        'data'       => $type === 'created' ? $data : $this->prepareData($model),
+                        'type'       => strtolower(data_get(explode('\\', get_class($model)), '2', 'model')) . '_' . $type,
+                        'created_at' => now(),
+                        'created_by' => $createdBy,
+                    ]);
                 }
-
-                ModelLog::create([
-                    'model_type' => get_class($model),
-                    'model_id'   => data_get($model, 'id'),
-                    'data'       => $type === 'created' ? $data : $this->prepareData($model),
-                    'type'       => strtolower(data_get(explode('\\', get_class($model)), '2', 'model')) . '_' . $type,
-                    'created_at' => now(),
-                    'created_by' => $createdBy,
-                ]);
             }
         } catch (Throwable $e) {
-//            $this->error($e);
+            $this->error($e);
         }
     }
 

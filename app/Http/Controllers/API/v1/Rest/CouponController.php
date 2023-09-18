@@ -6,7 +6,6 @@ use App\Helpers\ResponseError;
 use App\Http\Requests\CouponCheckRequest;
 use App\Http\Resources\CouponResource;
 use App\Models\Coupon;
-use App\Models\Order;
 use App\Models\OrderCoupon;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -30,7 +29,7 @@ class CouponController extends RestBaseController
      */
     public function check(CouponCheckRequest $request): JsonResponse
     {
-        $coupon = Coupon::checkCoupon($request->input('coupon'))->first();
+        $coupon = Coupon::checkCoupon($request->input('coupon'), $request->input('shop_id'))->first();
 
         if (empty($coupon)) {
             return $this->onErrorResponse([

@@ -56,6 +56,7 @@ class Table extends Model
     public function scopeFilter($query, $filter) {
         $query
             ->when(data_get($filter, 'name'), fn($q, $name) => $q->where('name', 'LIKE', "%$name%"))
+            ->when(data_get($filter, 'search'), fn($q, $name) => $q->where('name', 'LIKE', "%$name%")->orWhere('id', 'LIKE', "%$name%"))
             ->when(data_get($filter, 'shop_section_id'), fn($q, $shopSectionId) => $q->where('shop_section_id', $shopSectionId))
             ->when(data_get($filter, 'chair_count_from'), fn($q, $countFrom) => $q->where('chair_count', $countFrom))
             ->when(data_get($filter, 'chair_count_to'), fn($q, $countTo) => $q->where('chair_count', $countTo))
@@ -74,10 +75,14 @@ class Table extends Model
             })
             ->when(data_get($filter, 'date_from'), function ($query) use ($filter) {
 
-                $minTime  = Settings::adminSettings()->where('key', 'min_reservation_time')->first()?->value;
+				$minTime  = Settings::adminSettings()->where('key', 'min_reservation_time')->first()?->value;
 
-                $dateFrom = date('Y-m-d H:i:01', strtotime(data_get($filter, 'date_from', now())));
-                $dateTo   = date('Y-m-d H:i:59', strtotime(data_get($filter, 'date_to', $minTime ? "-$minTime hour" : now())));
+				$startDate = data_get($filter, 'date_from', now());
+
+				$dateFrom = date('Y-m-d H:i:01', strtotime($startDate));
+				$dateTo   = data_get($filter, 'date_to', $minTime ? "-$minTime hour" : $startDate);
+
+				$dateTo   = date('Y-m-d H:i:59', strtotime($dateTo));
 
                 $query->whereHas('users', function ($q) use ($dateFrom, $dateTo, $filter) {
                     $q

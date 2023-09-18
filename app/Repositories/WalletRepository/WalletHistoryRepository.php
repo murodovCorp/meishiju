@@ -15,10 +15,10 @@ class WalletHistoryRepository extends CoreRepository
         return WalletHistory::class;
     }
 
-    public function walletHistoryPaginate(array $filter)
+    public function 	walletHistoryPaginate(array $filter)
     {
         return $this->model()
-            ->with('author', 'user')
+            ->with('author', 'user', 'transaction')
             ->when(array_key_exists('wallet_uuid', $filter), function ($q) use ($filter) {
                 $q->where('wallet_uuid', data_get($filter, 'wallet_uuid'))->whereNotNull('wallet_uuid');
             })

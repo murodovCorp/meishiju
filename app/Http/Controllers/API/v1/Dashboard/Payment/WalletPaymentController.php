@@ -3,26 +3,33 @@
 namespace App\Http\Controllers\API\v1\Dashboard\Payment;
 
 use App\Helpers\ResponseError;
-use App\Http\Controllers\API\v1\Dashboard\Admin\AdminBaseController;
 use App\Http\Requests\Payment\PaymentTopUpRequest;
+use App\Models\Currency;
 use App\Models\Payment;
 use App\Models\PaymentPayload;
 use App\Models\PaymentProcess;
 use App\Models\Translation;
 use App\Models\User;
+use App\Models\Wallet;
+use Exception;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use Http;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Matscode\Paystack\Transaction;
 use Razorpay\Api\Api;
+use Redirect;
 use Str;
 use Stripe\Checkout\Session;
 use Stripe\Exception\ApiErrorException;
 use Stripe\Stripe;
 use Throwable;
 
-class WalletPaymentController extends AdminBaseController
+class WalletPaymentController extends PaymentBaseController
 {
-    public function __construct()
+    public function __construct(private string $host = '')
     {
         parent::__construct();
     }
@@ -35,7 +42,6 @@ class WalletPaymentController extends AdminBaseController
         /** @var User $user */
         $user           = auth('sanctum')->user();
         $payment        = Payment::where('tag', $request->input('payment_type'))->first();
-        $paymentPayload = PaymentPayload::where('payment_id', $payment?->id)->first();
 
         if (empty($user?->wallet)) {
             return $this->onErrorResponse([
@@ -50,6 +56,8 @@ class WalletPaymentController extends AdminBaseController
                 'message' => __('errors.' . ResponseError::ERROR_432)
             ]);
         }
+
+        $paymentPayload = PaymentPayload::where('payment_id', $payment->id)->first();
 
         if (empty($paymentPayload)) {
             return $this->onErrorResponse([
@@ -74,6 +82,8 @@ class WalletPaymentController extends AdminBaseController
 
         $host = request()->getSchemeAndHttpHost();
 
+        $this->host = $host;
+
         try {
 
             if ($payment->tag === 'stripe') {
@@ -84,8 +94,8 @@ class WalletPaymentController extends AdminBaseController
                     'success',
                     $this->process(
                         userId: $user->id,
-                        trxId:  $transaction->id,
-                        id:     $session->payment_intent,
+                        trxId:  $session->payment_intent ?? $session->id,
+                        id:     $session->payment_intent ?? $session->id,
                         url:    $session->url,
                         totalPrice: $totalPrice
                     )
@@ -115,6 +125,48 @@ class WalletPaymentController extends AdminBaseController
                         trxId:  $transaction->id,
                         id:     data_get($response, 'reference'),
                         url:    data_get($response, 'authorizationUrl'),
+                        totalPrice: $totalPrice
+                    )
+                );
+            } else if($payment->tag === 'paypal') {
+
+                $response = $this->paypal($payload, $totalPrice);
+
+                return $this->successResponse(
+                    'success',
+                    $this->process(
+                        userId: $user->id,
+                        trxId:  $transaction->id,
+                        id:     data_get($response, 'id'),
+                        url:    data_get($response, 'url'),
+                        totalPrice: $totalPrice
+                    )
+                );
+            } else if($payment->tag === 'flutterWave') {
+
+                $response = $this->flutterWave($payload, $totalPrice);
+
+                return $this->successResponse(
+                    'success',
+                    $this->process(
+                        userId: $user->id,
+                        trxId:  $transaction->id,
+                        id:     data_get($response, 'id'),
+                        url:    data_get($response, 'url'),
+                        totalPrice: $totalPrice
+                    )
+                );
+            } else if($payment->tag === 'paytabs') {
+
+                $response = $this->payTabs($payload, $totalPrice);
+
+                return $this->successResponse(
+                    'success',
+                    $this->process(
+                        userId: $user->id,
+                        trxId:  $transaction->id,
+                        id:     data_get($response, 'id'),
+                        url:    data_get($response, 'url'),
                         totalPrice: $totalPrice
                     )
                 );
@@ -155,17 +207,17 @@ class WalletPaymentController extends AdminBaseController
                 ]
             ],
             'mode' => 'payment',
-//          'success_url' => "$host/order-stripe-success?token={CHECKOUT_SESSION_ID}",
-//          'cancel_url' => "$host/order-stripe-success?token={CHECKOUT_SESSION_ID}",
+            'success_url' => "$this->host/wallet-success?token={CHECKOUT_SESSION_ID}",
+            'cancel_url' => "$this->host/wallet-success?token={CHECKOUT_SESSION_ID}",
         ]);
     }
 
     /**
      * @param array $payload
      * @param int|float $totalPrice
-     * @return Session|Throwable
+     * @return mixed
      */
-    public function razorpay(array $payload, int|float $totalPrice): Session|Throwable
+    public function razorpay(array $payload, int|float $totalPrice): mixed
     {
         $key    = data_get($payload, 'razorpay_key');
         $secret = data_get($payload, 'razorpay_secret');
@@ -178,18 +230,19 @@ class WalletPaymentController extends AdminBaseController
             'accept_partial'            => false,
             'first_min_partial_amount'  => $totalPrice,
             'description'               => "For topup",
-//            'callback_url'              => "$host/order-razorpay-success?order_id=$order->id",
+            'callback_url'              => "$this->host/wallet-success",
             'callback_method'           => 'get'
         ]);
     }
 
-    /**
-     * @param array $payload
-     * @param int|float $totalPrice
-     * @param User $user
-     * @return Session|Throwable
-     */
-    public function payStack(array $payload, int|float $totalPrice, User $user): Session|Throwable
+	/**
+	 * @param array $payload
+	 * @param int|float $totalPrice
+	 * @param User $user
+	 * @return mixed
+	 * @throws Exception
+	 */
+    public function payStack(array $payload, int|float $totalPrice, User $user): mixed
     {
         $payStack = new Transaction(data_get($payload, 'paystack_sk'));
 
@@ -200,15 +253,208 @@ class WalletPaymentController extends AdminBaseController
         ];
 
         return $payStack
-//            ->setCallbackUrl("$host/order-paystack-success?trx_id=$transaction->id")
+            ->setCallbackUrl("$this->host/wallet-success")
             ->initialize($data);
     }
 
-    public function process(int $userId, int $trxId, int $id, string $url, int|float $totalPrice): Model|PaymentProcess
+    /**
+     * @param array $payload
+     * @param int|float $totalPrice
+     * @return array
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function paypal(array $payload, int|float $totalPrice): array
     {
+        $url            = 'https://api-m.sandbox.paypal.com';
+        $clientId       = data_get($payload, 'paypal_sandbox_client_id');
+        $clientSecret   = data_get($payload, 'paypal_sandbox_client_secret');
+
+        if (data_get($payload, 'paypal_mode', 'sandbox') === 'live') {
+            $url            = 'https://api-m.paypal.com';
+            $clientId       = data_get($payload, 'paypal_live_client_id');
+            $clientSecret   = data_get($payload, 'paypal_live_client_secret');
+        }
+
+        $provider = new Client();
+        $responseAuth = $provider->post("$url/v1/oauth2/token", [
+            'auth' => [
+                $clientId,
+                $clientSecret,
+            ],
+            'form_params' => [
+                'grant_type' => 'client_credentials',
+            ]
+        ]);
+
+        $responseAuth = json_decode($responseAuth->getBody(), true);
+
+        $response = $provider->post("$url/v2/checkout/orders", [
+            'json' => [
+                'intent' => 'CAPTURE',
+                'purchase_units' => [
+                    [
+                        'amount' => [
+                            'currency_code' => Str::upper($order->currency?->title ?? data_get($payload, 'paypal_currency')),
+                            'value' => $totalPrice,
+                        ],
+                    ],
+                ],
+                'application_context' => [
+                    'return_url' =>  "$this->host/wallet-success?status=paid",
+                    'cancel_url' =>  "$this->host/wallet-success?status=canceled",
+                ],
+            ],
+            'headers' => [
+                'Accept-Language'   => 'en_US',
+                'Content-Type'      => 'application/json',
+                'Authorization'     => data_get($responseAuth, 'token_type', 'Bearer') . ' ' . data_get($responseAuth, 'access_token'),
+            ],
+        ]);
+
+        $response = json_decode($response->getBody(), true);
+
+        if (data_get($response, 'error')) {
+
+            $message = data_get($response, 'message', 'Something went wrong');
+
+            throw new Exception($message);
+        }
+
+        $links = collect(data_get($response, 'links'));
+
+        $checkoutNowUrl = data_get($links->where('rel', 'approve')->first(), 'href');
+        $checkoutNowUrl = $checkoutNowUrl ?? data_get($links->where('rel', 'payer-action')->first(), 'href');
+
+        return [
+            'id'  => data_get($response, 'id'),
+            'url' => $checkoutNowUrl ?? data_get($links->first(), 'href'),
+        ];
+    }
+
+    /**
+     * @param array $payload
+     * @param int|float $totalPrice
+     * @return array
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function flutterWave(array $payload, int|float $totalPrice): array
+    {
+        $headers = [
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer ' . data_get($payload, 'flw_sk')
+        ];
+
+        $trxRef = (string)time();
+
+        $currency = Currency::currenciesList()->where('default', 1)->first()?->title;
+        $currency = Str::upper($currency ?? data_get($payload, 'currency'));
+        /** @var User $user */
+        $user     = auth('sanctum')->user();
+
+        $data = [
+            'tx_ref'            => $trxRef,
+            'amount'            => $totalPrice,
+            'currency'          => $currency,
+            'payment_options'   => 'card,account,ussd,mobilemoneyghana',
+            'redirect_url'      => "$this->host/wallet-success",
+            'customer'          => [
+                'name'          => "$user->firstname $user?->lastname",
+                'phonenumber'   => $user->phone,
+                'email'         => $user?->email
+            ],
+            'customizations'    => [
+                'title'         => data_get($payload, 'title', ''),
+                'description'   => data_get($payload, 'description', ''),
+                'logo'          => data_get($payload, 'logo', ''),
+            ]
+        ];
+
+        $request = Http::withHeaders($headers)->post('https://api.flutterwave.com/v3/payments', $data);
+
+        $response = $request->json();
+
+        if (data_get($response, 'status') === 'error') {
+            throw new Exception(data_get($response, 'message'));
+        }
+
+        return [
+            'id'  => $trxRef,
+            'url' => data_get($response, 'data.link'),
+        ];
+    }
+
+    /**
+     * @param array $payload
+     * @param int|float $totalPrice
+     * @return array
+     * @throws Exception
+     */
+    public function payTabs(array $payload, int|float $totalPrice): array
+    {
+        $headers = [
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer ' . data_get($payload, 'server_key')
+        ];
+
+        $trxRef = (string)time();
+
+        $currency = Str::upper($order->currency?->title ?? data_get($payload, 'currency'));
+
+        /** @var User $user */
+        $user = auth('sanctum')->user();
+
+        $request = Http::withHeaders($headers)->post('https://secure.paytabs.sa/payment/request', [
+            'merchant_id'       => '105345',
+            'secret_key'        => 'SZJN6JRB6R-JGGWW29DD9-RWKLJNWNGR',
+            'site_url'          => config('app.admin_url'),
+            'return_url'        => "$this->host/wallet-success",
+            'cc_first_name'     => $user->firstname,
+            'cc_last_name'      => $user->lastname,
+            'cc_phone_number'   => $user->phone,
+            'cc_email'          => $user->email,
+            'amount'            => $totalPrice,
+            'currency'          => $currency,
+            'msg_lang'          => $this->language,
+        ]);
+
+        $response = $request->json();
+
+        if (data_get($response, 'status') === 'error') {
+            throw new Exception(data_get($response, 'message'));
+        }
+
+        return [
+            'id'  => $trxRef,
+            'url' => data_get($response, 'data.link'),
+        ];
+    }
+
+    public function process(
+        int $userId,
+        int|string $trxId,
+        int|string $id,
+        string $url,
+        int|float $totalPrice
+    ): Model|PaymentProcess
+    {
+        $wallet = Wallet::withTrashed()
+            ->firstOrCreate([
+                'user_id' => $userId
+            ], [
+                'uuid'          => Str::uuid(),
+                'currency_id'   => Currency::currenciesList()->where('default', 1)->first()?->rate,
+                'price'         => 0,
+                'deleted_at'    => null
+            ]);
+
         return PaymentProcess::updateOrCreate([
-            'user_id'   => $userId,
-            'trx_id'    => $trxId,
+            'user_id'    => $userId,
+            'model_id'   => $wallet->id,
+            'model_type' => get_class($wallet)
         ], [
             'id' => $id,
             'data' => [
@@ -221,4 +467,10 @@ class WalletPaymentController extends AdminBaseController
         ]);
     }
 
+    public function success(): RedirectResponse
+    {
+        $to = config('app.admin_url');
+
+        return Redirect::to($to);
+    }
 }

@@ -14,6 +14,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\{InteractsWithQueue, SerializesModels};
+use Throwable;
 
 class PayReferral implements ShouldQueue
 {
@@ -34,10 +35,11 @@ class PayReferral implements ShouldQueue
         $this->type = $type;
     }
 
-    /**
-     * Handle the event
-     * @return void
-     */
+	/**
+	 * Handle the event
+	 * @return void
+	 * @throws Throwable
+	 */
     public function handle(): void
     {
         $active = Settings::adminSettings()->where('key', 'referral_active')->first();
@@ -83,12 +85,13 @@ class PayReferral implements ShouldQueue
 
     }
 
-    /**
-     * @param User|null $owner
-     * @param $priceFrom
-     * @param $priceTo
-     * @return void
-     */
+	/**
+	 * @param User|null $owner
+	 * @param $priceFrom
+	 * @param $priceTo
+	 * @return void
+	 * @throws Throwable
+	 */
     private function increment(?User $owner, $priceFrom, $priceTo): void
     {
 
@@ -114,12 +117,13 @@ class PayReferral implements ShouldQueue
 
     }
 
-    /**
-     * @param User|null $owner
-     * @param $priceFrom
-     * @param $priceTo
-     * @return void
-     */
+	/**
+	 * @param User|null $owner
+	 * @param $priceFrom
+	 * @param $priceTo
+	 * @return void
+	 * @throws Throwable
+	 */
     private function decrement(?User $owner, $priceFrom, $priceTo): void
     {
 
@@ -147,12 +151,13 @@ class PayReferral implements ShouldQueue
 
     }
 
-    /**
-     * @param User|null $user
-     * @param $price
-     * @param $type
-     * @return void
-     */
+	/**
+	 * @param User|null $user
+	 * @param $price
+	 * @param $type
+	 * @return void
+	 * @throws Throwable
+	 */
     private function transaction(?User $user, $price, $type): void
     {
         (new WalletHistoryService)->create([

@@ -17,15 +17,14 @@ class SellerRequest extends BaseRequest
     {
         $isAddon = [
             'required',
-            Rule::exists('categories', 'id')->whereNull('deleted_at')
-                ->where('type', Category::MAIN)
-                ->where('active', true),
+            Rule::exists('categories', 'id')
+				->whereNull('deleted_at')
+                ->whereIn('type', [Category::MAIN, Category::SUB_MAIN]),
         ];
 
         return [
             'category_id'           => (int)request('addon') === 1 ? 'nullable' : $isAddon,
             'brand_id'              => ['nullable', Rule::exists('brands', 'id')
-                                                            ->where('active', true)
             ],
             'unit_id'               => ['nullable', Rule::exists('units', 'id')
                                                             ->where('active', true)
@@ -41,12 +40,10 @@ class SellerRequest extends BaseRequest
             'qr_code'               => ['string', Rule::unique('products','qr_code')
                 ->ignore(request()->route('product'),'uuid')
             ],
-            'bar_code'              => ['string', Rule::unique('products','bar_code')
-                ->ignore(request()->route('product'),'uuid')
-            ],
             'active'                => 'boolean',
             'addon'                 => 'boolean',
             'vegetarian'            => 'boolean',
+            'interval'              => 'numeric',
             'kcal'                  => 'string|max:10',
             'carbs'                 => 'string|max:10',
             'protein'               => 'string|max:10',

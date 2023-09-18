@@ -13,7 +13,6 @@ use Maatwebsite\Excel\Concerns\{FromCollection,
     WithHeadings,
     WithMapping,
 };
-use Illuminate\Support\Facades\Cache;
 use Throwable;
 
 class OrdersReportExport implements FromCollection, WithMapping, ShouldAutoSize, WithBatchInserts, WithChunkReading, WithHeadings
@@ -73,9 +72,7 @@ class OrdersReportExport implements FromCollection, WithMapping, ShouldAutoSize,
                 $this->error($e);
             }
         }
-        if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
-            abort(403);
-        }
+
         return trim($names, ', ');
     }
 

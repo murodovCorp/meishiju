@@ -41,6 +41,34 @@ class DeliveryZoneController extends RestBaseController
     }
 
     /**
+     * @param int $deliveryId
+     * @param Request $request
+     * @return float|JsonResponse
+     */
+    public function deliveryCalculatePrice(int $deliveryId, Request $request): float|JsonResponse
+    {
+        /** @var DeliveryZone $deliveryZone */
+        $deliveryZone = DeliveryZone::find($deliveryId);
+
+        if (!$deliveryZone) {
+            return $this->onErrorResponse([
+                'code'    => ResponseError::ERROR_404,
+                'message' => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
+            ]);
+        }
+
+        $km = $request->input('km');
+
+        if ($km <= 0) {
+            $km = 1;
+        }
+
+        return round(
+            ($deliveryZone->shop->delivery_price * $km) * $this->currency(), 2
+        );
+    }
+
+    /**
      * @param DistanceRequest $request
      * @return array
      */

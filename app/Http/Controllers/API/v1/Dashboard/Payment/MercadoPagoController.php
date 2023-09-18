@@ -36,7 +36,7 @@ class MercadoPagoController extends Controller
      * @return JsonResponse
      * @throws Exception
      */
-    public function orderProcessTransaction(Request $request): JsonResponse
+    public function orderProcessTransaction(StripeRequest $request): JsonResponse
     {
         try {
             $result = $this->service->orderProcessTransaction($request->all());

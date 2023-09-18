@@ -24,7 +24,7 @@ class PushNotificationController extends Controller
     {
         parent::__construct();
 
-        $this->middleware(['sanctum.check'])->except('store');
+        $this->middleware(['sanctum.check'])->except(['store', 'restStore']);
     }
 
     /**

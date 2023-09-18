@@ -9,6 +9,7 @@ use App\Http\Resources\LanguageResource;
 use App\Models\Language;
 use App\Services\Interfaces\LanguageServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 
 class LanguageController extends AdminBaseController
 {
@@ -51,6 +52,10 @@ class LanguageController extends AdminBaseController
             return $this->onErrorResponse($result);
         }
 
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_CREATED, locale: $this->language),
             LanguageResource::make(data_get($result, 'data'))
@@ -65,6 +70,11 @@ class LanguageController extends AdminBaseController
      */
     public function show(Language $language): JsonResponse
     {
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
             LanguageResource::make($language)
@@ -84,6 +94,10 @@ class LanguageController extends AdminBaseController
 
         if (!data_get($result, 'status')) {
             return $this->onErrorResponse($result);
+        }
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
         }
 
         return $this->successResponse(
@@ -156,6 +170,10 @@ class LanguageController extends AdminBaseController
                 'code'      => ResponseError::ERROR_404,
                 'message'   => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
             ]);
+        }
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
         }
 
         return $this->successResponse(

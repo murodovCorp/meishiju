@@ -12,6 +12,7 @@ use App\Repositories\ShopWorkingDayRepository\ShopWorkingDayRepository;
 use App\Services\ShopWorkingDayService\ShopWorkingDayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class ShopWorkingDayController extends AdminBaseController
 {
@@ -38,6 +39,10 @@ class ShopWorkingDayController extends AdminBaseController
     public function paginate(FilterParamsRequest $request): AnonymousResourceCollection
     {
         $model = $this->repository->paginate($request->all());
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return ShopResource::collection($model);
     }

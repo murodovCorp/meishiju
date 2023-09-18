@@ -5,10 +5,13 @@ namespace App\Services\ProductService;
 use App\Helpers\ResponseError;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Settings;
 use App\Models\Stock;
 use App\Services\CoreService;
 use App\Services\Interfaces\ProductServiceInterface;
 use App\Traits\SetTranslations;
+use DB;
+use Exception;
 use Throwable;
 
 class ProductService extends CoreService implements ProductServiceInterface
@@ -28,67 +31,61 @@ class ProductService extends CoreService implements ProductServiceInterface
     {
         try {
 
-            if (
-                !empty(data_get($data, 'category_id')) &&
-                $this->checkIsParentCategory(data_get($data, 'category_id'))
-            ) {
-                return [
-                    'status'  => false,
-                    'code'    => ResponseError::ERROR_501,
-                    'message' => __('errors.' . ResponseError::CATEGORY_IS_PARENT, locale: $this->language)
-                ];
-            }
+            $product = DB::transaction(function () use ($data) {
+                if (
+                    !empty(data_get($data, 'category_id')) &&
+                    $this->checkIsParentCategory(data_get($data, 'category_id'))
+                ) {
+                    throw new Exception(__('errors.' . ResponseError::CATEGORY_IS_PARENT, locale: $this->language));
+                }
 
-            if (data_get($data, 'addon') && data_get($data, 'addons.*')) {
-                return [
-                    'status'  => false,
-                    'code'    => ResponseError::ERROR_501,
-                    'message' => __('errors.' . ResponseError::ATTACH_FOR_ADDON, locale: $this->language)
-                ];
-            }
+                if (data_get($data, 'addon') && data_get($data, 'addons.*')) {
+					throw new Exception(__('errors.' . ResponseError::ATTACH_FOR_ADDON, locale: $this->language));
+                }
 
-            /** @var Product $product */
-            if (data_get($data, 'min_qty') > 1000000) {
-                data_set($data, 'min_qty',1000000);
-            }
+                /** @var Product $product */
+                if (data_get($data, 'min_qty') > 1000000) {
+                    data_set($data, 'min_qty',1000000);
+                }
 
-            if (data_get($data, 'max_qty') > 1000000) {
-                data_set($data, 'max_qty',1000000);
-            }
+                if (data_get($data, 'max_qty') > 1000000) {
+                    data_set($data, 'max_qty',1000000);
+                }
 
-            $product = $this->model()->create($data);
+				$autoApprove = Settings::adminSettings()->where('key', 'product_auto_approve')->first()?->value;
 
-            $this->setTranslations($product, $data);
+				if ($autoApprove) {
+					$data['status'] = Product::PUBLISHED;
+					$data['active'] = true;
+				}
 
-            if (data_get($data, 'meta')) {
-                $product->setMetaTags($data);
-            }
+                $product = $this->model()->create($data);
 
-            if (data_get($data, 'images.0')) {
-                $product->update(['img' => data_get($data, 'images.0')]);
-                $product->uploads(data_get($data, 'images'));
-            }
+                $this->setTranslations($product, $data);
 
-//            if (!Cache::has(base64_decode('cHJvamVjdC5zdGF0dXM=')) || Cache::get(base64_decode('cHJvamVjdC5zdGF0dXM='))->active != 1) {
-//                return ['status' => false, 'code' => ResponseError::ERROR_403];
-//            }
+                if (data_get($data, 'meta')) {
+                    $product->setMetaTags($data);
+                }
+
+                if (data_get($data, 'images.0')) {
+                    $product->update(['img' => data_get($data, 'images.0')]);
+                    $product->uploads(data_get($data, 'images'));
+                }
+
+                return $product;
+            });
 
             return [
                 'status' => true,
                 'code'   => ResponseError::NO_ERROR,
-                'data'   => $product->loadMissing([
-                    'translations',
-                    'metaTags',
-                    'stocks.addons',
-                    'stocks.addons.addon.translation' => fn($q) => $q->where('locale', $this->language),
-                ])
+                'data'   => $product
             ];
         } catch (Throwable $e) {
             $this->error($e);
             return [
                 'status'  => false,
                 'code'    => ResponseError::ERROR_501,
-                'message' => __('errors.' . ResponseError::ERROR_501, locale: $this->language)
+                'message' => $e->getMessage()
             ];
         }
     }
@@ -151,6 +148,8 @@ class ProductService extends CoreService implements ProductServiceInterface
                 data_set($data, 'max_qty',1000000);
             }
 
+			$data['status_note'] = null;
+
             $product->update($data);
 
             $this->setTranslations($product, $data);
@@ -179,7 +178,7 @@ class ProductService extends CoreService implements ProductServiceInterface
             return [
                 'status'  => false,
                 'code'    => ResponseError::ERROR_502,
-                'message' => __('errors.' . ResponseError::ERROR_502, locale: $this->language)
+                'message' => $e->getMessage()
             ];
         }
     }
@@ -229,10 +228,13 @@ class ProductService extends CoreService implements ProductServiceInterface
         $errIds = [];
 
         if (count($ids) === 0) {
+            $stock->addons()->delete();
             return $errIds;
         }
 
         try {
+
+            $stock = $stock->loadMissing(['countable']);
 
             $stock->addons()->delete();
 
@@ -242,7 +244,7 @@ class ProductService extends CoreService implements ProductServiceInterface
                 $product = Product::with('stock')->where('id', $id)->first();
 
                 if (
-                    data_get($product,'stock.addon') !== 1 ||
+					!$product->stock->addon ||
                     $product->shop_id !== $stock->countable?->shop_id ||
                     $product->stock?->bonus
                 ) {

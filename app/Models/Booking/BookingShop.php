@@ -27,7 +27,6 @@ use DB;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -55,13 +54,13 @@ use Illuminate\Support\Carbon;
  * @property boolean $visibility
  * @property string|null $background_img
  * @property string|null $logo_img
- * @property float $min_amount
+ * @property string|null $min_amount
  * @property string $status
+ * @property integer $delivery_price
  * @property string|null $status_note
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
- * @property int|null $type
  * @property array|null $delivery_time
  * @property-read Collection|Gallery[] $galleries
  * @property-read int|null $galleries_count
@@ -145,24 +144,12 @@ class BookingShop extends Model
         'inactive'
     ];
 
-    const TYPE_SHOP         = 1;
-    const TYPE_RESTAURANT   = 2;
-
-    const TYPES = [
-        self::TYPE_SHOP         => 'shop',
-        self::TYPE_RESTAURANT   => 'restaurant',
-    ];
-
-    const TYPES_BY = [
-        'shop'          => self::TYPE_SHOP,
-        'restaurant'    => self::TYPE_RESTAURANT,
-    ];
-
     protected $casts = [
         'location'      => 'array',
         'delivery_time' => 'array',
         'close_time'    => 'date:H:i',
         'open'          => 'boolean',
+//        'visibility'    => 'boolean',
     ];
 
     public function getAvgRateAttribute(): ?float
@@ -286,15 +273,47 @@ class BookingShop extends Model
 
     public function scopeFilter($query, $filter)
     {
+        $orders  = [];
+
+        if (data_get($filter, 'address.latitude') && data_get($filter, 'address.longitude')) {
+            DeliveryZone::list()->map(function (DeliveryZone $deliveryZone) use ($filter, &$orders) {
+
+                if (!$deliveryZone->shop_id) {
+                    return null;
+                }
+
+                $shop       = $deliveryZone->shop;
+
+                $location   = data_get($deliveryZone->shop, 'location', []);
+
+                $km         = (new Utility)->getDistance($location, data_get($filter, 'address', []));
+                $rate       = data_get($filter, 'currency.rate', 1);
+
+                $orders[$deliveryZone->shop_id] = (new Utility)->getPriceByDistance($km, $shop, $rate);
+
+                if (
+                    Utility::pointInPolygon(data_get($filter, 'address'), $deliveryZone->address)
+                    && $orders[$deliveryZone->shop_id] > 0
+                ) {
+                    return $deliveryZone->shop_id;
+                }
+
+                unset($orders[$deliveryZone->shop_id]);
+
+                return null;
+            })
+                ->reject(fn($data) => empty($data))
+                ->toArray();
+
+            arsort($orders);
+        }
+
         $query
             ->when(data_get($filter, 'user_id'), function ($q, $userId) {
                 $q->where('user_id', $userId);
             })
             ->when(data_get($filter, 'status'), function ($q, $status) {
                 $q->where('status', $status);
-            })
-            ->when(data_get($filter, 'type'), function ($q, $type) {
-                $q->where('type', data_get(self::TYPES_BY, $type));
             })
             ->when(isset($filter['open']), function ($q) use($filter) {
                 $q->where('open', $filter['open']);
@@ -312,20 +331,32 @@ class BookingShop extends Model
             })
             ->when(data_get($filter, 'bonus'), function (Builder $query) {
                 $query->whereHas('bonus', function ($q) {
-                    $q->where('expired_at', '>=', now());
+                    $q->where('expired_at', '>', now())->where('status', true);
                 });
             })
             ->when(data_get($filter, 'deals'), function (Builder $query) {
                 $query->where(function ($query) {
                     $query->whereHas('bonus', function ($q) {
-                        $q->where('expired_at', '>=', now());
+                        $q->where('expired_at', '>', now())->where('status', true);
                     })->orWhereHas('discounts', function ($q) {
                         $q->where('end', '>=', now())->where('active', 1);
                     });
                 });
             })
-            ->when(data_get($filter, 'address'), function ($query) use ($filter) {
-                $query->whereHas('deliveryZone');
+            ->when(data_get($filter, 'address'), function ($query) use ($filter, $orders) {
+                $orderBys = ['new', 'old', 'best_sale', 'low_sale', 'high_rating', 'low_rating', 'trust_you'];
+                $orderByIds = implode(', ', array_keys($orders));
+
+                $query
+                    ->whereHas('deliveryZone')
+                    ->when($orderByIds, function ($builder) use ($orderBys, $filter, $orderByIds) {
+
+                        if (!in_array(data_get($filter, 'order_by'), $orderBys)) {
+                            $builder->orderByRaw(DB::raw("FIELD(shops.id, $orderByIds) ASC"));
+                        }
+
+                    });
+
             })
             ->when(data_get($filter, 'search'), function ($query, $search) {
                 $query->where(function ($query) use ($search) {
@@ -337,6 +368,21 @@ class BookingShop extends Model
                                 ->select('id', 'shop_id', 'locale', 'title');
                         });
                 });
+            })
+            ->when(data_get($filter, 'take'), function (Builder $query, $take) {
+
+                $query->whereHas('tags', function (Builder $q) use ($take) {
+                    $q->when(is_array($take), fn($q) => $q->whereIn('id', $take), fn($q) => $q->where('id', $take));
+                });
+
+            })
+            ->when(data_get($filter, 'has_section'), function (Builder $query) {
+                $query->whereHas('shopSections');
+            })
+            ->when(data_get($filter, 'free_delivery'), function (Builder $q) {
+                $q->where([
+                    ['delivery_price', '=', 0],
+                ]);
             })
             ->when(data_get($filter, 'fast_delivery'), function (Builder $q) {
                 $q

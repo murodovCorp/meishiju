@@ -6,7 +6,6 @@ use App\Helpers\ResponseError;
 use App\Http\Requests\FilterParamsRequest;
 use App\Http\Requests\UserCreateRequest;
 use App\Http\Resources\UserResource;
-use App\Models\Invitation;
 use App\Models\User;
 use App\Repositories\UserRepository\UserRepository;
 use App\Services\AuthService\UserVerifyService;
@@ -91,9 +90,10 @@ class UserController extends SellerBaseController
 
     public function shopUsersPaginate(FilterParamsRequest $request): JsonResponse|AnonymousResourceCollection
     {
-        $users = $this->model->with('roles')
-            ->whereHas('invite', function ($q) {
-                $q->where(['shop_id' => $this->shop->id, 'status' => Invitation::STATUS['excepted']]);
+        $users = $this->model
+			->with('roles')
+            ->whereHas('invitations', function ($q) {
+                $q->where('shop_id', $this->shop->id);
             })
             ->when($request->input('search'), function ($query, $search) {
 
@@ -105,9 +105,15 @@ class UserController extends SellerBaseController
                 });
             })
             ->when($request->input('role'), function ($query, $role) {
+
                 $query->whereHas('roles', function ($q) use ($role) {
-                    $q->where('name', $role);
+					$q->where('name', $role);
                 });
+
+				if ($role === 'user') {
+					$query->whereHas('orders', fn($q) => $q->where('shop_id', $this->shop->id));
+				}
+
             })
             ->when(isset($request->active), function ($q) use ($request) {
                 $q->where('active', $request->input('active'));
@@ -139,10 +145,7 @@ class UserController extends SellerBaseController
      */
     public function getDeliveryman(FilterParamsRequest $request): AnonymousResourceCollection
     {
-        $users = $this->model->with([
-            'roles',
-            'invitations' => fn($q) => $q->where('shop_id', $this->shop->id)
-        ])
+        $users = $this->model->with(['roles', 'invitations'])
             ->whereHas('roles', function ($q) {
                 $q->where('name', 'deliveryman');
             })

@@ -4,7 +4,6 @@ namespace App\Repositories\StoryRepository;
 
 use App\Models\Language;
 use App\Models\Product;
-use App\Models\Shop;
 use App\Models\Story;
 use App\Repositories\CoreRepository;
 use Illuminate\Database\Eloquent\Builder;
@@ -55,9 +54,9 @@ class StoryRepository extends CoreRepository
                     $query->where(fn($q) => $q->where('updated_at', '>=', date('Y-m-d 00:00:01'))
                         ->where('updated_at', '<=', date('Y-m-d 23:59:59'))
                     )
-                    ->orWhere(fn($q) => $q->where('created_at', '>=', date('Y-m-d 00:00:01'))
-                        ->where('created_at', '<=', date('Y-m-d 23:59:59'))
-                    );
+                        ->orWhere(fn($q) => $q->where('created_at', '>=', date('Y-m-d 00:00:01'))
+                            ->where('created_at', '<=', date('Y-m-d 23:59:59'))
+                        );
                 });
             })
             ->orderBy(data_get($data, 'column', 'id'), data_get($data, 'sort', 'desc'))
@@ -66,122 +65,79 @@ class StoryRepository extends CoreRepository
 
     public function list(array $data = []): array
     {
-//        $data['open'] = 1;
-//        $data['status'] = 'approved';
         $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
-        $shopsStories = Shop::filter($data)->with([
-            'products:id,shop_id,uuid,active,addon,status',
-            'products.stories:id,file_urls,product_id,created_at,updated_at',
-            'products.translation' => fn ($q) => $q->where('locale', $this->language)
-                ->orWhere('locale', $locale)
-                ->select('id', 'product_id', 'locale', 'title'),
-            'translation' => fn ($q) => $q->where('locale', $this->language)
+        $shopsStories = Story::with([
+            'shop:id,uuid,logo_img',
+            'shop.seller:id,firstname,lastname,img',
+            'shop.translation' => fn ($q) => $q->where('locale', $this->language)
                 ->orWhere('locale', $locale)
                 ->select('id', 'shop_id', 'locale', 'title'),
+            'product:id,shop_id,uuid,active,addon,status',
+            'product.translation' => fn ($q) => $q->where('locale', $this->language)
+                ->orWhere('locale', $locale)
+                ->select('id', 'product_id', 'locale', 'title'),
         ])
-            ->whereHas('products', function (Builder $query) use ($data) {
-                $query->when(data_get($data, 'free'), function ($q) {
-                    $q->whereHas('stocks', fn($b) => $b->where('price', '=', 0));
-                })->where('active', 1)->where('addon', 0)
-                    ->where('status', Product::PUBLISHED);
-            })
-            ->whereHas('products.stories', function (Builder $query) {
+            ->whereHas('product', function (Builder $query) use ($data) {
+
                 $query
-                ->where('active', 1)
-                ->whereJsonLength('file_urls', '>', 0);
-//                ->where(function (Builder $query) {
-//                    $query->where(function (Builder $query) {
-//                        $query->where(fn($q) => $q->where('updated_at', '>=', date('Y-m-d 00:00:01'))
-//                            ->where('updated_at', '<=', date('Y-m-d 23:59:59'))
-//                        )
-//                        ->orWhere(fn($q) => $q->where('created_at', '>=', date('Y-m-d 00:00:01'))
-//                            ->where('created_at', '<=', date('Y-m-d 23:59:59'))
-//                        );
-//                    });
-//                });
-                // for over foodyman demo
-                //$query
-                //                    ->where('active', 1)
-                //                    ->whereJsonLength('file_urls', '>', 0);
-                //                //->where(function (Builder $query) {
-                //                //                        $query->where(function (Builder $query) {
-                //                //                            $query->where(fn($q) => $q->where('updated_at', '>=', date('Y-m-d 00:00:01'))
-                //                //                                ->where('updated_at', '<=', date('Y-m-d 23:59:59'))
-                //                //                            )
-                //                //                            ->orWhere(fn($q) => $q->where('created_at', '>=', date('Y-m-d 00:00:01'))
-                //                //                                ->where('created_at', '<=', date('Y-m-d 23:59:59'))
-                //                //                            );
-                //                //                        });
-                //                //                    })
-        })
-            ->select(['id', 'uuid', 'logo_img'])
+                    ->when(data_get($data, 'free'), function ($q) {
+                        $q->whereHas('stock', fn($b) => $b->where('price', '=', 0));
+                    })
+                    ->where('active', 1)
+                    ->where('addon', 0)
+                    ->where('status', Product::PUBLISHED);
+
+            })
+            ->where('created_at', '>=', date('Y-m-d', strtotime('-1 day')))
             ->simplePaginate(data_get($data, 'perPage', 100));
 
-        $shops = collect();
+        $shops = [];
 
         foreach ($shopsStories as $shopStories) {
-            /** @var Shop $shopStories */
 
-            if (!$shopStories->id) {
+            /** @var Story $shopStories */
+
+            if (!isset($shops[$shopStories->shop_id])) {
+				$shops[$shopStories->shop_id] = [];
+			}
+
+            $product = $shopStories->product;
+
+            if (!$product->active || $product->addon || $product->status !== Product::PUBLISHED) {
                 continue;
             }
 
-            $shops[$shopStories->id] = [];
+            foreach ($shopStories->file_urls as $file_url) {
 
-            foreach ($shopStories->products as $product) {
+                $shopsStoriesTitle  = $shopStories->shop->translation?->title;
+                $productTitle       = $product->translation?->title;
 
-//                if (!$product->active || !$product->addon || $product->status !== Product::PUBLISHED) {
-                    // !$product->active
-//                    continue;
-//                }
-
-                foreach ($product->stories as $story) {
-
-//                    if (!$story->file_urls || ($story->created_at <= date('Y-m-d 23:59:59') || $story->updated_at <= date('Y-m-d 23:59:59') )) {
-//                        $story->delete();
-//                        continue;
-//                    }
-
-                    foreach ($story->file_urls as $file_url) {
-
-                        $shopsStoriesTitle  = $shopStories->translations?->where('locale', $this->language)->first()?->title;
-                        $productTitle       = $product->translations?->where('locale', $this->language)->first()?->title;
-
-                        if (empty($shopsStoriesTitle)) {
-                            $shopsStoriesTitle = $shopStories->translations?->where('locale', $locale)->first()?->title;
-                        }
-
-                        if (empty($productTitle)) {
-                            $productTitle      = $product->translations?->where('locale', $locale)->first()?->title;
-                        }
-
-                        $shops[$shopStories->id] = [
-                            ...$shops[$shopStories->id],
-                            [
-                                'shop_id'       => $shopStories->id,
-                                'logo_img'      => $shopStories->logo_img,
-                                'title'         => $shopsStoriesTitle,
-                                'firstname'     => data_get($shopStories->seller, 'firstname'),
-                                'lastname'      => data_get($shopStories->seller, 'lastname'),
-                                'avatar'        => data_get($shopStories->seller, 'img'),
-                                'product_uuid'  => $product->uuid,
-                                'product_title' => $productTitle,
-                                'url'           => $file_url,
-                                'created_at'    => optional($story->created_at)->format('Y-m-d H:i:s'),
-                                'updated_at'    => optional($story->updated_at)->format('Y-m-d H:i:s'),
-                            ]
-                        ];
-
-                    }
-
+                if (empty($productTitle)) {
+                    $productTitle      = $product->translations?->where('locale', $locale)->first()?->title;
                 }
+
+                $shops[$shopStories->shop_id][] = [
+					'shop_id'       => $shopStories->shop_id,
+					'logo_img'      => $shopStories->shop->logo_img,
+					'title'         => $shopsStoriesTitle,
+					'firstname'     => $shopStories->shop->seller?->firstname,
+					'lastname'      => $shopStories->shop->seller?->lastname,
+					'avatar'        => $shopStories->shop->seller?->img,
+					'product_uuid'  => $product->uuid,
+					'product_title' => $productTitle,
+					'url'           => $file_url,
+					'created_at'    => !empty($shopStories->created_at) ? $shopStories->created_at->format('Y-m-d H:i:s') . 'Z' : null,
+					'updated_at'    => !empty($shopStories->updated_at) ? $shopStories->updated_at->format('Y-m-d H:i:s') . 'Z' : null,
+				];
 
             }
 
         }
 
-        return $shops?->count() > 0 ? array_values($shops->toArray()) : [];
+		$shops = collect($shops);
+
+        return $shops?->count() > 0 ? array_values($shops->reject(fn($items) => empty($items))->toArray()) : [];
     }
 
     public function show(Story $story): Story

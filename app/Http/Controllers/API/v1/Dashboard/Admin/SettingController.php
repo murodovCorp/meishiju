@@ -8,10 +8,10 @@ use App\Models\Referral;
 use App\Models\Settings;
 use App\Models\User;
 use App\Services\SettingService\SettingService;
-use Cache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Psr\SimpleCache\InvalidArgumentException;
 use Throwable;
 
@@ -33,6 +33,10 @@ class SettingController extends AdminBaseController
     public function index(): JsonResponse
     {
         $settings = Settings::adminSettings();
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return $this->successResponse(__('errors.' . ResponseError::SUCCESS, locale: $this->language), $settings);
     }

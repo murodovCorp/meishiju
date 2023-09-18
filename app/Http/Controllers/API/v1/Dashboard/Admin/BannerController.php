@@ -11,6 +11,7 @@ use App\Repositories\BannerRepository\BannerRepository;
 use App\Services\BannerService\BannerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class BannerController extends AdminBaseController
 {
@@ -35,6 +36,10 @@ class BannerController extends AdminBaseController
         $filter = $request->merge(['type' => 'banner'])->all();
 
         $banners = $this->repository->bannersPaginate($filter);
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return BannerResource::collection($banners);
     }

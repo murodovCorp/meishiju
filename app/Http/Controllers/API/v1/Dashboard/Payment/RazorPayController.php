@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\v1\Dashboard\Payment;
 
 use App\Helpers\ResponseError;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Payment\StripeRequest;
 use App\Http\Requests\Shop\SubscriptionRequest;
 use App\Models\Currency;
 use App\Models\Shop;
@@ -14,7 +15,6 @@ use App\Traits\OnResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Log;
 use Redirect;
 use Throwable;
 
@@ -30,10 +30,10 @@ class RazorPayController extends Controller
     /**
      * process transaction.
      *
-     * @param Request $request
+     * @param StripeRequest $request
      * @return JsonResponse
      */
-    public function orderProcessTransaction(Request $request): JsonResponse
+    public function orderProcessTransaction(StripeRequest $request): JsonResponse
     {
         try {
             $paymentProcess = $this->service->orderProcessTransaction($request->all());
@@ -108,11 +108,6 @@ class RazorPayController extends Controller
      */
     public function paymentWebHook(Request $request): void
     {
-        Log::error('yandex', [
-            'all' => $request->all(),
-            'h'  => $request->headers
-        ]);
-
         $token  = $request->input('payload.payment_link.entity.id');
         $status = $request->input('payload.payment_link.entity.status');
 

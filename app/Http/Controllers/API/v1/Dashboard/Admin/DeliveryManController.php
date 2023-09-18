@@ -6,6 +6,7 @@ use App\Http\Requests\FilterParamsRequest;
 use App\Http\Resources\UserResource;
 use App\Repositories\UserRepository\UserRepository;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class DeliveryManController extends AdminBaseController
 {
@@ -26,6 +27,10 @@ class DeliveryManController extends AdminBaseController
     public function paginate(FilterParamsRequest $request): AnonymousResourceCollection
     {
         $deliveryMans = $this->repository->deliveryMans($request->all());
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return UserResource::collection($deliveryMans);
     }

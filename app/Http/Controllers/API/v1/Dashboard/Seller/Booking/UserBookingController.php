@@ -66,7 +66,7 @@ class UserBookingController extends SellerBaseController
     {
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
-            UserBookingResource::make($userBooking)
+            UserBookingResource::make($this->repository->show($userBooking))
         );
     }
 

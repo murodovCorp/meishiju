@@ -16,8 +16,6 @@ class CreatePaymentProcessTable extends Migration
         Schema::create('payment_process', function (Blueprint $table) {
             $table->string('id');
             $table->foreignId('user_id')->nullable()->constrained()->cascadeOnUpdate()->cascadeOnDelete();
-            $table->foreignId('order_id')->nullable()->constrained()->cascadeOnUpdate()->cascadeOnDelete();
-            $table->foreignId('subscription_id')->nullable()->constrained()->cascadeOnUpdate()->cascadeOnDelete();
             $table->jsonb('data');
         });
     }

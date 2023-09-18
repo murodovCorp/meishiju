@@ -3,6 +3,7 @@
 namespace App\Services\PaymentService;
 
 use App\Models\Order;
+use App\Models\ParcelOrder;
 use App\Models\Payment;
 use App\Models\PaymentPayload;
 use App\Models\PaymentProcess;
@@ -34,14 +35,21 @@ class FlutterWaveService extends BaseService
         $paymentPayload = PaymentPayload::where('payment_id', $payment?->id)->first();
         $payload        = $paymentPayload?->payload;
 
-        $order          = Order::find(data_get($data, 'order_id'));
-        $totalPrice     = ceil($order->rate_total_price * 2 * 100) / 2;
+        /** @var ParcelOrder $order */
+        $order = data_get($data, 'parcel_id')
+            ? ParcelOrder::find(data_get($data, 'parcel_id'))
+            : Order::find(data_get($data, 'order_id'));
+
+        $totalPrice = ceil($order->rate_total_price * 2 * 100) / 2;
 
         $order->update([
-            'total_price' => ($totalPrice / $order->rate) / 100
+            'total_price' => ($totalPrice / ($order->rate <= 0 ? 1 : $order->rate)) / 100
         ]);
 
         $host = request()->getSchemeAndHttpHost();
+        $url  = "$host/order-stripe-success?" . (
+            data_get($data, 'parcel_id') ? "parcel_id=$order->id" : "order_id=$order->id"
+        );
 
         $headers = [
             'Accept' => 'application/json',
@@ -53,10 +61,10 @@ class FlutterWaveService extends BaseService
 
         $data = [
             'tx_ref'            => $trxRef,
-            'amount'            => 100,
+            'amount'            => $totalPrice,
             'currency'          => Str::upper($order->currency?->title ?? data_get($payload, 'currency')),
             'payment_options'   => 'card,account,ussd,mobilemoneyghana',
-            'redirect_url'      => "$host/order-stripe-success?order_id=$order->id",
+            'redirect_url'      => $url,
             'customer'          => [
                 'name'          => $order->username ?? "{$order->user?->firstname} {$order->user?->lastname}",
                 'phonenumber'   => $order->phone ?? $order->user?->phone,
@@ -78,14 +86,14 @@ class FlutterWaveService extends BaseService
         }
 
         return PaymentProcess::updateOrCreate([
-            'user_id'   => auth('sanctum')->id(),
-            'order_id'  => data_get($data, 'order_id'),
+            'user_id'    => auth('sanctum')->id(),
+            'model_id'   => $order->id,
+            'model_type' => get_class($order)
         ], [
             'id'    => $trxRef,
             'data'  => [
-                'url'       => $body,
-                'price'     => $totalPrice,
-                'order_id'  => $order->id
+                'url'       => data_get($body, 'data.link'),
+                'price'     => $totalPrice
             ]
         ]);
     }
@@ -119,7 +127,7 @@ class FlutterWaveService extends BaseService
 
         $data = [
             'tx_ref'            => $trxRef,
-            'amount'            => 100,
+            'amount'            => $subscription->price,
             'currency'          => Str::lower(data_get($paymentPayload?->payload, 'currency', $currency)),
             'payment_options'   => 'card,account,ussd,mobilemoneyghana',
             'redirect_url'      => "$host/subscription-stripe-success?subscription_id=$subscription->id",
@@ -144,8 +152,9 @@ class FlutterWaveService extends BaseService
         }
 
         return PaymentProcess::updateOrCreate([
-            'user_id'   => auth('sanctum')->id(),
-            'order_id'  => data_get($data, 'order_id'),
+            'user_id'    => auth('sanctum')->id(),
+			'model_id'   => $subscription->id,
+			'model_type' => get_class($subscription)
         ], [
             'id'    => $trxRef,
             'data'  => [

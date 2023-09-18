@@ -23,7 +23,6 @@ use App\Repositories\ReviewRepository\ReviewRepository;
 use App\Repositories\ShopPaymentRepository\ShopPaymentRepository;
 use App\Services\ShopServices\ShopReviewService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Str;
@@ -51,6 +50,7 @@ class ShopController extends RestBaseController
     {
         $visibility = (int)Settings::adminSettings()->where('key', 'by_subscription')->first()?->value;
 
+
         $merge = [
             'status'    => 'approved',
             'currency'  => $this->currency,
@@ -67,13 +67,13 @@ class ShopController extends RestBaseController
         return ShopResource::collection($shops);
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @param Request $request
-     * @return AnonymousResourceCollection
-     */
-    public function selectPaginate(Request $request): AnonymousResourceCollection
+	/**
+	 * Display a listing of the resource.
+	 *
+	 * @param FilterParamsRequest $request
+	 * @return AnonymousResourceCollection
+	 */
+    public function selectPaginate(FilterParamsRequest $request): AnonymousResourceCollection
     {
         $shops = $this->shopRepository->selectPaginate(
             $request->merge([
@@ -119,11 +119,12 @@ class ShopController extends RestBaseController
     /**
      * Display the specified resource.
      *
+     * @param FilterParamsRequest $request
      * @return JsonResponse
      */
-    public function takes(): JsonResponse
+    public function takes(FilterParamsRequest $request): JsonResponse
     {
-        $shop = $this->shopRepository->takes();
+        $shop = $this->shopRepository->takes($request->all());
 
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
@@ -143,13 +144,13 @@ class ShopController extends RestBaseController
         return $this->successResponse(__('errors.' . ResponseError::SUCCESS, locale: $this->language), $shop);
     }
 
-    /**
-     * Search shop Model from database.
-     *
-     * @param Request $request
-     * @return AnonymousResourceCollection
-     */
-    public function shopsSearch(Request $request): AnonymousResourceCollection
+	/**
+	 * Search shop Model from database.
+	 *
+	 * @param FilterParamsRequest $request
+	 * @return AnonymousResourceCollection
+	 */
+    public function shopsSearch(FilterParamsRequest $request): AnonymousResourceCollection
     {
         $shops = $this->shopRepository->shopsSearch($request->merge([
             'status'        => 'approved',
@@ -159,26 +160,40 @@ class ShopController extends RestBaseController
         return ShopResource::collection($shops);
     }
 
-    /**
-     * Search shop Model from database via IDs.
-     *
-     * @param Request $request
-     * @return AnonymousResourceCollection
-     */
-    public function shopsByIDs(Request $request): AnonymousResourceCollection
+	/**
+	 * Search shop Model from database via IDs.
+	 *
+	 * @param FilterParamsRequest $request
+	 * @return AnonymousResourceCollection
+	 */
+    public function shopsByIDs(FilterParamsRequest $request): AnonymousResourceCollection
     {
         $shops = $this->shopRepository->shopsByIDs($request->merge(['status' => 'approved'])->all());
 
         return ShopResource::collection($shops);
     }
 
-    /**
-     * Search shop Model from database via IDs.
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function recommended(Request $request): JsonResponse
+	/**
+	 * Search shop Model from database via IDs.
+	 *
+	 * @param FilterParamsRequest $request
+	 *
+	 * @return JsonResponse
+	 */
+	public function productsRecPaginate(FilterParamsRequest $request): JsonResponse
+	{
+		return $this->successResponse(__('web.products_found'),
+			$this->shopRepository->productsRecPaginate($request->all())
+		);
+	}
+
+	/**
+	 * Search shop Model from database via IDs.
+	 *
+	 * @param FilterParamsRequest $request
+	 * @return JsonResponse
+	 */
+    public function recommended(FilterParamsRequest $request): JsonResponse
     {
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
@@ -186,14 +201,26 @@ class ShopController extends RestBaseController
         );
     }
 
-    /**
-     * Search shop Model from database via IDs.
-     *
-     * @param int $id
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function products(int $id, Request $request): JsonResponse
+	/**
+	 * Search shop Model from database via IDs.
+	 *
+	 * @param FilterParamsRequest $request
+	 *
+	 * @return AnonymousResourceCollection
+	 */
+	public function branchProducts(FilterParamsRequest $request): AnonymousResourceCollection
+	{
+		return $this->shopRepository->branchProducts($request->all());
+	}
+
+	/**
+	 * Search shop Model from database via IDs.
+	 *
+	 * @param int $id
+	 * @param FilterParamsRequest $request
+	 * @return JsonResponse
+	 */
+    public function products(int $id, FilterParamsRequest $request): JsonResponse
     {
         $shop = Shop::find($id);
 
@@ -209,14 +236,14 @@ class ShopController extends RestBaseController
         );
     }
 
-    /**
-     * Search shop Model from database via IDs.
-     *
-     * @param int $id
-     * @param Request $request
-     * @return JsonResponse|AnonymousResourceCollection
-     */
-    public function categories(int $id, Request $request): JsonResponse|AnonymousResourceCollection
+	/**
+	 * Search shop Model from database via IDs.
+	 *
+	 * @param int $id
+	 * @param FilterParamsRequest $request
+	 * @return JsonResponse|AnonymousResourceCollection
+	 */
+    public function categories(int $id, FilterParamsRequest $request): JsonResponse|AnonymousResourceCollection
     {
         $shop = Shop::find($id);
 
@@ -232,14 +259,14 @@ class ShopController extends RestBaseController
         return CategoryResource::collection($categories);
     }
 
-    /**
-     * Search shop Model from database via IDs.
-     *
-     * @param int $id
-     * @param Request $request
-     * @return JsonResponse|AnonymousResourceCollection
-     */
-    public function productsPaginate(int $id, Request $request): JsonResponse|AnonymousResourceCollection
+	/**
+	 * Search shop Model from database via IDs.
+	 *
+	 * @param int $id
+	 * @param FilterParamsRequest $request
+	 * @return JsonResponse|AnonymousResourceCollection
+	 */
+    public function productsPaginate(int $id, FilterParamsRequest $request): JsonResponse|AnonymousResourceCollection
     {
         $shop = Shop::find($id);
 
@@ -255,14 +282,14 @@ class ShopController extends RestBaseController
         return ProductResource::collection($products);
     }
 
-    /**
-     * Search shop Model from database via IDs.
-     *
-     * @param int $id
-     * @param Request $request
-     * @return JsonResponse|AnonymousResourceCollection
-     */
-    public function productsRecommendedPaginate(int $id, Request $request): JsonResponse|AnonymousResourceCollection
+	/**
+	 * Search shop Model from database via IDs.
+	 *
+	 * @param int $id
+	 * @param FilterParamsRequest $request
+	 * @return JsonResponse|AnonymousResourceCollection
+	 */
+    public function productsRecommendedPaginate(int $id, FilterParamsRequest $request): JsonResponse|AnonymousResourceCollection
     {
         $shop = Shop::find($id);
 
@@ -280,14 +307,14 @@ class ShopController extends RestBaseController
         return ProductResource::collection($products);
     }
 
-    /**
-     * Search shop Model from database via IDs.
-     *
-     * @param int $id
-     * @param Request $request
-     * @return JsonResponse|AnonymousResourceCollection
-     */
-    public function shopPayments(int $id, Request $request): JsonResponse|AnonymousResourceCollection
+	/**
+	 * Search shop Model from database via IDs.
+	 *
+	 * @param int $id
+	 * @param FilterParamsRequest $request
+	 * @return JsonResponse|AnonymousResourceCollection
+	 */
+    public function shopPayments(int $id, FilterParamsRequest $request): JsonResponse|AnonymousResourceCollection
     {
         $shop = Shop::find($id);
 
@@ -309,12 +336,13 @@ class ShopController extends RestBaseController
      */
     public function galleries(int $id): ShopGalleryResource|JsonResponse
     {
-        $shopGallery = ShopGallery::with(['galleries'])
+		/** @var ShopGallery|null $shopGallery */
+		$shopGallery = ShopGallery::with(['galleries'])
             ->where('shop_id', $id)
             ->where('active', 1)
             ->first();
 
-        if (empty($shopGallery)) {
+        if (empty($shopGallery) || !$shopGallery->active) {
             return $this->onErrorResponse([
                 'code'    => ResponseError::ERROR_404,
                 'message' => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
@@ -373,7 +401,7 @@ class ShopController extends RestBaseController
             return $this->onErrorResponse($result);
         }
 
-        return $this->successResponse(ResponseError::NO_ERROR, ShopResource::make($result));
+        return $this->successResponse(ResponseError::NO_ERROR, ShopResource::make(data_get($result, 'data')));
 
     }
 

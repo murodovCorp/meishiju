@@ -29,7 +29,11 @@ class BannerService extends CoreService
             $banner = DB::transaction(function () use ($data) {
                 /** @var Banner $banner */
                 $banner = $this->model()->create($data);
-                $banner->shops()->sync(data_get($data, 'shops', []));
+
+                if (data_get($data, 'shops.*')) {
+                    $banner->shops()->sync(data_get($data, 'shops', []));
+                }
+
                 $this->setTranslations($banner, $data);
 
                 if (data_get($data, 'images.0')) {
@@ -58,7 +62,11 @@ class BannerService extends CoreService
         try {
             DB::transaction(function () use ($banner, $data) {
                 $banner->update($data);
-                $banner->shops()->sync(data_get($data, 'shops', []));
+
+                if (data_get($data, 'shops.*')) {
+                    $banner->shops()->sync(data_get($data, 'shops', []));
+                }
+
                 $this->setTranslations($banner, $data);
 
                 if (data_get($data, 'images.0')) {

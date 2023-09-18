@@ -5,10 +5,10 @@ namespace App\Repositories\ShopRepository;
 use App\Models\Language;
 use App\Models\Shop;
 use App\Repositories\CoreRepository;
-use Cache;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class AdminShopRepository extends CoreRepository
 {
@@ -43,7 +43,6 @@ class AdminShopRepository extends CoreRepository
                 'open',
                 'tax',
                 'status',
-                'type',
                 'deleted_at',
             ])
             ->paginate(data_get($filter, 'perPage', 10));
@@ -88,9 +87,10 @@ class AdminShopRepository extends CoreRepository
                 'background_img',
                 'logo_img',
                 'open',
+                'visibility',
+                'verify',
                 'tax',
                 'status',
-                'type',
                 'user_id',
                 'deleted_at',
             ])
@@ -108,7 +108,7 @@ class AdminShopRepository extends CoreRepository
         $shop = $this->model();
         $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
-        if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
             abort(403);
         }
 
@@ -122,7 +122,7 @@ class AdminShopRepository extends CoreRepository
             'categories:id',
             'categories.translation' => fn($q) => $q->select('category_id', 'id', 'locale', 'title')
                 ->where('locale', $this->language)->orWhere('locale', $locale),
-            'bonus' => fn($q) => $q->where('expired_at', '>=', now())
+            'bonus' => fn($q) => $q->where('expired_at', '>', now())->where('status', true)
                 ->select([
                     'bonusable_type',
                     'bonusable_id',

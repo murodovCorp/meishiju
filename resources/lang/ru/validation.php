@@ -259,7 +259,7 @@ return [
         'username' => 'имя пользователя',
         'order_id' => 'заказ',
         'brand_id' => 'марка',
-        'bar_code' => 'штрих-код',
+        'sku'      => 'ску',
         'max_time' => 'максимальное время',
         'end_time' => 'время окончания',
         'owner_id' => 'владелец',
@@ -352,6 +352,7 @@ return [
         'origin_price' => 'исходная цена',
         'nutrition_id' => 'питание',
         'min_quantity' => 'минимальное количество',
+        'price_per_km' => 'цена за км',
         'countable_id' => 'продукт',
         'verify_token' => 'проверить токен',
 

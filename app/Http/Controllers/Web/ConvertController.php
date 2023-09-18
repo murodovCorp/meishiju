@@ -23,7 +23,7 @@ class ConvertController
         $excel   = Excel::toArray(fn($data) => $data, $file);
         $columns = [];
 
-        foreach ($excel as $page => $items) {
+        foreach ($excel as $items) {
 
             foreach ($items as $col => $row) {
 

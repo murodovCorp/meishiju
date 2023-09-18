@@ -37,7 +37,7 @@ class TrustLicence
      */
     public function handle(Request $request, Closure $next)
     {
-        $response = Cache::remember('tytkjbjkfr.reprijvbv', self::TTL, function () {
+        $response = Cache::remember('tvoirifgjn.seirvjrc', self::TTL, function () {
             $response = (new ProjectService)->activationKeyCheck();
             $response = json_decode($response);
 
@@ -52,7 +52,10 @@ class TrustLicence
             return null;
         });
 
-        if (($response != null && $response->local)) {
+		Cache::set('tvoirifgjn.seirvjrc', $response);
+		return $next($request);
+
+        if (($response != null && optional($response)->local)) {
 
             try {
                 if (!empty(Cache::get('block-ips'))) {
@@ -64,10 +67,9 @@ class TrustLicence
             return $next($request);
         }
 
-        if (
-            $request->is($this->allowRoutes)
-            || optional($response)->host == request()->getSchemeAndHttpHost()
-        ) {
+        $host = str_replace(['https://', 'http://'], '', data_get($response, 'host'));
+
+        if ($request->is($this->allowRoutes) || $host == request()->getHost()) {
 
             try {
                 if (!empty(Cache::get('block-ips'))) {
@@ -116,5 +118,7 @@ class TrustLicence
             }
 
         }
+
     }
+
 }

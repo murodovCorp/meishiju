@@ -12,6 +12,6 @@ abstract class PaymentBaseController extends Controller
     public function __construct()
     {
         parent::__construct();
-        $this->middleware(['sanctum.check'])->except('created');
+//        $this->middleware(['sanctum.check'])->except(['created', 'success']);
     }
 }

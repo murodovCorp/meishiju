@@ -43,7 +43,7 @@ class StripeController extends Controller
         } catch (Throwable $e) {
             $this->error($e);
             return $this->onErrorResponse([
-                'message' => $e->getMessage()
+                'message' => ResponseError::ERROR_501
             ]);
         }
 
@@ -94,9 +94,12 @@ class StripeController extends Controller
      */
     public function orderResultTransaction(Request $request): RedirectResponse
     {
-        $orderId = (int)$request->input('order_id');
 
-        $to = config('app.front_url') . "orders/$orderId";
+		Log::error('mercado', $request->all());
+        $orderId  = (int)$request->input('order_id');
+        $parcelId = (int)$request->input('parcel_id');
+
+        $to = config('app.front_url') . ($orderId ? "orders/$orderId" : "parcels/$parcelId");
 
         return Redirect::to($to);
     }
@@ -120,21 +123,15 @@ class StripeController extends Controller
      */
     public function paymentWebHook(Request $request): void
     {
-
+        Log::error('paymentWebHook', $request->all());
         $status = $request->input('data.object.status');
 
         $status = match ($status) {
-            'succeeded', 'complete' => WalletHistory::PAID,
+            'succeeded' => WalletHistory::PAID,
             default     => 'progress',
         };
 
         $token = $request->input('data.object.id');
-
-        Log::error('stripe webhook', [
-            'token'     => $token,
-            'status'    => $status,
-            '_status'   => $request->input('data.object.status')
-        ]);
 
         $this->service->afterHook($token, $status);
     }

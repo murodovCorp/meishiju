@@ -10,6 +10,7 @@ use App\Repositories\WalletRepository\WalletHistoryRepository;
 use App\Services\WalletHistoryService\WalletHistoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class WalletHistoryController extends AdminBaseController
 {
@@ -26,6 +27,10 @@ class WalletHistoryController extends AdminBaseController
     public function paginate(FilterParamsRequest $request): AnonymousResourceCollection
     {
         $walletHistory = $this->repository->walletHistoryPaginate($request->all());
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return WalletHistoryResource::collection($walletHistory);
     }

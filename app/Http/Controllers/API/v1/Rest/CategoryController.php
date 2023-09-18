@@ -14,124 +14,123 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CategoryController extends RestBaseController
 {
-    public function __construct(
-        private CategoryRepoInterface $repository,
-        private RestCategoryRepository $restRepository
-    )
-    {
-        parent::__construct();
-    }
 
-    public function parentCategory(CategoryFilterRequest $request): JsonResponse
-    {
-        $categories = $this->restRepository->parentCategories($request->merge(['active' => 1])->all());
+	public function __construct(
+		private CategoryRepoInterface $repository,
+		private RestCategoryRepository $restRepository
+	)
+	{
+		parent::__construct();
+	}
 
-        return $this->successResponse(
-            __('errors.' . ResponseError::NO_ERROR, locale: $this->language),
-            CategoryResource::collection($categories)
-        );
-    }
+	public function parentCategory(CategoryFilterRequest $request): JsonResponse
+	{
+		$categories = $this->restRepository->parentCategories($request->merge(['active' => 1])->all());
 
-    public function childrenCategory(int $id): JsonResponse
-    {
-        $childrenCategories = $this->repository->childrenCategory($id);
+		return $this->successResponse(
+			__('errors.' . ResponseError::NO_ERROR),
+			CategoryResource::collection($categories)
+		);
+	}
 
-        if (!$childrenCategories) {
-            return $this->onErrorResponse([
-                'code'    => ResponseError::ERROR_404,
-                'message' => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
-            ]);
-        }
+	public function childrenCategory(int $id): JsonResponse
+	{
+		$childrenCategories = $this->repository->childrenCategory($id);
 
-        return $this->successResponse(
-            __('errors.' . ResponseError::NO_ERROR, locale: $this->language),
-            CategoryResource::make($childrenCategories)
-        );
-    }
+		if (!$childrenCategories) {
+			return $this->onErrorResponse(['code' => ResponseError::ERROR_404]);
+		}
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @param CategoryFilterRequest $request
-     * @return AnonymousResourceCollection
-     */
+		return $this->successResponse(
+			__('errors.' . ResponseError::NO_ERROR),
+			CategoryResource::make($childrenCategories)
+		);
+	}
 
-    public function paginate(CategoryFilterRequest $request): AnonymousResourceCollection
-    {
-        $categories = $this->restRepository->parentCategories($request->merge(['active' => 1])->all());
+	/**
+	 * Display a listing of the resource.
+	 *
+	 * @param CategoryFilterRequest $request
+	 * @return AnonymousResourceCollection
+	 */
 
-        return CategoryResource::collection($categories);
-    }
+	public function paginate(CategoryFilterRequest $request): AnonymousResourceCollection
+	{
+		$filter = $request
+			->merge([
+				'active' => 1,
+				'has_products' => in_array($request->input('type'), ['main', 'sub_main'])
+			])
+			->all();
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @param CategoryFilterRequest $request
-     * @return AnonymousResourceCollection
-     */
+		$categories = $this->restRepository->parentCategories($filter);
 
-    public function selectPaginate(CategoryFilterRequest $request): AnonymousResourceCollection
-    {
-        $categories = $this->repository->selectPaginate($request->merge(['active' => 1])->all());
+		return CategoryResource::collection($categories);
+	}
 
-        return CategoryResource::collection($categories);
-    }
+	/**
+	 * Display a listing of the resource.
+	 *
+	 * @param CategoryFilterRequest $request
+	 * @return AnonymousResourceCollection
+	 */
 
-    /**
-     * Search Model by tag name.
-     *
-     * @param CategoryFilterRequest $request
-     * @return AnonymousResourceCollection
-     */
-    public function categoriesSearch(CategoryFilterRequest $request): AnonymousResourceCollection
-    {
-        $categories = $this->repository->categoriesSearch($request->merge(['active' => 1])->all());
+	public function selectPaginate(CategoryFilterRequest $request): AnonymousResourceCollection
+	{
+		$categories = $this->repository->selectPaginate($request->merge(['active' => 1])->all());
 
-        return CategoryResource::collection($categories);
-    }
+		return CategoryResource::collection($categories);
+	}
 
-    /**
-     * Display the specified resource.
-     *
-     * @param string $uuid
-     * @return JsonResponse
-     */
-    public function show(string $uuid): JsonResponse
-    {
-        $category = $this->repository->categoryByUuid($uuid);
+	/**
+	 * Search Model by tag name.
+	 *
+	 * @param CategoryFilterRequest $request
+	 * @return AnonymousResourceCollection
+	 */
+	public function categoriesSearch(CategoryFilterRequest $request): AnonymousResourceCollection
+	{
+		$categories = $this->repository->categoriesSearch($request->merge(['active' => 1])->all());
 
-        if (!$category) {
-            return $this->onErrorResponse([
-                'code'    => ResponseError::ERROR_404,
-                'message' => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
-            ]);
-        }
+		return CategoryResource::collection($categories);
+	}
 
-        return $this->successResponse(
-            __('errors.' . ResponseError::NO_ERROR, locale: $this->language),
-            CategoryResource::make($category)
-        );
-    }
+	/**
+	 * Display the specified resource.
+	 *
+	 * @param string $uuid
+	 * @return JsonResponse
+	 */
+	public function show(string $uuid): JsonResponse
+	{
+		$category = $this->repository->categoryByUuid($uuid);
 
-    public function shopCategoryProduct(Request $request): AnonymousResourceCollection
-    {
-        $categories = $this->repository->shopCategoryProduct($request->all());
+		if (!$category) {
+			return $this->onErrorResponse(['code' => ResponseError::ERROR_404]);
+		}
 
-        return CategoryResource::collection($categories);
-    }
+		return $this->successResponse(__('errors.' . ResponseError::NO_ERROR), CategoryResource::make($category));
+	}
 
-    public function shopCategory(Request $request): AnonymousResourceCollection
-    {
-        $categories = $this->repository->shopCategory($request->all());
+	public function shopCategoryProduct(Request $request): AnonymousResourceCollection
+	{
+		$categories = $this->repository->shopCategoryProduct($request->all());
 
-        return CategoryResource::collection($categories);
-    }
+		return CategoryResource::collection($categories);
+	}
 
-    public function types(): JsonResponse
-    {
-        return $this->successResponse(
-            __('errors.' . ResponseError::NO_ERROR, locale: $this->language),
-            array_keys(Category::TYPES)
-        );
-    }
+	public function shopCategory(Request $request): AnonymousResourceCollection
+	{
+		$categories = $this->repository->shopCategory($request->all());
+
+		return CategoryResource::collection($categories);
+	}
+
+	public function types(): JsonResponse
+	{
+		return $this->successResponse(
+			__('errors.' . ResponseError::NO_ERROR),
+			array_keys(Category::TYPES)
+		);
+	}
 }

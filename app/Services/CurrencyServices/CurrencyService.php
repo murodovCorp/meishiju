@@ -5,6 +5,7 @@ use App\Helpers\ResponseError;
 use App\Models\Currency;
 use App\Services\CoreService;
 use App\Services\Interfaces\CurrencyServiceInterface;
+use DB;
 use Exception;
 use Throwable;
 
@@ -82,11 +83,21 @@ class CurrencyService extends CoreService implements CurrencyServiceInterface
         } catch (Throwable) {}
     }
 
+    public function setCurrencyDefault(Currency $currency) {
 
-    private function setCurrencyDefault(Currency $currency) {
+		DB::table('currencies')
+			->where('default', 1)
+			->update([
+				'default' => 0,
+			]);
+
         $currency->default = 1;
         $currency->active = 1;
         $currency->save();
+
+		try {
+			cache()->forget('currencies-list');
+		} catch (Throwable) {}
     }
 
 }

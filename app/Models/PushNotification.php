@@ -37,23 +37,29 @@ class PushNotification extends Model
     ];
 
     const NEW_ORDER             = 'new_order';
+    const NEW_PARCEL_ORDER      = 'new_parcel_order';
     const NEW_USER_BY_REFERRAL  = 'new_user_by_referral';
     const STATUS_CHANGED        = 'status_changed';
-    const NEW_IN_TABLE          = 'new_in_table';
-    const BOOKING_STATUS        = 'booking_status';
-    const NEW_BOOKING           = 'new_booking';
-    const NEWS_PUBLISH          = 'news_publish';
-    const ADD_CASHBACK          = 'add_cashback';
+    const ORDER_REFUNDED        = 'order_refunded';
+	const NEW_IN_TABLE          = 'new_in_table';
+	const BOOKING_STATUS        = 'booking_status';
+	const NEW_BOOKING           = 'new_booking';
+	const NEWS_PUBLISH          = 'news_publish';
+	const ADD_CASHBACK          = 'add_cashback';
+	const SHOP_APPROVED         = 'shop_approved';
 
-    const TYPES = [
+	const TYPES = [
         self::NEW_ORDER             => self::NEW_ORDER,
+        self::NEW_PARCEL_ORDER      => self::NEW_PARCEL_ORDER,
         self::NEW_USER_BY_REFERRAL  => self::NEW_USER_BY_REFERRAL,
         self::STATUS_CHANGED        => self::STATUS_CHANGED,
+        self::ORDER_REFUNDED        => self::ORDER_REFUNDED,
         self::NEW_IN_TABLE          => self::NEW_IN_TABLE,
         self::BOOKING_STATUS        => self::BOOKING_STATUS,
         self::NEW_BOOKING           => self::NEW_BOOKING,
         self::NEWS_PUBLISH          => self::NEWS_PUBLISH,
         self::ADD_CASHBACK          => self::ADD_CASHBACK,
+        self::SHOP_APPROVED         => self::ADD_CASHBACK,
     ];
 
     public function user(): BelongsTo

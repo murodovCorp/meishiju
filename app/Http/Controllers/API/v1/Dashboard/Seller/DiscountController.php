@@ -85,7 +85,10 @@ class DiscountController extends SellerBaseController
 
         $discount = $this->discountRepository->discountDetails($discount);
 
-        return $this->successResponse(__('errors.' . ResponseError::SUCCESS, locale: $this->language), DiscountResource::make($discount));
+        return $this->successResponse(
+			__('errors.' . ResponseError::SUCCESS, locale: $this->language),
+			DiscountResource::make($discount)
+		);
     }
 
     /**

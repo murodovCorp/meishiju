@@ -42,6 +42,11 @@ class Unit extends Model
 
     protected $guarded = ['id'];
 
+    protected $casts = [
+        'position'  => 'string',
+        'active'    => 'bool',
+    ];
+
     // Translations
     public function translations(): HasMany
     {

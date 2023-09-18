@@ -6,9 +6,12 @@ use App\Helpers\ResponseError;
 use App\Http\Requests\Payment\TransactionRequest;
 use App\Http\Requests\Payment\TransactionUpdateRequest;
 use App\Http\Resources\OrderResource;
+use App\Http\Resources\ParcelOrderResource;
+use App\Http\Resources\ShopAdsPackageResource;
 use App\Http\Resources\SubscriptionResource;
 use App\Http\Resources\WalletResource;
 use App\Models\Order;
+use App\Models\ParcelOrder;
 use App\Models\PaymentProcess;
 use App\Models\Transaction;
 use App\Services\PaymentService\PayPalService;
@@ -34,7 +37,20 @@ class TransactionController extends PaymentBaseController
                 OrderResource::make(data_get($result, 'data'))
             );
 
-        } elseif ($type === 'subscription') {
+        } else if ($type === 'parcel-order') {
+
+            $result = (new TransactionService)->orderTransaction($id, $request->validated(), ParcelOrder::class);
+
+            if (!data_get($result, 'status')) {
+                return $this->onErrorResponse($result);
+            }
+
+            return $this->successResponse(
+                __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_CREATED, locale: $this->language),
+                ParcelOrderResource::make(data_get($result, 'data'))
+            );
+
+        } else if ($type === 'subscription') {
 
             $result = (new TransactionService)->subscriptionTransaction($id, $request->validated());
 
@@ -45,6 +61,19 @@ class TransactionController extends PaymentBaseController
             return $this->successResponse(
                 __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_CREATED, locale: $this->language),
                 SubscriptionResource::make(data_get($result, 'data'))
+            );
+
+        } else if ($type === 'ads') {
+
+            $result = (new TransactionService)->adsTransaction($id);
+
+            if (!data_get($result, 'status')) {
+                return $this->onErrorResponse($result);
+            }
+
+            return $this->successResponse(
+                __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_CREATED, locale: $this->language),
+                ShopAdsPackageResource::make(data_get($result, 'data'))
             );
 
         }

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Events\Mails\EmailSendByTemplate;
 use App\Models\EmailTemplate;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 
 class EmailSendByTime extends Command
 {
@@ -50,6 +51,10 @@ class EmailSendByTime extends Command
             $emailTemplate->update(['status' => 1]);
 
             event((new EmailSendByTemplate($emailTemplate)));
+        }
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
         }
 
         return 0;

@@ -8,6 +8,8 @@ interface ProductRepoInterface
 {
     public function productsPaginate(array $filter);
 
+    public function selectPaginate(array $filter);
+
     public function productDetails(int $id);
 
     public function productByUUID(string $uuid): ?Product;

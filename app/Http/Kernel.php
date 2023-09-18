@@ -85,7 +85,6 @@ class Kernel extends HttpKernel
      * @var array<string, class-string|string>
      */
     protected $routeMiddleware = [
-        'block.ip'          => BlockIpMiddleware::class,
         'auth'              => Authenticate::class,
         'auth.basic'        => AuthenticateWithBasicAuth::class,
         'cache.headers'     => SetCacheHeaders::class,
@@ -97,6 +96,7 @@ class Kernel extends HttpKernel
         'verified'          => EnsureEmailIsVerified::class,
         'account.verified'  => VerifyCheck::class,
         'sanctum.check'     => SanctumCheck::class,
+        'block.ip'          => BlockIpMiddleware::class,
         'role'              => RoleMiddleware::class,
         'check.shop'        => CheckSellerShop::class,
     ];

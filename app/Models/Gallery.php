@@ -45,7 +45,7 @@ class Gallery extends Model
         'restaurant/logo', 'restaurant/background', 'shops/logo', 'shops/background', 'deliveryman/settings',
         'deliveryman', 'shops', 'restaurant', 'banners', 'brands', 'blogs', 'categories', 'coupons', 'discounts',
         'extras', 'reviews', 'order_refunds', 'users', 'products', 'languages', 'referral', 'shop-tags', 'receipts',
-        'shop-galleries', 'landing-pages'
+        'shop-galleries', 'landing-pages', 'parcel-order-setting', 'parcel-orders', 'stocks',
     ];
 
     public function loadable(): MorphTo

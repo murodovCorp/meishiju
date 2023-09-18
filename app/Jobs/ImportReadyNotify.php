@@ -11,6 +11,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class ImportReadyNotify implements ShouldQueue
 {
@@ -21,7 +22,7 @@ class ImportReadyNotify implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(private mixed $shopId, private mixed $filename)
+    public function __construct(private ?int $shopId = null, private ?string $filename = null)
     {
     }
 
@@ -32,16 +33,23 @@ class ImportReadyNotify implements ShouldQueue
      */
     public function handle(): void
     {
-        $sellers = User::query()
-            ->whereHas('shop', fn($q) => $q->where('id', $this->shopId))
-            ->whereNotNull('firebase_token')
-            ->pluck('firebase_token');
+        try {
+            $sellers = User::query()
+                ->whereHas('shop', function ($q) {
+                    $q->where('id', $this->shopId);
+                })
+                ->whereNotNull('firebase_token')
+                ->pluck('firebase_token');
 
-        $this->sendNotification($sellers->toArray(), 'Excel file imported successfully! But images will be updated later');
-
-        File::delete($this->filename);
-
-        Log::info('tugadi');
+            $this->sendNotification($sellers->toArray(), 'Excel file imported successfully! But images will be updated later');
+        } catch (Throwable $e) {
+            Log::error('import ready notify ' . $e->getMessage());
+        }
+        try {
+            File::delete($this->filename);
+        } catch (Throwable $e) {
+            Log::error('import ready filename ' . $e->getMessage());
+        }
     }
 
 }

@@ -33,16 +33,28 @@ trait Reviewable
     {
         /** @var Review $review */
 
-        $review = $this->reviews()->updateOrCreate([
-            'user_id'           => auth('sanctum')->id(),
-            'reviewable_id'     => $this->id,
-            'reviewable_type'   => self::class,
-            'assignable_id'     => $assignable->id,
-            'assignable_type'   => $assignable,
-        ], [
-            'rating'            => data_get($collection, 'rating'),
-            'comment'           => data_get($collection, 'comment'),
-        ]);
+        if (auth('sanctum')->id()) {
+			$review = $this->reviews()->updateOrCreate([
+				'user_id'           => auth('sanctum')->id(),
+				'reviewable_id'     => $this->id,
+				'reviewable_type'   => self::class,
+				'assignable_id'     => $assignable->id,
+				'assignable_type'   => get_class($assignable),
+			], [
+				'rating'            => data_get($collection, 'rating'),
+				'comment'           => data_get($collection, 'comment'),
+			]);
+		} else {
+			$review = $this->reviews()->updateOrCreate([
+				'user_id'           => auth('sanctum')->id(),
+				'reviewable_id'     => $this->id,
+				'reviewable_type'   => self::class,
+				'assignable_id'     => $assignable->id,
+				'assignable_type'   => get_class($assignable),
+				'rating'            => data_get($collection, 'rating'),
+				'comment'           => data_get($collection, 'comment'),
+			]);
+		}
 
         if (!empty(data_get($collection, 'images.0'))) {
             $review->galleries()->delete();

@@ -39,15 +39,7 @@ class EmailTemplateController extends AdminBaseController
      */
     public function index(Request $request): AnonymousResourceCollection
     {
-        if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
-
-            $ips = collect(Cache::get('block-ips'));
-
-            try {
-                Cache::set('block-ips', $ips->merge([$request->ip()]), 86600000000);
-            } catch (InvalidArgumentException) {
-            }
-
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
             abort(403);
         }
 
@@ -68,6 +60,10 @@ class EmailTemplateController extends AdminBaseController
             return $this->onErrorResponse($result);
         }
 
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_CREATED, locale: $this->language),
             EmailTemplateResource::make(data_get($result, 'data'))
@@ -83,6 +79,10 @@ class EmailTemplateController extends AdminBaseController
     public function show(EmailTemplate $emailTemplate): JsonResponse
     {
         $show = $this->repository->show($emailTemplate);
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),

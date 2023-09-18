@@ -14,7 +14,7 @@ class UpdateRequest extends BaseRequest
      */
     public function rules(): array
     {
-        if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
             abort(403);
         }
         return [

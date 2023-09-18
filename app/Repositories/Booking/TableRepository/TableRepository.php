@@ -3,6 +3,7 @@
 namespace App\Repositories\Booking\TableRepository;
 
 use App\Models\Booking\Table;
+use App\Models\Booking\UserBooking;
 use App\Models\Language;
 use App\Models\Settings;
 use App\Repositories\CoreRepository;
@@ -60,18 +61,23 @@ class TableRepository extends CoreRepository
     {
         $minTime  = Settings::adminSettings()->where('key', 'min_reservation_time')->first()?->value;
 
-        $dateFrom = date('Y-m-d H:i:01', strtotime(data_get($filter, 'date_from', now())));
-        $dateTo   = date('Y-m-d H:i:59', strtotime(data_get($filter, 'date_to', $minTime ? "-$minTime hour" : now())));
+		$startDate = data_get($filter, 'date_from', now());
 
-        $model = Table::filter($filter)
-            ->with('users')
+        $dateFrom = date('Y-m-d H:i:01', strtotime($startDate));
+		$dateTo   = data_get($filter, 'date_to', $minTime ? "-$minTime hour" : $startDate);
+
+        $dateTo   = date('Y-m-d H:i:59', strtotime($dateTo));
+
+        $model = Table::with([
+			'users' => fn($q) => $q->whereIn('status', [UserBooking::NEW, UserBooking::ACCEPTED])
+		])
+			->whereHas('users', fn($q) => $q->whereIn('status', [UserBooking::NEW, UserBooking::ACCEPTED]))
             ->whereHas('shopSection', function ($q) use ($filter) {
                 $q->when(data_get($filter, 'shop_id'), function ($b) use ($filter) {
                     $b->where('shop_id', data_get($filter, 'shop_id'));
                 });
             })
             ->where('id', data_get($filter, 'id'))
-
             ->first();
 
         $bookedDays = [];
@@ -84,13 +90,13 @@ class TableRepository extends CoreRepository
         foreach ($model->users as $user) {
 
             if (
-                !empty(data_get($filter, 'date_to')) &&
-                date('Y-m-d H:i:01', strtotime($user->start_date)) >= $dateFrom &&
-                date('Y-m-d H:i:59', strtotime($user->start_date)) <= $dateTo
+                !empty(data_get($filter, 'date_to'))
+                && $dateFrom >= date('Y-m-d H:i:01', strtotime($user->start_date))
+                && $dateTo <= date('Y-m-d H:i:59', strtotime($user->start_date))
             ) {
                 $bookedDays[] = [
-                    'start_date'    => $user->start_date,
-                    'end_date'      => $user->end_date,
+                    'start_date' => $user->start_date,
+                    'end_date'   => $user->end_date,
                 ];
                 continue;
             }
@@ -100,8 +106,8 @@ class TableRepository extends CoreRepository
             }
 
             $bookedDays[] = [
-                'start_date'    => $user->start_date,
-                'end_date'      => $user->end_date,
+                'start_date' => $user->start_date,
+                'end_date'   => $user->end_date,
             ];
 
         }

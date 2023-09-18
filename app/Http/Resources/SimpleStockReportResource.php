@@ -22,19 +22,20 @@ class SimpleStockReportResource extends JsonResource
         $dateTo     = date('Y-m-d 23:59:59', strtotime(request('date_to', now())));
 
         return [
-            'order_quantity' => $this->orderDetails->where('order.status', Order::STATUS_DELIVERED)
-                    ->when(request('shop_id'), fn($q, $shopId) => $q->where('shop_id', $shopId))
-                    ->where('order.created_at', '>=', $dateFrom)
-                    ->where('order.created_at', '<=', $dateTo)
+            'order_quantity' => $this->orderDetails->where('status', Order::STATUS_DELIVERED)
+                    ->when(request('shop_id'), fn($q, $shopId) => $q->where('order.shop_id', $shopId))
+                    ->where('created_at', '>=', $dateFrom)
+                    ->where('created_at', '<=', $dateTo)
                     ->sum('quantity') ?? 0,
             'quantity' => $this->quantity ?? 0,
-            'count'    => $this->orderDetails->where('order.status', Order::STATUS_DELIVERED)
-                ->when(request('shop_id'), fn($q, $shopId) => $q->where('shop_id', $shopId))
-                ->where('order.created_at', '>=', $dateFrom)
-                ->where('order.created_at', '<=', $dateTo)
-                ->groupBy('order_id')->count(),
+            'count'    => $this->orderDetails->where('status', Order::STATUS_DELIVERED)
+                ->when(request('shop_id'), fn($q, $shopId) => $q->where('order.shop_id', $shopId))
+                ->where('created_at', '>=', $dateFrom)
+                ->where('created_at', '<=', $dateTo)
+                ->groupBy('order_id')
+                ->count(),
             'price' => $this->orderDetails->where('order.status', Order::STATUS_DELIVERED)
-                    ->when(request('shop_id'), fn($q, $shopId) => $q->where('shop_id', $shopId))
+                    ->when(request('shop_id'), fn($q, $shopId) => $q->where('order.shop_id', $shopId))
                     ->where('order.created_at', '>=', $dateFrom)
                     ->where('order.created_at', '<=', $dateTo)
                     ->groupBy('order_id')->reduce(fn($carry, $item) =>

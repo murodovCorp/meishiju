@@ -85,11 +85,40 @@ class BranchService extends CoreService
     /**
      * Delete model.
      * @param array|null $ids
+     * @param int|null $shopId
      * @return array
      */
-    public function delete(?array $ids = []): array
+    public function delete(?array $ids = [], ?int $shopId = null): array
     {
-        return $this->remove($ids);
+        $models = Branch::when($shopId, fn($q) => $q->where('shop_id', $shopId))->whereIn('id', $ids)->get();
+
+        $errorIds = [];
+
+        foreach ($models as $model) {
+            try {
+                $model->delete();
+            } catch (Throwable $e) {
+                $this->error($e);
+                $errorIds[] = $model->id;
+            }
+        }
+
+        if (count($errorIds) === 0) {
+            return ['status' => true, 'code' => ResponseError::NO_ERROR];
+        }
+
+        return [
+            'status'  => false,
+            'code'    => ResponseError::ERROR_505,
+            'message' => __(
+                'errors.' . ResponseError::CANT_DELETE_IDS,
+                [
+                    'ids' => implode(', ', $errorIds)
+                ],
+                $this->language
+            )
+        ];
+
     }
 
 }

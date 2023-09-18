@@ -52,7 +52,7 @@ class LanguageService extends CoreService implements LanguageServiceInterface
             return [
                 'status'  => false,
                 'code'    => ResponseError::ERROR_501,
-                'message' => __('errors.' . $e->getMessage(), locale: $this->language)
+                'message' => __('errors.' . ResponseError::ERROR_501, locale: $this->language)
             ];
         }
     }
@@ -67,7 +67,7 @@ class LanguageService extends CoreService implements LanguageServiceInterface
         try {
             $language->update($data);
 
-            $default = $language->default ?: data_get($data, 'default');
+            $default =  $language->default ?: data_get($data, 'default');
 
             $this->setDefault($language->id, $default);
 
@@ -90,7 +90,7 @@ class LanguageService extends CoreService implements LanguageServiceInterface
             return [
                 'status'  => false,
                 'code'    => ResponseError::ERROR_502,
-                'message' => __('errors.' . $e->getMessage(), locale: $this->language)
+                'message' => __('errors.' . ResponseError::ERROR_502, locale: $this->language)
             ];
         }
     }
@@ -111,7 +111,7 @@ class LanguageService extends CoreService implements LanguageServiceInterface
 
             FileHelper::deleteFile("images/languages/$language->img");
 
-            $language->forceDelete();
+            $language->delete();
         }
 
         try {

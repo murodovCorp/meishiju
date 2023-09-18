@@ -11,6 +11,7 @@ use App\Repositories\ExtraRepository\ExtraGroupRepository;
 use App\Services\ExtraGroupService\ExtraGroupService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class ExtraGroupController extends AdminBaseController
 {
@@ -33,7 +34,11 @@ class ExtraGroupController extends AdminBaseController
      */
     public function index(FilterParamsRequest $request): AnonymousResourceCollection
     {
-        $extras = $this->repository->extraGroupList($request->all());
+        $extras = $this->repository->extraGroupList($request->merge(['is_admin' => true])->all());
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return ExtraGroupResource::collection($extras);
     }
@@ -94,7 +99,16 @@ class ExtraGroupController extends AdminBaseController
      */
     public function update(int $id, StoreRequest $request): JsonResponse
     {
-        $result = $this->service->update($id, $request->validated());
+		$extraGroup = ExtraGroup::find($id);
+
+		if (!$extraGroup) {
+			return $this->onErrorResponse([
+				'code'      => ResponseError::ERROR_404,
+				'message'   => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
+			]);
+		}
+
+        $result = $this->service->update($extraGroup, $request->validated());
 
         if (!data_get($result, 'status')) {
             return $this->onErrorResponse($result);

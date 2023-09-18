@@ -21,9 +21,7 @@ class OrderExport extends BaseExport implements FromCollection, WithHeadings
     public function collection(): Collection
     {
         $language = Language::where('default', 1)->first();
-        if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
-            abort(403);
-        }
+
         $orders = Order::filter($this->filter)
             ->with([
                 'user:id,firstname',
@@ -43,7 +41,7 @@ class OrderExport extends BaseExport implements FromCollection, WithHeadings
     public function headings(): array
     {
         return [
-            '#',
+            'Id',
             'User Id',
             'Username',
             'Total Price',
@@ -76,30 +74,30 @@ class OrderExport extends BaseExport implements FromCollection, WithHeadings
         $currencySymbol = data_get($order->currency, 'symbol');
 
         return [
-           'id'                     => $order->id,//0
-           'user_id'                => $order->user_id,//1
-           'username'               => $order->username ?? optional($order->user)->firstname,//2
-           'total_price'            => $order->total_price,//3
-           'currency_id'            => $order->currency_id,//4
-           'currency_title'         => "$currencyTitle($currencySymbol)",//5
-           'rate'                   => $order->rate,//6
-           'note'                   => $order->note,//7
-           'shop_id'                => $order->shop_id,//8
-           'shop_title'             => data_get(optional($order->shop)->translation, 'title'),//9
-           'tax'                    => $order->tax,//10
-           'commission_fee'         => $order->commission_fee,//11
-           'status'                 => $order->status,//12
-           'delivery_fee'           => $order->delivery_fee,//13
-           'deliveryman'            => $order->deliveryman,//14
-           'deliveryman_firstname'  => optional($order->deliveryMan)->firstname,//15
-           'delivery_date'          => $order->delivery_date,//16
-           'delivery_time'          => $order->delivery_time,//17
-           'total_discount'         => $order->total_discount,//18
-           'location'               => implode(',', $order->location),//19
-           'address'                => $order->address,//20
-           'delivery_type'          => $order->delivery_type,//21
-           'phone'                  => $order->phone,//22
-           'created_at'             => $order->created_at ?? date('Y-m-d H:i:s'),//23
+           'id'                     => $order->id,
+           'user_id'                => $order->user_id,
+           'username'               => $order->username ?? optional($order->user)->firstname,
+           'total_price'            => $order->total_price,
+           'currency_id'            => $order->currency_id,
+           'currency_title'         => "$currencyTitle($currencySymbol)",
+           'rate'                   => $order->rate,
+           'note'                   => $order->note,
+           'shop_id'                => $order->shop_id,
+           'shop_title'             => data_get(optional($order->shop)->translation, 'title'),
+           'tax'                    => $order->tax,
+           'commission_fee'         => $order->commission_fee,
+           'status'                 => $order->status,
+           'delivery_fee'           => $order->delivery_fee,
+           'deliveryman'            => $order->deliveryman,
+           'deliveryman_firstname'  => optional($order->deliveryMan)->firstname,
+           'delivery_date'          => $order->delivery_date,
+           'delivery_time'          => $order->delivery_time,
+           'total_discount'         => $order->total_discount,
+           'location'               => is_array($order->location) ? implode(',', $order->location) : $order->location,
+           'address'                => $order->address,
+           'delivery_type'          => $order->delivery_type,
+           'phone'                  => $order->phone,
+           'created_at'             => $order->created_at ?? date('Y-m-d H:i:s'),
         ];
     }
 }

@@ -19,6 +19,7 @@ class SellerRequest extends BaseRequest
             'type'          => Rule::in(Banner::TYPES),
             'url'           => 'required|string',
             'clickable'     => 'boolean',
+            'input'         => 'boolean',
             'active'        => 'boolean',
             'images'        => ['array'],
             'images.*'      => ['string'],

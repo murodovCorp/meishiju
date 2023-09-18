@@ -30,8 +30,7 @@ class Helper
 
             if ($i >= strlen($prefix)) {
 
-                $num[$i] = strtolower($num[$i]); //字母转换成小写
-                //如果存在a-z的小写字母 转换成数字
+                $num[$i] = strtolower($num[$i]);
 
                 if (ord($num[$i]) >= 97 && ord($num[$i]) <= 122) {
                     $num[$i] = (ord($num[$i]) - 97) % 10;

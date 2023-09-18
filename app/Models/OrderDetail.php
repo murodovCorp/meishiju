@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -27,44 +26,44 @@ use Illuminate\Support\Collection;
  * @property float $discount
  * @property float $rate_discount
  * @property int $quantity
+ * @property string $note
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property Carbon|null $deleted_at
  * @property-read Order $order
  * @property-read Stock $stock
  * @property-read int $rate_total_price
  * @property-read int $rate_origin_price
  * @property-read int $rate_tax
  * @property-read boolean $bonus
- * @property-read OrderDetail $parent
+ * @property-read self $parent
  * @property-read Collection $children
  * @method static OrderDetailFactory factory(...$parameters)
- * @method static Builder|OrderDetail filter($array)
- * @method static Builder|OrderDetail newModelQuery()
- * @method static Builder|OrderDetail newQuery()
- * @method static Builder|OrderDetail query()
- * @method static Builder|OrderDetail updatedDate($updatedDate)
- * @method static Builder|OrderDetail whereCreatedAt($value)
- * @method static Builder|OrderDetail whereDiscount($value)
- * @method static Builder|OrderDetail whereId($value)
- * @method static Builder|OrderDetail whereOrderId($value)
- * @method static Builder|OrderDetail whereOriginPrice($value)
- * @method static Builder|OrderDetail whereQuantity($value)
- * @method static Builder|OrderDetail whereStockId($value)
- * @method static Builder|OrderDetail whereTax($value)
- * @method static Builder|OrderDetail whereTotalPrice($value)
- * @method static Builder|OrderDetail whereUpdatedAt($value)
+ * @method static Builder|self filter($array)
+ * @method static Builder|self newModelQuery()
+ * @method static Builder|self newQuery()
+ * @method static Builder|self query()
+ * @method static Builder|self updatedDate($updatedDate)
+ * @method static Builder|self whereCreatedAt($value)
+ * @method static Builder|self whereDiscount($value)
+ * @method static Builder|self whereId($value)
+ * @method static Builder|self whereOrderId($value)
+ * @method static Builder|self whereOriginPrice($value)
+ * @method static Builder|self whereQuantity($value)
+ * @method static Builder|self whereStockId($value)
+ * @method static Builder|self whereTax($value)
+ * @method static Builder|self whereTotalPrice($value)
+ * @method static Builder|self whereUpdatedAt($value)
  * @mixin Eloquent
  */
 class OrderDetail extends Model
 {
-    use HasFactory, Notification, SoftDeletes;
+    use HasFactory, Notification;
 
     protected $guarded = ['id'];
 
     public function order(): BelongsTo
     {
-        return $this->belongsTo(Order::class)->withTrashed();
+        return $this->belongsTo(Order::class);
     }
 
     public function stock(): BelongsTo
@@ -74,12 +73,12 @@ class OrderDetail extends Model
 
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(self::class, 'parent_id')->withTrashed();
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     public function children(): HasMany
     {
-        return $this->hasMany(self::class, 'parent_id')->withTrashed();
+        return $this->hasMany(self::class, 'parent_id');
     }
 
     public function getRateTotalPriceAttribute(): ?float

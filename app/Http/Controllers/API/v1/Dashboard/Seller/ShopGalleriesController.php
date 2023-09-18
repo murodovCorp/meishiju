@@ -65,7 +65,10 @@ class ShopGalleriesController extends SellerBaseController
         $model = ShopGallery::where('shop_id', $shopId)->first();
 
         if (empty($model) || $model->shop_id !== $this->shop->id) {
-            return $this->onErrorResponse(['code' => ResponseError::ERROR_404]);
+            return $this->onErrorResponse([
+                'code'      => ResponseError::ERROR_404,
+                'message'   => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
+            ]);
         }
 
         $validated              = $request->validated();

@@ -8,17 +8,22 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderRefund;
 use App\Models\Payment;
+use App\Models\PaymentToPartner;
+use App\Models\PushNotification;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WalletHistory;
 use App\Services\CoreService;
 use App\Services\WalletHistoryService\WalletHistoryService;
+use App\Traits\Notification;
 use DB;
 use Exception;
 use Throwable;
 
 class OrderRefundService extends CoreService
 {
+	use Notification;
+
     protected function getModelClass(): string
     {
         return OrderRefund::class;
@@ -75,16 +80,15 @@ class OrderRefundService extends CoreService
             }
 
             $orderRefund = $orderRefund->loadMissing([
-                'order.shop:id,uuid,user_id,delivery_price',
-                'order.shop.seller:id',
-                'order.shop.seller.wallet:id,user_id,uuid',
-                'order.deliveryMan:id',
-                'order.deliveryMan.wallet:id,user_id,uuid',
-                'order.user:id',
-                'order.user.wallet:id,user_id,uuid',
+                'order.shop',
+                'order.shop.seller.wallet',
+                'order.deliveryMan.wallet',
+                'order.user.wallet',
                 'order.transactions',
-                'order.orderDetails:id,order_id,stock_id,quantity',
                 'order.orderDetails.stock',
+                'order.paymentToPartner',
+                'order.coupon',
+                'order.pointHistories',
             ]);
 
             /** @var User $user */
@@ -158,10 +162,24 @@ class OrderRefundService extends CoreService
                     (new WalletHistoryService)->create([
                         'type'   => 'topup',
                         'price'  => $order->total_price,
-                        'note'   => "For Order #$order->id",
+                        'note'   => "Refund for Order #$order->id",
                         'status' => WalletHistory::PAID,
                         'user'   => $user
                     ]);
+
+					$this->sendNotification(
+						is_array($user->firebase_token) ? $user->firebase_token : [$user->firebase_token],
+						__('errors.' . ResponseError::ORDER_REFUNDED, locale: $this->language),
+						$orderRefund->id,
+						[
+							'id'     => $orderRefund->id,
+							'status' => $orderRefund->status,
+							'type'   => PushNotification::ORDER_REFUNDED
+						],
+						[$user->id],
+						__('errors.' . ResponseError::ORDER_REFUNDED, locale: $this->language),
+					);
+
 
                     if ($order->status === Order::STATUS_DELIVERED) {
 
@@ -169,27 +187,56 @@ class OrderRefundService extends CoreService
                             throw new Exception(__('errors.' . ResponseError::ERROR_114, locale: $this->language));
                         }
 
-                        (new WalletHistoryService)->create([
-                            'type'   => 'withdraw',
-                            'price'  => $order->total_price - $order->commission_fee,
-                            'note'   => "For Order #$order->id",
-                            'status' => WalletHistory::PAID,
-                            'user'   => $order->shop->seller
-                        ]);
+                        if ($order->paymentToPartner?->type === PaymentToPartner::SELLER) {
 
-                        if ($order->delivery_type === Order::DELIVERY && $order->deliveryMan?->wallet?->id) {
+							$sellerPrice = $order?->total_price
+								- $order?->delivery_fee
+								- $order?->service_fee
+								- $order?->commission_fee
+								- ($order?->coupon?->price ?? 0)
+								- $order?->pointHistories?->sum('price');
+
+							$seller = $order->shop->seller;
+
+							(new WalletHistoryService)->create([
+								'type'   => 'withdraw',
+								'price'  => $sellerPrice,
+								'note'   => "Refund for Order #$order->id",
+								'status' => WalletHistory::PAID,
+								'user'   => $order->shop->seller
+							]);
+
+							$this->sendNotification(
+								is_array($seller->firebase_token) ? $seller->firebase_token : [$seller->firebase_token],
+								__('errors.' . ResponseError::ORDER_REFUNDED, locale: $this->language),
+								$orderRefund->id,
+								[
+									'id'     => $orderRefund->id,
+									'status' => $orderRefund->status,
+									'type'   => PushNotification::ORDER_REFUNDED
+								],
+								[$seller->id],
+								__('errors.' . ResponseError::ORDER_REFUNDED, locale: $this->language),
+							);
+						}
+
+                        if (
+							$order->paymentToPartner?->type === PaymentToPartner::DELIVERYMAN &&
+							$order->delivery_type === Order::DELIVERY
+							&& $order->deliveryMan?->wallet?->id
+						) {
+
+							if (!$order->shop?->seller?->wallet?->id) {
+								throw new Exception(__('errors.' . ResponseError::ERROR_114, locale: $this->language));
+							}
 
                             (new WalletHistoryService)->create([
                                 'type'   => 'withdraw',
                                 'price'  => $order->delivery_fee,
-                                'note'   => "For Order #$order->id",
+                                'note'   => "Refund for Order #$order->id",
                                 'status' => WalletHistory::PAID,
                                 'user'   => $order->deliveryMan
                             ]);
-
-//                          if(!$order->deliveryMan?->wallet?->id) {
-//                              throw new Exception(__('errors.' . ResponseError::ERROR_113, locale: $this->language));
-//                          }
 
                         }
 

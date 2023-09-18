@@ -19,31 +19,35 @@ class ProductReportResource extends JsonResource
     public function toArray($request): array
     {
         /** @var Product|JsonResource $this */
-        $dateFrom   = date('Y-m-d 00:00:01', strtotime(request('date_from')));
-        $dateTo     = date('Y-m-d 23:59:59', strtotime(request('date_to', now())));
+        $dateFrom = date('Y-m-d 00:00:01', strtotime(request('date_from')));
+        $dateTo   = date('Y-m-d 23:59:59', strtotime(request('date_to', now())));
 
         return [
             'id'            => $this->id,
-            'bar_code'      => $this->bar_code,
-            'category_id'   => $this->category_id,
+            'category_id'   => $this->category_id ?? 0,
             'active'        => $this->active,
             'shop_id'       => $this->shop_id,
-            'quantity'      => $this->stocks->reduce(fn($carry, Stock $item) => $carry + $item->orderDetails
-                        ->when(request('shop_id'), fn($q, $shopId) => $q->where('shop_id', $shopId))
-                        ->where('order.status', Order::STATUS_DELIVERED)
-                        ->where('order.created_at', '>=', $dateFrom)
-                        ->where('order.created_at', '<=', $dateTo)
-                        ->sum('quantity')) ?? 0,
-            'count' => $this->stocks->reduce(fn(mixed $carry, Stock $item) => $carry + $item->orderDetails
-                        ->when(request('shop_id'), fn($q, $shopId) => $q->where('shop_id', $shopId))
+            'interval'      => $this->interval,
+            'quantity'      => $this->stocks->reduce(
+                fn($carry, Stock $item) => $carry + $item->orderDetails
+                    ->when(request('shop_id'), fn($q, $shopId) => $q->where('order.shop_id', $shopId))
                     ->where('order.status', Order::STATUS_DELIVERED)
                     ->where('order.created_at', '>=', $dateFrom)
                     ->where('order.created_at', '<=', $dateTo)
-                    ->groupBy('order_id')->count()
+                    ->sum('quantity')
+            ) ?? 0,
+            'count' => $this->stocks->reduce(
+                fn(mixed $carry, Stock $item) => $carry + $item->orderDetails
+                    ->when(request('shop_id'), fn($q, $shopId) => $q->where('order.shop_id', $shopId))
+                    ->where('order.status', Order::STATUS_DELIVERED)
+                    ->where('order.created_at', '>=', $dateFrom)
+                    ->where('order.created_at', '<=', $dateTo)
+                    ->groupBy('order_id')
+                    ->count()
             ) ?? 0,
             'price' => $this->stocks->reduce(fn($carry, Stock $item) => $carry +
                 $item->orderDetails
-                    ->when(request('shop_id'), fn($q, $shopId) => $q->where('shop_id', $shopId))
+                    ->when(request('shop_id'), fn($q, $shopId) => $q->where('order.shop_id', $shopId))
                     ->where('order.status', Order::STATUS_DELIVERED)
                     ->where('order.created_at', '>=', $dateFrom)
                     ->where('order.created_at', '<=', $dateTo)
@@ -52,9 +56,9 @@ class ProductReportResource extends JsonResource
             'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
 
             // Relations
-            'translation'   => TranslationResource::make($this->translation),
+            'translation'   => $this->translation ? TranslationResource::make($this->translation) : ['id' => 0, 'translation' => ['title' => 'removed']],
             'stocks'        => SimpleStockReportResource::collection($this->stocks),
-            'category'      => CategoryResource::make($this->category),
+            'category'      => $this->category ? CategoryResource::make($this->category) : ['id' => 0, 'translation' => ['title' => 'removed']],
         ];
     }
 

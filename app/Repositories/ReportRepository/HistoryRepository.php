@@ -44,7 +44,6 @@ class HistoryRepository
             ->where('created_at', '>=', now()->format('Y-m-d 00:00:01'))
             ->where('status', Order::STATUS_DELIVERED)
             ->when(data_get($filter, 'shop_id'), fn($q, $shopId) => $q->where('shop_id', $shopId))
-            ->whereNull('deleted_at')
             ->select([
                 DB::raw('sum(delivery_fee) as delivery_fee')
             ])
@@ -98,7 +97,6 @@ class HistoryRepository
             ->when(data_get($filter, 'shop_id'), fn($q, $shopId) => $q->where('shop_id', $shopId))
             ->where('created_at', '>=', $prevFrom)
             ->where('created_at', '<=', $curFrom)
-            ->whereNull('deleted_at')
             ->select([
                 DB::raw("sum(if(status = 'delivered', total_price, 0)) as revenue"),
                 DB::raw('sum(total_price) as orders'),
@@ -110,7 +108,6 @@ class HistoryRepository
             ->when(data_get($filter, 'shop_id'), fn($q, $shopId) => $q->where('shop_id', $shopId))
             ->where('created_at', '>=', $curFrom)
             ->where('created_at', '<=', $prevTo)
-            ->whereNull('deleted_at')
             ->select([
                 DB::raw("sum(if(status = 'delivered', total_price, 0)) as revenue"),
                 DB::raw('sum(total_price) as orders'),
@@ -166,7 +163,6 @@ class HistoryRepository
             ->when(data_get($filter, 'shop_id'), fn($q, $shopId) => $q->where('shop_id', $shopId))
             ->where('created_at', '>=', $dateFrom)
             ->where('created_at', '<=', $dateTo)
-            ->whereNull('deleted_at')
             ->where('status', Order::STATUS_DELIVERED)
             ->select([
                 DB::raw("(DATE_FORMAT(created_at, '$type')) as time"),
@@ -193,7 +189,6 @@ class HistoryRepository
             ])
             ->where('created_at', '>=', $dateFrom)
             ->where('created_at', '<=', $dateTo)
-            ->whereNull('deleted_at')
             ->when(data_get($filter, 'shop_id'), fn($q, $shopId) => $q->where('shop_id', $shopId))
             ->first();
 

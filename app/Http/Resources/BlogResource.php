@@ -25,7 +25,7 @@ class BlogResource extends JsonResource
             'uuid'          => (string) $this->uuid,
             'user_id'       => $this->when($this->user_id, (string) $this->user_id),
             'type'          => $this->type,
-            'published_at'  => $this->when($this->published_at, $this->published_at . 'Z'),
+            'published_at'  => $this->when($this->published_at, $this->published_at),
             'active'        => (bool)$this->active,
             'img'           => $this->when($this->img, $this->img),
             'created_at'    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),

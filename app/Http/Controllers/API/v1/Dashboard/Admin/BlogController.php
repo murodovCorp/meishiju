@@ -14,6 +14,7 @@ use App\Traits\Notification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class BlogController extends AdminBaseController
 {
@@ -42,6 +43,10 @@ class BlogController extends AdminBaseController
     public function paginate(Request $request): AnonymousResourceCollection
     {
         $blogs = $this->repository->blogsPaginate($request->all());
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return BlogResource::collection($blogs);
     }
@@ -158,7 +163,10 @@ class BlogController extends AdminBaseController
      */
     public function blogPublish(string $uuid): JsonResponse
     {
-        $blog = Blog::firstWhere('uuid', $uuid);
+        $blog = Blog::with([
+            'translation' => fn($q) => $q->where('locale', $this->language)->orWhereNotNull('title')
+        ])
+            ->firstWhere('uuid', $uuid);
 
         if (empty($blog)) {
             return $this->onErrorResponse([
@@ -167,23 +175,24 @@ class BlogController extends AdminBaseController
             ]);
         }
 
-        $result = $this->service->blogPublish($blog);
+		/** @var Blog $blog */
+		$result = $this->service->blogPublish($blog);
 
         if (!data_get($result, 'status')) {
             return $this->onErrorResponse($result);
         }
 
         if ($blog->type === 'blog') {
-            dispatch(function () use ($blog) {
-                $this->sendAllNotification(
-                    $blog->translation?->title,
-                    [
-                        'id'            => $blog->id,
-                        'published_at'  => optional($blog->published_at)->format('Y-m-d H:i:s'),
-                        'type'          => PushNotification::NEWS_PUBLISH
-                    ],
-                );
-            })->afterResponse();
+            $this->sendAllNotification(
+                $blog->translation?->short_desc ?? $blog->translation?->title,
+                [
+                    'id'            => $blog->id,
+                    'uuid'          => $blog->uuid,
+                    'published_at'  => optional($blog->published_at)->format('Y-m-d H:i:s'),
+                    'type'          => PushNotification::NEWS_PUBLISH
+                ],
+                $blog->translation?->title
+            );
         }
 
         return $this->successResponse(

@@ -23,17 +23,17 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
- * @method static Builder|Point newModelQuery()
- * @method static Builder|Point newQuery()
- * @method static Builder|Point query()
- * @method static Builder|Point whereActive($value)
- * @method static Builder|Point whereCreatedAt($value)
- * @method static Builder|Point whereId($value)
- * @method static Builder|Point wherePrice($value)
- * @method static Builder|Point whereShopId($value)
- * @method static Builder|Point whereType($value)
- * @method static Builder|Point whereUpdatedAt($value)
- * @method static Builder|Point whereValue($value)
+ * @method static Builder|self newModelQuery()
+ * @method static Builder|self newQuery()
+ * @method static Builder|self query()
+ * @method static Builder|self whereActive($value)
+ * @method static Builder|self whereCreatedAt($value)
+ * @method static Builder|self whereId($value)
+ * @method static Builder|self wherePrice($value)
+ * @method static Builder|self whereShopId($value)
+ * @method static Builder|self whereType($value)
+ * @method static Builder|self whereUpdatedAt($value)
+ * @method static Builder|self whereValue($value)
  * @mixin Eloquent
  */
 class Point extends Model
@@ -51,10 +51,11 @@ class Point extends Model
         'updated_at'    => 'datetime:Y-m-d H:i:s',
     ];
 
-    public static function getActualPoint(string $amount)
+    public static function getActualPoint(string $amount, int $shopId)
     {
         $point = self::where('active', 1)
             ->where('value', '<=', (int) $amount)
+            ->where('shop_id', $shopId)
             ->orderByDesc('value')
             ->first();
 

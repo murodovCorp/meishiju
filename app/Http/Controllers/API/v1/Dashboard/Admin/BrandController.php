@@ -15,6 +15,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
 
@@ -59,6 +60,10 @@ class BrandController extends AdminBaseController
     public function paginate(Request $request): AnonymousResourceCollection
     {
         $brands = $this->brandRepository->brandsPaginate($request->all());
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return BrandResource::collection($brands);
     }
@@ -210,10 +215,10 @@ class BrandController extends AdminBaseController
 
     public function fileExport(): JsonResponse
     {
-        $fileName = 'export/brands.xls';
+        $fileName = 'export/brands.xlsx';
 
         try {
-            Excel::store(new BrandExport, $fileName, 'public');
+            Excel::store(new BrandExport, $fileName, 'public', \Maatwebsite\Excel\Excel::XLSX);
 
             return $this->successResponse('Successfully exported', [
                 'path' => 'public/export',

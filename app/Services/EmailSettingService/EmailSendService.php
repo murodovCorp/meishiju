@@ -221,10 +221,6 @@ class EmailSendService extends CoreService
             ]
         ];
 
-        if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
-            abort(403);
-        }
-
         try {
 
             $mail->setFrom($emailSetting->from_to, $emailSetting->from_site);

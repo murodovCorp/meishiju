@@ -39,16 +39,20 @@ class ReviewController extends SellerBaseController
     {
         $review = $this->repository->show($review);
 
-        if ($review->assignable_id !== $this->shop->id || $review->reviewable?->shop?->id !== $this->shop->id) {
-            return $this->onErrorResponse([
-                'code'      => ResponseError::ERROR_404,
-                'message'   => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
-            ]);
+        if (
+			$review->assignable_id === $this->shop->id
+			|| $review->reviewable_id === $this->shop->id
+			|| $review->reviewable?->shop?->id === $this->shop->id
+		) {
+			return $this->successResponse(
+				__('errors.' . ResponseError::SUCCESS, locale: $this->language),
+				ReviewResource::make($review)
+			);
         }
 
-        return $this->successResponse(
-            __('errors.' . ResponseError::SUCCESS, locale: $this->language),
-            ReviewResource::make($review)
-        );
+		return $this->onErrorResponse([
+			'code'      => ResponseError::ERROR_404,
+			'message'   => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
+		]);
     }
 }

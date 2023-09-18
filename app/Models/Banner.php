@@ -28,6 +28,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property string|null $deleted_at
  * @property bool $clickable
+ * @property bool $input
  * @property-read Collection|Gallery[] $galleries
  * @property-read int|null $galleries_count
  * @property-read Collection|Shop[] $shops
@@ -35,20 +36,23 @@ use Illuminate\Support\Carbon;
  * @property-read BannerTranslation|null $translation
  * @property-read Collection|BannerTranslation[] $translations
  * @property-read int|null $translations_count
+ * @property-read ShopAdsPackage|null $shopAdsPackage
+ * @property-read Collection|ShopAdsPackage[] $shopAdsPackages
+ * @property-read int|null $shop_ads_packages_count
  * @method static BannerFactory factory(...$parameters)
- * @method static Builder|Banner newModelQuery()
- * @method static Builder|Banner newQuery()
- * @method static Builder|Banner query()
- * @method static Builder|Banner whereActive($value)
- * @method static Builder|Banner whereClickable($value)
- * @method static Builder|Banner whereCreatedAt($value)
- * @method static Builder|Banner whereDeletedAt($value)
- * @method static Builder|Banner whereId($value)
- * @method static Builder|Banner whereImg($value)
- * @method static Builder|Banner whereProducts($value)
- * @method static Builder|Banner whereShopId($value)
- * @method static Builder|Banner whereUpdatedAt($value)
- * @method static Builder|Banner whereUrl($value)
+ * @method static Builder|self newModelQuery()
+ * @method static Builder|self newQuery()
+ * @method static Builder|self query()
+ * @method static Builder|self whereActive($value)
+ * @method static Builder|self whereClickable($value)
+ * @method static Builder|self whereCreatedAt($value)
+ * @method static Builder|self whereDeletedAt($value)
+ * @method static Builder|self whereId($value)
+ * @method static Builder|self whereImg($value)
+ * @method static Builder|self whereProducts($value)
+ * @method static Builder|self whereShopId($value)
+ * @method static Builder|self whereUpdatedAt($value)
+ * @method static Builder|self whereUrl($value)
  * @mixin Eloquent
  */
 class Banner extends Model
@@ -64,6 +68,16 @@ class Banner extends Model
     public function shops(): BelongsToMany
     {
         return $this->belongsToMany(Shop::class, BannerShop::class);
+    }
+
+    public function shopAdsPackage(): HasOne
+    {
+        return $this->hasOne(ShopAdsPackage::class);
+    }
+
+    public function shopAdsPackages(): HasMany
+    {
+        return $this->hasMany(ShopAdsPackage::class);
     }
 
     // Translations

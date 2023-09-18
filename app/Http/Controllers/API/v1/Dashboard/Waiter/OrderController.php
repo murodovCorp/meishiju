@@ -35,25 +35,17 @@ class OrderController extends WaiterBaseController
     {
         $filter = $request->all();
         $filter['waiter_id'] = auth('sanctum')->id();
-        $filter['shop_id']   = auth('sanctum')->user()->invite?->shop_id;
         unset($filter['isset-waiter']);
 
         if (data_get($filter, 'empty-waiter')) {
             /** @var User $user */
             $user = auth('sanctum')->user();
-            $filter['shop_ids'] = $user->invitations->pluck('shop_id')->toArray();
+            $filter['shop_ids'] = $user?->invitations?->pluck('shop_id')?->toArray();
             unset($filter['shop_id']);
             unset($filter['waiter_id']);
         }
 
-        $orders = $this->repository->ordersPaginate($filter, with: [
-            'shop:id,location,tax,background_img,logo_img',
-            'shop.translation'      => fn($q) => $q->where('locale', $this->language),
-            'currency'              => fn($q) => $q->select('id', 'title', 'symbol'),
-            'user:id,firstname,lastname,img',
-            'table:id,name,shop_section_id,chair_count,tax,active',
-            'transaction.paymentSystem',
-        ]);
+        $orders = $this->repository->ordersPaginate($filter);
 
         $statistic = (new DashboardRepository)->orderByStatusStatistics($filter);
 
@@ -69,7 +61,8 @@ class OrderController extends WaiterBaseController
             'meta'      => [
                 'current_page'  => (int)data_get($filter, 'page', 1),
                 'per_page'      => (int)data_get($filter, 'perPage', 10),
-                'last_page'     => $lastPage
+                'last_page'     => $lastPage,
+                'total'         => (int)data_get($statistic, 'total', 0),
             ],
         ]);
     }

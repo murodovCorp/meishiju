@@ -1,12 +1,11 @@
 <?php
 
 use App\Http\Controllers\Web\ConvertController;
-use App\Http\Controllers\API\v1\Dashboard\Payment\{
-    MercadoPagoController,
+use App\Http\Controllers\API\v1\Dashboard\Payment\{MercadoPagoController,
     PayStackController,
     RazorPayController,
-    StripeController
-};
+    StripeController,
+    WalletPaymentController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -20,7 +19,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::get('wallet-success', [WalletPaymentController::class, 'success']);
+
 Route::get('order-stripe-success', [StripeController::class, 'orderResultTransaction']);
+Route::get('parcel-order-stripe-success', [StripeController::class, 'orderResultTransaction']);
 Route::get('subscription-stripe-success', [StripeController::class, 'subscriptionResultTransaction']);
 
 //Route::get('order-paypal-success', [PayPalController::class, 'orderResultTransaction']);

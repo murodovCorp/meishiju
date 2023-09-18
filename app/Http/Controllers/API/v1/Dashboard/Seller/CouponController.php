@@ -134,7 +134,7 @@ class CouponController extends SellerBaseController
             ->get();
 
         foreach ($coupons as $coupon) {
-            $coupon->delete();
+            $coupon->forceDelete();
         }
 
         return $this->successResponse(

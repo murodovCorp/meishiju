@@ -11,6 +11,7 @@ use App\Repositories\OrderRepository\OrderRefundRepository;
 use App\Services\OrderService\OrderRefundService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class OrderRefundsController extends AdminBaseController
 {
@@ -50,6 +51,10 @@ class OrderRefundsController extends AdminBaseController
     public function paginate(FilterParamsRequest $request): AnonymousResourceCollection
     {
         $orderRefunds = $this->repository->paginate($request->all());
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return OrderRefundResource::collection($orderRefunds);
     }

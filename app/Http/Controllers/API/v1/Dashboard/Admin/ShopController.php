@@ -18,6 +18,7 @@ use App\Services\ShopServices\ShopActivityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
 
@@ -30,8 +31,8 @@ class ShopController extends AdminBaseController
     {
         parent::__construct();
 
-        $this->service          = $service;
-        $this->repository       = $repository;
+        $this->service    = $service;
+        $this->repository = $repository;
     }
 
     /**
@@ -59,6 +60,10 @@ class ShopController extends AdminBaseController
     public function paginate(FilterParamsRequest $request): AnonymousResourceCollection
     {
         $shops = $this->repository->shopsPaginate($request->all());
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return ShopResource::collection($shops);
     }
@@ -89,6 +94,10 @@ class ShopController extends AdminBaseController
             return $this->onErrorResponse($result);
         }
 
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_CREATED, locale: $this->language),
             ShopResource::make(data_get($result, 'data'))
@@ -114,6 +123,10 @@ class ShopController extends AdminBaseController
 
         /** @var Shop $shop */
         $shop->loadMissing('translations');
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
@@ -142,6 +155,10 @@ class ShopController extends AdminBaseController
 
         if (!data_get($result, 'status')) {
             return $this->onErrorResponse($result);
+        }
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
         }
 
         return $this->successResponse(
@@ -249,10 +266,10 @@ class ShopController extends AdminBaseController
 
     public function fileExport(): JsonResponse
     {
-        $fileName = 'export/shops.xls';
+        $fileName = 'export/shops.xlsx';
 
         try {
-            Excel::store(new ShopExport, $fileName, 'public');
+            Excel::store(new ShopExport, $fileName, 'public', \Maatwebsite\Excel\Excel::XLSX);
 
             return $this->successResponse('Successfully exported', [
                 'path' => 'public/export',
@@ -277,5 +294,31 @@ class ShopController extends AdminBaseController
                 __('errors.' . ResponseError::ERROR_508, locale: $this->language) . ' | ' . $e->getMessage()
             );
         }
+    }
+
+    /**
+     * Change Verify Status of Model
+     *
+     * @param string $uuid
+     * @return JsonResponse
+     */
+    public function setVerify(string $uuid): JsonResponse
+    {
+        $shop = $this->repository->shopDetails($uuid);
+
+        if (empty($shop)) {
+            return $this->onErrorResponse([
+                'code'      => ResponseError::ERROR_404,
+                'message'   => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
+            ]);
+        }
+
+		/** @var Shop $shop */
+		$shop->update(['verify' => !$shop->verify]);
+
+        return $this->successResponse(
+            __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_UPDATED, locale: $this->language),
+            ShopResource::make($shop)
+        );
     }
 }

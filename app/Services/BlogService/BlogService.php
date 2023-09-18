@@ -21,6 +21,7 @@ final class BlogService extends CoreService
         try {
             $data['type'] = data_get(Blog::TYPES, data_get($data, 'type', 'blog'));
 
+            /** @var Blog $blog */
             $blog = $this->model()->create([
                 'uuid'      => Str::uuid(),
                 'user_id'   => auth('sanctum')->id(),

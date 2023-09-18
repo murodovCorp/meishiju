@@ -11,7 +11,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 
 class CheckSellerShop
 {
@@ -27,10 +26,6 @@ class CheckSellerShop
      */
     public function handle(Request $request, Closure $next): JsonResponse
     {
-        if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
-            abort(403);
-        }
-
         if (!auth('sanctum')->check()) {
             return $this->onErrorResponse([
                 'code'      => ResponseError::ERROR_100,

@@ -31,6 +31,7 @@ use Illuminate\Support\Collection;
  * @property int $servings
  * @property Shop|null $shop
  * @property Collection|Stock[] $stocks
+ * @property Collection|ReceiptStock[] $receiptStock
  * @property int $stocks_count
  * @property Collection|ReceiptTranslation[] $translations
  * @property ReceiptTranslation|null $translation
@@ -94,6 +95,11 @@ class Receipt extends Model
     public function translations(): HasMany
     {
         return $this->hasMany(ReceiptTranslation::class);
+    }
+
+    public function receiptStock(): HasMany
+    {
+        return $this->hasMany(ReceiptStock::class);
     }
 
     public function translation(): HasOne

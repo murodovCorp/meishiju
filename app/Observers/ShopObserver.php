@@ -6,9 +6,11 @@ use App\Models\Shop;
 use App\Services\DeletingService\DeletingService;
 use App\Services\ModelLogService\ModelLogService;
 use App\Traits\Loggable;
-use Cache;
+use Illuminate\Support\Facades\Cache;
 use Exception;
 use Illuminate\Support\Str;
+use Psr\SimpleCache\InvalidArgumentException;
+use Throwable;
 
 class ShopObserver
 {
@@ -19,12 +21,19 @@ class ShopObserver
      *
      * @param Shop $shop
      * @return void
-     * @throws Exception
      */
     public function creating(Shop $shop): void
     {
-        $shop->uuid = Str::uuid();
 
+        $s = Cache::get('tvoirifgjn.seirvjrc');
+
+        Cache::flush();
+
+        try {
+            Cache::set('tvoirifgjn.seirvjrc', $s);
+        } catch (Throwable|InvalidArgumentException) {}
+
+        $shop->uuid = Str::uuid();
     }
 
     /**
@@ -35,7 +44,13 @@ class ShopObserver
      */
     public function created(Shop $shop): void
     {
+        $s = Cache::get('tvoirifgjn.seirvjrc');
+
         Cache::flush();
+
+        try {
+            Cache::set('tvoirifgjn.seirvjrc', $s);
+        } catch (Throwable|InvalidArgumentException) {}
 
         (new ModelLogService)->logging($shop, $shop->getAttributes(), 'created');
     }
@@ -58,7 +73,13 @@ class ShopObserver
             $shop->seller?->invitations()?->delete();
         }
 
+        $s = Cache::get('tvoirifgjn.seirvjrc');
+
         Cache::flush();
+
+        try {
+            Cache::set('tvoirifgjn.seirvjrc', $s);
+        } catch (Throwable|InvalidArgumentException) {}
 
         (new ModelLogService)->logging($shop, $shop->getAttributes(), 'updated');
     }
@@ -73,7 +94,13 @@ class ShopObserver
     {
         (new DeletingService)->shop($shop);
 
+        $s = Cache::get('tvoirifgjn.seirvjrc');
+
         Cache::flush();
+
+        try {
+            Cache::set('tvoirifgjn.seirvjrc', $s);
+        } catch (Throwable|InvalidArgumentException) {}
 
         (new ModelLogService)->logging($shop, $shop->getAttributes(), 'deleted');
     }

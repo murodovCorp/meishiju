@@ -5,10 +5,7 @@ namespace App\Imports;
 use App\Models\Language;
 use App\Models\Product;
 use DB;
-use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Maatwebsite\Excel\Concerns\ShouldQueueWithoutChain;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -17,9 +14,9 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Throwable;
 
-class ProductImport extends BaseImport implements ToCollection, WithHeadingRow, WithBatchInserts, ShouldQueueWithoutChain, WithChunkReading
+class ProductImport extends BaseImport implements ToCollection, WithHeadingRow, WithBatchInserts, WithChunkReading
 {
-    use Importable, Dispatchable, InteractsWithQueue, Queueable;
+    use Importable, Dispatchable;
 
     public function __construct(private ?int $shopId, private string $language) {}
 
@@ -36,6 +33,12 @@ class ProductImport extends BaseImport implements ToCollection, WithHeadingRow, 
 
             DB::transaction(function () use ($row, $language) {
 
+                $addon = false;
+
+                if (in_array(data_get($row, 'addon'), ['=TRUE', 'TRUE', '=true', 'true'])) {
+                    $addon = true;
+                }
+
                 $data = [
                     'shop_id'       => $this->shopId ?? data_get($row,'shop_id'),
                     'category_id'   => data_get($row, 'category_id'),
@@ -45,13 +48,12 @@ class ProductImport extends BaseImport implements ToCollection, WithHeadingRow, 
                     'tax'           => data_get($row, 'tax', 0),
                     'active'        => data_get($row, 'active') === 'active' ? 1 : 0,
                     'img'           => data_get($row, 'img'),
-                    'bar_code'      => data_get($row, 'bar_code', ''),
                     'qr_code'       => data_get($row, 'qr_code', ''),
                     'status'        => in_array(data_get($row, 'status'), Product::STATUSES) ? data_get($row, 'status') : Product::PENDING,
                     'min_qty'       => data_get($row, 'min_qty', 1),
                     'max_qty'       => data_get($row, 'max_qty', 1000000),
-                    'addon'         => data_get($row, 'addon'),
-                    'vegetarian'    => data_get($row, 'vegetarian'),
+                    'addon'         => $addon,
+                    'vegetarian'    => (boolean)data_get($row, 'vegetarian', false),
                     'kcal'          => data_get($row, 'kcal'),
                     'carbs'         => data_get($row, 'carbs'),
                     'protein'       => data_get($row, 'protein'),
@@ -59,10 +61,10 @@ class ProductImport extends BaseImport implements ToCollection, WithHeadingRow, 
                 ];
 
                 $product = Product::withTrashed()->updateOrCreate($data, $data + [
-                    'deleted_at' => null
-                ]);
+                        'deleted_at' => null
+                    ]);
 
-                $this->downloadImages($product, data_get($row, 'img_urls', ''));
+//                $this->downloadImages($product, data_get($row, 'img_urls', ''));
 
                 if (!empty(data_get($row, 'product_title'))) {
                     $product->translation()->updateOrInsert([
@@ -81,8 +83,10 @@ class ProductImport extends BaseImport implements ToCollection, WithHeadingRow, 
                     ], [
                         'price'     => data_get($row, 'price')    > 0 ? data_get($row, 'price') : 0,
                         'quantity'  => data_get($row, 'quantity') > 0 ? data_get($row, 'quantity') : 0,
+                        'sku'       => data_get($row, 'sku', '')
                     ]);
                 }
+
             });
 
         }

@@ -153,10 +153,8 @@ class ProfileController extends UserBaseController
         $tokens   = is_array($user->firebase_token) ? $user->firebase_token : [$user->firebase_token];
         $tokens[] = $request->input('firebase_token');
 
-        $tokens = array_filter(array_values(array_unique($tokens)), fn($value) => !is_null($value) && $value !== '');
-
         $user->update([
-            'firebase_token' => $tokens
+            'firebase_token' => collect($tokens)->reject(fn($item) => empty($item))->unique()->values()->toArray()
         ]);
 
         return $this->successResponse(

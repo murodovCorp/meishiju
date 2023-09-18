@@ -50,24 +50,34 @@ class StoreRequest extends BaseRequest
             'phone'                 => 'string',
             'username'              => 'string',
             'delivery_date'         => 'date|date_format:Y-m-d',
-            'delivery_time'         => 'nullable|string',
+            'delivery_time'         => 'string',
             'note'                  => 'nullable|string|max:191',
             'cart_id'               => 'integer|exists:carts,id',
+            'notes'                 => 'array',
+            'notes.*'               => 'string|max:255',
             'images'                => 'array',
             'images.*'              => 'string',
+			'bonus'                 => 'boolean',
+			'tip_type'              => 'in:fix,percent',
+			'tips'                  => 'numeric|min:0',
 
-            'products'              => 'nullable|array',
+			'products'              => 'nullable|array',
             'products.*.stock_id'   =>  [
                 'integer',
-                Rule::exists('stocks', 'id')->whereNull('deleted_at')
+                Rule::exists('stocks', 'id')
+					->whereNull('deleted_at')
             ],
-            'products.*.quantity'   => 'nullable|integer',
-            'products.*.parent_id'  => [
-                'nullable',
-                'integer',
-                Rule::exists('stocks', 'id')->where('addon', 0)->whereNull('deleted_at')
-            ],
-            'bonus'                 => 'boolean',
+            'products.*.quantity'   => 'numeric',
+            'products.*.note'       => 'nullable|string|max:255',
+
+			'products.*.addons'     => 'array',
+			'products.*.addons.*.stock_id'  => [
+				'integer',
+				Rule::exists('stocks', 'id')
+					->where('addon', 1)
+					->whereNull('deleted_at')
+			],
+			'products.*.addons.*.quantity'  => ['integer'],
         ];
     }
 }

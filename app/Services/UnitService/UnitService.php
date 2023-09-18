@@ -3,6 +3,7 @@
 namespace App\Services\UnitService;
 
 use App\Helpers\ResponseError;
+use App\Models\Language;
 use App\Models\Unit;
 use App\Services\CoreService;
 use DB;
@@ -18,8 +19,10 @@ class UnitService extends CoreService
     public function create(array $data): array
     {
         try {
+            $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
-            $unitId = DB::transaction(function () use ($data) {
+            /** @var Unit $unit */
+            $unit = DB::transaction(function () use ($data) {
 
                 /** @var Unit $unit */
                 $unit = $this->model()->create([
@@ -40,10 +43,17 @@ class UnitService extends CoreService
 
                 }
 
-                return $unit->id;
+                return $unit;
             });
 
-            return ['status' => true, 'code' => ResponseError::NO_ERROR, 'data' => Unit::find($unitId)];
+            return [
+                'status' => true,
+                'code'   => ResponseError::NO_ERROR,
+                'data' => $unit->fresh([
+                    'translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
+                    'translations',
+                ])
+            ];
         } catch (Throwable $e) {
             $this->error($e);
         }
@@ -58,9 +68,11 @@ class UnitService extends CoreService
     public function update(Unit $unit, array $data): array
     {
         try {
+            $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
+
             $unit->update([
-                'active' => data_get($data, 'active', 0),
-                'position' => data_get($data, 'position', 'after'),
+                'active'    => data_get($data, 'active', 0),
+                'position'  => data_get($data, 'position', 'after'),
             ]);
 
             $unit->translations()->forceDelete();
@@ -76,7 +88,14 @@ class UnitService extends CoreService
 
             }
 
-            return ['status' => true, 'code' => ResponseError::NO_ERROR, 'data' => Unit::find($unit->id)];
+            return [
+                'status' => true,
+                'code'   => ResponseError::NO_ERROR,
+                'data' => $unit->fresh([
+                    'translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
+                    'translations',
+                ])
+            ];
         } catch (Throwable $e) {
             $this->error($e);
         }
@@ -88,14 +107,23 @@ class UnitService extends CoreService
         ];
     }
 
-    public function setActive($id): array
+    public function setActive(int $id): array
     {
         try {
+            $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
+
             $unit = Unit::find($id);
 
             $unit->update(['active' => !$unit->active]);
 
-            return ['status' => true, 'code' => ResponseError::NO_ERROR, 'data' => Unit::find($unit->id)];
+            return [
+                'status' => true,
+                'code'   => ResponseError::NO_ERROR,
+                'data' => $unit->fresh([
+                    'translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
+                    'translations',
+                ])
+            ];
         } catch (Throwable $e) {
             $this->error($e);
         }

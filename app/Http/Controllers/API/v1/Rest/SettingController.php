@@ -5,7 +5,6 @@ namespace App\Http\Controllers\API\v1\Rest;
 use App\Helpers\ResponseError;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ReferralResource;
-use App\Models\EmailSetting;
 use App\Models\Order;
 use App\Models\Referral;
 use App\Models\Settings;
@@ -76,60 +75,33 @@ class SettingController extends Controller
     public function systemInformation(): JsonResponse
     {
         // get MySql version from DataBase
-        $error  = '';
-        $errors = '';
-        $mysql  = null;
+        $error  = 'No error';
 
         try {
-            $mysql  = DB::selectOne( DB::raw('SHOW VARIABLES LIKE "%innodb_version%"'));
-            $node       = exec('node -v');
+			$mysql  	= DB::selectOne(DB::raw('SHOW VARIABLES LIKE "%innodb_version%"'));
+			$node       = exec('node -v');
             $npm        = exec('npm -v');
             $composer   = exec('composer -V');
-
-            try {
-
-                foreach (EmailSetting::get() as $item) {
-
-                    $ch = curl_init("$item->host:$item->port");
-
-                    curl_exec($ch);
-
-                    if (!curl_errno($ch)) {
-
-                        $errors .= match ($http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
-                            200 => "$item->host:$item->port",
-                            default => "Error code HTTP: $http_code. ",
-                        };
-
-                    }
-
-                    curl_close($ch);
-                }
-
-            } catch (Throwable $e) {
-                $errors = $e->getMessage();
-            }
-
         } catch (Throwable $e) {
             $this->error($e);
             $node = '';
             $npm = '';
             $composer = '';
-
-            $error = 'can`t run php command exec';
+            $error = $e->getMessage() ?? 'can`t run php command exec';
+			$mysql = (object)['Value' => 'Mysql Error', 'Variable_name' => 'Mysql Error'];
         }
 
-        return $this->successResponse("success", [
+        return $this->successResponse('success', [
             'PHP Version'       => phpversion(),
             'Laravel Version'   => app()->version(),
             'OS Version'        => php_uname(),
-            'MySql Version'     => data_get($mysql, 'Value'),
+            'MySql Version'     => $mysql->Value,
             'NodeJs Version'    => $node,
             'NPM Version'       => $npm,
             'Project Version'   => env('PROJECT_V'),
             'Composer Version'  => $composer,
             'error'             => $error,
-            'mail errors'       => $errors,
+            'engine'            => $mysql->Variable_name
         ]);
     }
 

@@ -44,4 +44,18 @@ class TableController extends RestBaseController
             TableResource::make($result)
         );
     }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param int $id
+     * @param FilterParamsRequest $request
+     * @return array
+     */
+    public function disableDates(int $id, FilterParamsRequest $request): array
+    {
+        $filter = $request->merge(['id' => $id])->all();
+
+        return $this->repository->disableDates($filter);
+    }
 }

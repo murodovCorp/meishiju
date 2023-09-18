@@ -9,6 +9,7 @@ use App\Http\Resources\CurrencyResource;
 use App\Models\Currency;
 use App\Services\Interfaces\CurrencyServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 
 class CurrencyController extends AdminBaseController
 {
@@ -159,6 +160,10 @@ class CurrencyController extends AdminBaseController
             ]);
         }
 
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language), CurrencyResource::make($currency)
         );
@@ -175,6 +180,23 @@ class CurrencyController extends AdminBaseController
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
             CurrencyResource::collection($languages)
+        );
+    }
+
+	/**
+	 * Get all Active languages
+	 * @param int $id
+	 * @return JsonResponse
+	 */
+    public function setDefaultCurrency(int $id): JsonResponse
+    {
+        $currency = Currency::find($id);
+
+		$this->service->setCurrencyDefault($currency);
+
+        return $this->successResponse(
+            __('errors.' . ResponseError::SUCCESS, locale: $this->language),
+            CurrencyResource::collection($currency)
         );
     }
 

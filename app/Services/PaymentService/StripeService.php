@@ -3,6 +3,7 @@
 namespace App\Services\PaymentService;
 
 use App\Models\Order;
+use App\Models\ParcelOrder;
 use App\Models\Payment;
 use App\Models\PaymentPayload;
 use App\Models\PaymentProcess;
@@ -14,7 +15,6 @@ use Str;
 use Stripe\Checkout\Session;
 use Stripe\Exception\ApiErrorException;
 use Stripe\Stripe;
-use Throwable;
 
 class StripeService extends BaseService
 {
@@ -25,10 +25,11 @@ class StripeService extends BaseService
 
     /**
      * @param array $data
+     * @param array $types
      * @return PaymentProcess|Model
-     * @throws ApiErrorException|Throwable
+     * @throws ApiErrorException
      */
-    public function orderProcessTransaction(array $data): Model|PaymentProcess
+    public function orderProcessTransaction(array $data, array $types = ['card']): Model|PaymentProcess
     {
         $payment = Payment::where('tag', 'stripe')->first();
 
@@ -37,26 +38,25 @@ class StripeService extends BaseService
 
         Stripe::setApiKey(data_get($payload, 'stripe_sk'));
 
-        $order          = Order::find(data_get($data, 'order_id'));
-        $totalPrice     = ceil($order->rate_total_price * 100);
+        /** @var ParcelOrder $order */
+        $order = data_get($data, 'parcel_id')
+            ? ParcelOrder::find(data_get($data, 'parcel_id'))
+            : Order::find(data_get($data, 'order_id'));
+
+        $totalPrice = ceil($order->rate_total_price * 100);
 
         $order->update([
             'total_price' => ($totalPrice / $order->rate) / 100
         ]);
 
         $host = request()->getSchemeAndHttpHost();
+        $url  = "$host/order-stripe-success?token={CHECKOUT_SESSION_ID}&" . (
+            data_get($data, 'parcel_id') ? "parcel_id=$order->id" : "order_id=$order->id"
+        );
 
         $session = Session::create([
-            'payment_method_types'   => [
-                'alipay',
-                'wechat_pay'
-            ],
-            'payment_method_options' => [
-                'wechat_pay' => [
-                    'client' => 'web'
-                ]
-            ],
-            'currency'   => Str::lower($order->currency?->title ?? data_get($payload, 'currency')),
+            'payment_method_types' => $types,
+            'currency' => Str::lower($order->currency?->title ?? data_get($payload, 'currency')),
             'line_items' => [
                 [
                     'price_data' => [
@@ -69,20 +69,20 @@ class StripeService extends BaseService
                     'quantity' => 1,
                 ]
             ],
-            'mode' => 'payment',
-            'success_url' => "$host/order-stripe-success?token={CHECKOUT_SESSION_ID}&order_id=$order->id",
-            'cancel_url' => "$host/order-stripe-success?token={CHECKOUT_SESSION_ID}&order_id=$order->id",
+            'mode'        => 'payment',
+            'success_url' => $url,
+            'cancel_url'  => $url,
         ]);
 
         return PaymentProcess::updateOrCreate([
-            'user_id'   => auth('sanctum')->id(),
-            'order_id'  => data_get($data, 'order_id'),
+            'user_id'    => auth('sanctum')->id(),
+            'model_id'   => $order->id,
+            'model_type' => get_class($order)
         ], [
             'id' => $session->payment_intent ?? $session->id,
             'data' => [
-                'url'   => $session->url,
-                'price' => $totalPrice,
-                'order_id' => $order->id
+                'url'      => $session->url,
+                'price'    => $totalPrice,
             ]
         ]);
     }
@@ -91,10 +91,11 @@ class StripeService extends BaseService
      * @param array $data
      * @param Shop $shop
      * @param $currency
+     * @param array $types
      * @return Model|array|PaymentProcess
      * @throws ApiErrorException
      */
-    public function subscriptionProcessTransaction(array $data, Shop $shop, $currency): Model|array|PaymentProcess
+    public function subscriptionProcessTransaction(array $data, Shop $shop, $currency, array $types = ['card']): Model|array|PaymentProcess
     {
         $payment = Payment::where('tag', 'stripe')->first();
 
@@ -106,7 +107,7 @@ class StripeService extends BaseService
         $subscription   = Subscription::find(data_get($data, 'subscription_id'));
 
         $session = Session::create([
-            'payment_method_types' => ['card'],
+            'payment_method_types' => $types,
             'line_items' => [
                 [
                     'price_data' => [
@@ -125,15 +126,16 @@ class StripeService extends BaseService
         ]);
 
         return PaymentProcess::updateOrCreate([
-            'user_id'           => auth('sanctum')->id(),
-            'subscription_id'   => $subscription->id,
+            'user_id'    => auth('sanctum')->id(),
+			'model_id'   => $subscription->id,
+			'model_type' => get_class($subscription)
         ], [
-            'id' => $session->payment_intent,
+            'id' => $session->payment_intent ?? $session->id,
             'data' => [
-                'url'               => $session->url,
-                'price'             => ceil($subscription->price) * 100,
-                'shop_id'           => $shop->id,
-                'subscription_id'   => $subscription->id,
+                'url'             => $session->url,
+                'price'           => ceil($subscription->price) * 100,
+                'shop_id'         => $shop->id,
+                'subscription_id' => $subscription->id,
             ]
         ]);
     }

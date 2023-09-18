@@ -20,7 +20,7 @@ class UpdateRequest extends BaseRequest
             'categories.*'  => [
                 'required',
                 Rule::exists('categories', 'id')
-                    ->where('type', Category::MAIN)
+					->whereIn('type', [Category::SHOP, Category::SUB_SHOP])
                     ->whereNull('deleted_at')
             ]
         ];

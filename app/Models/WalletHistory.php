@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Payable;
 use App\Traits\SetCurrency;
 use Database\Factories\WalletHistoryFactory;
 use Eloquent;
@@ -52,7 +53,7 @@ use Illuminate\Support\Carbon;
  */
 class WalletHistory extends Model
 {
-    use HasFactory, SetCurrency, SoftDeletes;
+    use HasFactory, SetCurrency, SoftDeletes, Payable;
 
     protected $guarded = ['id'];
 
@@ -75,23 +76,18 @@ class WalletHistory extends Model
         self::CANCELED  => self::CANCELED,
     ];
 
-    public function getPriceRateAttribute(): float
+    public function getPriceRateAttribute(): float|int|null
     {
         if (request()->is('api/v1/dashboard/user/*') || request()->is('api/v1/rest/*')) {
             return $this->price * $this->currency();
         }
 
-        return $this->price * $this->currency();
+        return $this->price;
     }
 
     public function wallet(): BelongsTo
     {
         return $this->belongsTo(Wallet::class, 'wallet_uuid', 'uuid');
-    }
-
-    public function transaction(): BelongsTo
-    {
-        return $this->belongsTo(Transaction::class);
     }
 
     public function author(): BelongsTo

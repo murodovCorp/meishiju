@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -19,7 +20,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $id
  * @property string|null $type
  * @property int $active
+ * @property int $shop_id
  * @property Carbon|null $deleted_at
+ * @property Shop|null $shop
  * @property-read Collection|ExtraValue[] $extraValues
  * @property-read int|null $extra_values_count
  * @property-read ExtraGroupTranslation|null $translation
@@ -66,5 +69,10 @@ class ExtraGroup extends Model
     public function extraValues(): HasMany
     {
         return $this->hasMany(ExtraValue::class);
+    }
+
+    public function shop(): BelongsTo
+	{
+        return $this->belongsTo(Shop::class);
     }
 }

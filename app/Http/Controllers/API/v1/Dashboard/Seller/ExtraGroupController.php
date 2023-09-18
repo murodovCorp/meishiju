@@ -30,7 +30,7 @@ class ExtraGroupController extends SellerBaseController
      */
     public function index(FilterParamsRequest $request): AnonymousResourceCollection
     {
-        $extras = $this->repository->extraGroupList($request->all());
+        $extras = $this->repository->extraGroupList($request->merge(['shop_id' => $this->shop->id])->all());
 
         return ExtraGroupResource::collection($extras);
     }
@@ -43,7 +43,10 @@ class ExtraGroupController extends SellerBaseController
      */
     public function store(StoreRequest $request): JsonResponse
     {
-        $result = $this->service->create($request->validated());
+		$validated = $request->validated();
+		$validated['shop_id'] = $this->shop->id;
+
+        $result = $this->service->create($validated);
 
         if (!data_get($result, 'status')) {
             return $this->onErrorResponse($result);
@@ -64,9 +67,10 @@ class ExtraGroupController extends SellerBaseController
      */
     public function show(int $id): JsonResponse
     {
-        $extra = $this->repository->extraGroupDetails($id);
+		/** @var ExtraGroup $extra */
+		$extra = $this->repository->extraGroupDetails($id);
 
-        if (!$extra) {
+        if (!$extra || !empty($extra->shop_id) && $extra->shop_id !== $this->shop->id) {
             return $this->onErrorResponse([
                 'code'      => ResponseError::ERROR_404,
                 'message'   => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
@@ -91,7 +95,16 @@ class ExtraGroupController extends SellerBaseController
      */
     public function update(int $id, StoreRequest $request): JsonResponse
     {
-        $result = $this->service->update($id, $request->validated());
+		$extraGroup = ExtraGroup::find($id);
+
+		if (!$extraGroup || $extraGroup->shop_id !== $this->shop->id) {
+			return $this->onErrorResponse([
+				'code'      => ResponseError::ERROR_404,
+				'message'   => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
+			]);
+		}
+
+		$result = $this->service->update($extraGroup, $request->validated());
 
         if (!data_get($result, 'status')) {
             return $this->onErrorResponse($result);
@@ -111,7 +124,7 @@ class ExtraGroupController extends SellerBaseController
      */
     public function destroy(FilterParamsRequest $request): JsonResponse
     {
-        $hasValues = $this->service->delete($request->input('ids'));
+        $hasValues = $this->service->delete($request->input('ids'), $this->shop->id);
 
         if ($hasValues > 0) {
             return $this->onErrorResponse([
@@ -146,7 +159,7 @@ class ExtraGroupController extends SellerBaseController
      */
     public function setActive(int $id): JsonResponse
     {
-        $result = $this->service->setActive($id);
+        $result = $this->service->setActive($id, $this->shop->id);
 
         if (!data_get($result, 'status')) {
             return $this->onErrorResponse($result);

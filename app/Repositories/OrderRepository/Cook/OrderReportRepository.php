@@ -35,7 +35,6 @@ class OrderReportRepository extends CoreRepository
             ->where('waiter_id', data_get($filter, 'waiter_id'))
             ->where('created_at', '>=', $dateFrom)
             ->where('created_at', '<=', $dateTo)
-            ->whereNull('deleted_at')
             ->latest('id')
             ->first();
 
@@ -43,7 +42,6 @@ class OrderReportRepository extends CoreRepository
             ->where('cook_id', data_get($filter, 'cook_id'))
             ->where('created_at', '>=', $dateFrom)
             ->where('created_at', '<=', $dateTo)
-            ->whereNull('deleted_at')
             ->select([
                 DB::raw('count(id) as total_count'),
                 DB::raw("sum(if(created_at >= '$now', 1, 0)) as total_today_count"),
@@ -64,7 +62,6 @@ class OrderReportRepository extends CoreRepository
             ->where('cook_id', data_get($filter, 'cook_id'))
             ->where('created_at', '>=', $dateFrom)
             ->where('created_at', '<=', $dateTo)
-            ->whereNull('deleted_at')
             ->where('status', Order::STATUS_DELIVERED)
             ->select([
                 DB::raw("(DATE_FORMAT(created_at, '$type')) as time"),

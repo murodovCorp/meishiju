@@ -6,6 +6,9 @@ use App\Models\Branch;
 use App\Models\Language;
 use App\Repositories\CoreRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 
 class BranchRepository extends CoreRepository
 {
@@ -53,10 +56,10 @@ class BranchRepository extends CoreRepository
 
     /**
      * @param int $id
-     * @return Branch|null
+     * @return Model|Collection|Builder|array|null
      */
-    public function showById(int $id): Branch|null
-    {
+    public function showById(int $id): Model|Collection|Builder|array|null
+	{
         $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
         return Branch::with([

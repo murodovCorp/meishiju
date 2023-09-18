@@ -4,7 +4,6 @@ namespace App\Imports;
 
 use App\Models\Brand;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
@@ -27,8 +26,8 @@ class BrandImport extends BaseImport implements ToCollection, WithHeadingRow, Wi
             }
 
             $brand = Brand::updateOrCreate(['title' => data_get($row, 'title')], [
-                'title'     => data_get($row, 'title', ''),
-                'active'    => data_get($row, 'active') === 'active' ? 1 : 0,
+                'title'  => data_get($row, 'title', ''),
+                'active' => data_get($row, 'active') == 'active',
             ]);
 
             $this->downloadImages($brand, data_get($row, 'img_urls', ''));

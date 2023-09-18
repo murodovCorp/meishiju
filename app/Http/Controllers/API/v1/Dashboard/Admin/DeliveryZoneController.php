@@ -11,6 +11,7 @@ use App\Repositories\DeliveryZoneRepository\DeliveryZoneRepository;
 use App\Services\DeliveryZoneService\DeliveryZoneService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class DeliveryZoneController extends AdminBaseController
 {
@@ -38,6 +39,10 @@ class DeliveryZoneController extends AdminBaseController
     public function index(FilterParamsRequest $request): AnonymousResourceCollection
     {
         $deliveryZone = $this->repository->paginate($request->all());
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return DeliveryZoneResource::collection($deliveryZone);
     }

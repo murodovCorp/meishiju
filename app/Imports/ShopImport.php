@@ -28,10 +28,6 @@ class ShopImport implements ToCollection, WithHeadingRow, WithBatchInserts
 
         foreach ($collection as $row) {
 
-            $type = !empty(data_get($row, 'type')) ?
-                data_get(Shop::TYPES_BY, data_get($row, 'type'), Shop::TYPE_SHOP) :
-                Shop::TYPE_SHOP;
-
             $explodeDeliveryTime = explode(',', data_get($row, 'delivery_time', ''));
 
             $deliveryTime = [
@@ -40,7 +36,7 @@ class ShopImport implements ToCollection, WithHeadingRow, WithBatchInserts
                 'type'  => str_replace(['type:', ' '], '', data_get($explodeDeliveryTime, 2, '')),
             ];
 
-            $location   = explode(',', data_get($row, 'location', ''));
+            $location = explode(',', data_get($row, 'location', ''));
 
             $shop = Shop::updateOrCreate(['user_id' => data_get($row, 'user_id')], [
                 'tax'               => data_get($row, 'tax', 0),
@@ -59,7 +55,7 @@ class ShopImport implements ToCollection, WithHeadingRow, WithBatchInserts
                 'status_note'       => data_get($row, 'status_note', ''),
                 'take'              => data_get($row, 'take') !== null ? data_get($row, 'take') : '',
                 'delivery_time'     => $deliveryTime,
-                'type'              => $type,
+                'delivery_price'    => data_get($row, 'delivery_price', 0),
             ]);
 
             $this->downloadImages(Shop::find($shop->id), data_get($row, 'img_urls', ''));

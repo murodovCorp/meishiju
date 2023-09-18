@@ -22,7 +22,6 @@ class ProductAddonFactory extends Factory
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
             'qr_code' => $this->faker->word(),
-            'bar_code' => $this->faker->word(),
             'tax' => $this->faker->randomFloat(),
             'active' => $this->faker->boolean(),
             'addon' => $this->faker->boolean(),

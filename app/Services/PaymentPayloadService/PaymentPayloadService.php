@@ -6,7 +6,6 @@ use App\Helpers\ResponseError;
 use App\Models\Payment;
 use App\Models\PaymentPayload;
 use App\Services\CoreService;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Throwable;
@@ -24,10 +23,6 @@ class PaymentPayloadService extends CoreService
 
         if (!data_get($prepareValidate, 'status')) {
             return $prepareValidate;
-        }
-
-        if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
-            abort(403);
         }
 
         try {
@@ -59,10 +54,6 @@ class PaymentPayloadService extends CoreService
 
             if (!data_get($prepareValidate, 'status')) {
                 return $prepareValidate;
-            }
-
-            if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
-                abort(403);
             }
 
             $paymentPayload = PaymentPayload::where('payment_id', $paymentId)->firstOrFail();
@@ -266,9 +257,9 @@ class PaymentPayloadService extends CoreService
     public function payStack(array $data): \Illuminate\Contracts\Validation\Validator|\Illuminate\Validation\Validator
     {
         return Validator::make($data, [
-            'payload.paystack_pk'   => 'required|string',
-            'payload.paystack_sk'   => 'required|string',
-            'payload.currency'      => [
+            'payload.paystack_pk'	=> 'required|string',
+            'payload.paystack_sk'	=> 'required|string',
+            'payload.currency'   	=> [
                 'required',
                 Rule::exists('currencies', 'title')->whereNull('deleted_at')
             ],

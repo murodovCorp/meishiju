@@ -4,15 +4,14 @@ namespace App\Http\Controllers\API\v1\Dashboard\Admin;
 
 use App\Helpers\ResponseError;
 use App\Http\Requests\FilterParamsRequest;
+use App\Http\Requests\Unit\StoreRequest;
 use App\Http\Resources\UnitResource;
 use App\Models\Unit;
 use App\Repositories\UnitRepository\UnitRepository;
 use App\Services\UnitService\UnitService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Cache;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class UnitController extends AdminBaseController
 {
@@ -33,20 +32,12 @@ class UnitController extends AdminBaseController
     /**
      * Display a listing of the resource.
      *
-     * @param Request $request
+     * @param FilterParamsRequest $request
      * @return AnonymousResourceCollection
      */
-    public function paginate(Request $request): AnonymousResourceCollection
+    public function paginate(FilterParamsRequest $request): AnonymousResourceCollection
     {
-        if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
-
-            $ips = collect(Cache::get('block-ips'));
-
-            try {
-                Cache::set('block-ips', $ips->merge([$request->ip()]), 86600000000);
-            } catch (InvalidArgumentException $e) {
-            }
-
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
             abort(403);
         }
 
@@ -58,11 +49,11 @@ class UnitController extends AdminBaseController
     /**
      * Store a newly created resource in storage.
      *
-     * @param Request $request
+     * @param StoreRequest $request
      *
      * @return JsonResponse
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreRequest $request): JsonResponse
     {
         $result = $this->service->create($request->all());
 
@@ -95,11 +86,11 @@ class UnitController extends AdminBaseController
      * Update the specified resource in storage.
      *
      * @param Unit $unit
-     * @param Request $request
+     * @param StoreRequest $request
      *
      * @return JsonResponse
      */
-    public function update(Unit $unit, Request $request): JsonResponse
+    public function update(Unit $unit, StoreRequest $request): JsonResponse
     {
         $result = $this->service->update($unit, $request->all());
 
@@ -129,7 +120,7 @@ class UnitController extends AdminBaseController
         );
     }
 
-    public function setActiveUnit($id): JsonResponse
+    public function setActiveUnit(int $id): JsonResponse
     {
         $result = $this->service->setActive($id);
 

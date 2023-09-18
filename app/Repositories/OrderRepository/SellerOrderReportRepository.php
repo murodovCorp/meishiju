@@ -4,7 +4,6 @@ namespace App\Repositories\OrderRepository;
 
 use App\Models\Order;
 use App\Repositories\CoreRepository;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class SellerOrderReportRepository extends CoreRepository
@@ -28,7 +27,12 @@ class SellerOrderReportRepository extends CoreRepository
         $dateTo     = date('Y-m-d 23:59:59', strtotime(request('date_to', now())));
         $now        = now()?->format('Y-m-d 00:00:01');
 
-        $lastOrder  = Order::where('shop_id', data_get($filter, 'shop_id'))
+		/** @var Order $lastOrder */
+		$lastOrder  = Order::with([
+			'coupon',
+			'pointHistories'
+		])
+			->where('shop_id', data_get($filter, 'shop_id'))
             ->latest('id')
             ->first();
 
@@ -36,7 +40,6 @@ class SellerOrderReportRepository extends CoreRepository
             ->where('shop_id', data_get($filter, 'shop_id'))
             ->where('created_at', '>=', $dateFrom)
             ->where('created_at', '<=', $dateTo)
-            ->whereNull('deleted_at')
             ->select([
                 DB::raw("sum(if(status = 'delivered', total_price, 0)) as total_price"),
                 DB::raw("sum(if(status = 'delivered', commission_fee, 0)) as commission_fee"),
@@ -66,7 +69,6 @@ class SellerOrderReportRepository extends CoreRepository
             ->where('shop_id', data_get($filter, 'shop_id'))
             ->where('created_at', '>=', $dateFrom)
             ->where('created_at', '<=', $dateTo)
-            ->whereNull('deleted_at')
             ->where('status', Order::STATUS_DELIVERED)
             ->select([
                 DB::raw("(DATE_FORMAT(created_at, '$type')) as time"),
@@ -76,9 +78,16 @@ class SellerOrderReportRepository extends CoreRepository
             ->orderBy('time')
             ->get();
 
+		$sellerPrice = $lastOrder?->total_price
+			- $lastOrder?->delivery_fee
+			- $lastOrder?->service_fee
+			- $lastOrder?->commission_fee
+			- ($lastOrder?->coupon?->price ?? 0)
+			- $lastOrder?->pointHistories?->sum('price');
+
         return [
             'last_order_total_price'    => (int)ceil($lastOrder?->total_price) ?? 0,
-            'last_order_income'         => (int)ceil($lastOrder?->seller_price) ?? 0,
+            'last_order_income'         => (int)ceil($sellerPrice) ?? 0,
             'total_price'               => (int)data_get($orders, 'total_price', 0),
             'fm_total_price'            => (int)$fmTotalPrice,
             'total_count'               => (int)data_get($orders, 'total_count', 0),
@@ -91,26 +100,6 @@ class SellerOrderReportRepository extends CoreRepository
             'total_delivered_count'     => (int)data_get($orders, 'total_delivered_count', 0),
             'chart'                     => $chart
         ];
-    }
-
-    public function reportPaginate(array $filter = []): LengthAwarePaginator
-    {
-        $dateFrom   = date('Y-m-d 00:00:01', strtotime(request('date_from')));
-        $dateTo     = date('Y-m-d 23:59:59', strtotime(request('date_to', now())));
-
-        return Order::where('shop_id', data_get($filter, 'shop_id'))
-            ->where('status', Order::STATUS_DELIVERED)
-            ->where('created_at', '>=', $dateFrom)
-            ->where('created_at', '<=', $dateTo)
-            ->select([
-                'status',
-                'shop_id',
-                'created_at',
-                'total_price',
-                'commission_fee',
-                'delivery_fee',
-            ])
-            ->paginate(data_get($filter, 'perPage', 10));
     }
 
 }

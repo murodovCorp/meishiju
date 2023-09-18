@@ -55,10 +55,10 @@ class YandexController extends Controller
 //            'failed' => 'При выполнение заказа произошла ошибка, дальнейшее выполнение невозможно.',
 //        ];
 
-        /** @var Order $order */
         $order = Order::whereJsonContains('yandex->id', $request->input('claim_id'))->first();
 
         if (empty($order) || !$request->input('status')) {
+            /** @var Order $order */
             Log::error('empty yandex', [
                 $request->all(),
                 'order'  => $order->id,
@@ -75,6 +75,7 @@ class YandexController extends Controller
             'yandex' => $yandex
         ]);
 
+        /** @var Order $order */
         if ($request->input('status') === 'ready_for_approval' && $order->status !== Order::STATUS_CANCELED) {
             (new YandexService)->acceptOrder($order);
         }

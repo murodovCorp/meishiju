@@ -34,15 +34,7 @@ class PrivacyPolicyController extends AdminBaseController
      */
     public function store(StoreRequest $request): JsonResponse
     {
-        if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
-
-            $ips = collect(Cache::get('block-ips'));
-
-            try {
-                Cache::set('block-ips', $ips->merge([$request->ip()]), 86600000000);
-            } catch (InvalidArgumentException $e) {
-            }
-
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
             abort(403);
         }
 

@@ -22,10 +22,12 @@ class DatabaseSeeder extends Seeder
         $this->call(EmailSettingSeeder::class);
         $this->call(UnitSeeder::class);
         $this->call(CategorySeeder::class);
+        $this->call(CategoryStatusSeeder::class);
         $this->call(ShopTagSeeder::class);
         $this->call(PaymentSeeder::class);
         $this->call(NotificationSeeder::class);
         $this->call(OrderSeeder::class);
+        $this->call(SettingsSeeder::class);
 //        if (app()->environment() == 'local') {
 //            Category::factory()->hasTranslations(1)->count(10)->create();
 //            Brand::factory()->count(10)->create();

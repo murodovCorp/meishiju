@@ -21,9 +21,9 @@ class UnitResource extends JsonResource
             $this->translations->pluck('locale')->toArray() : null;
 
         return [
-            'id'            => (int) $this->id,
-            'active'        => (boolean) $this->active,
-            'position'      => (string) $this->position,
+            'id'            => $this->id,
+            'active'        => $this->active,
+            'position'      => $this->position,
             'created_at'    => $this->when($this->created_at, $this->created_at?->format('Y-m-d H:i:s') . 'Z'),
             'updated_at'    => $this->when($this->updated_at, $this->updated_at?->format('Y-m-d H:i:s') . 'Z'),
             'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),

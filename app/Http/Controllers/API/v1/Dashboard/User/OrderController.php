@@ -46,7 +46,7 @@ class OrderController extends UserBaseController
     {
         $filter = $request->merge(['user_id' => auth('sanctum')->id()])->all();
 
-        $orders = $this->orderRepository->ordersPaginate($filter, 'paginate', isUser: true);
+        $orders = $this->orderRepository->ordersPaginate($filter, true);
 
         return OrderResource::collection($orders);
     }

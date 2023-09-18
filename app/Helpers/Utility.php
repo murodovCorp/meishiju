@@ -2,6 +2,8 @@
 
 namespace App\Helpers;
 
+use App\Models\ParcelOrderSetting;
+use App\Models\Shop;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class Utility
@@ -13,11 +15,31 @@ class Utility
     }
 
     /**
+     * @param float|null $km
+     * @param Shop|null $shop
+     * @param float|null $rate
      * @return float|null
      */
-    public function getDeliveryFee(): ?float
+    public function getPriceByDistance(?float $km, ?Shop $shop, ?float $rate): ?float
     {
-        return round(0);
+        $price      = data_get($shop, 'price', 0);
+        $pricePerKm = data_get($shop, 'delivery_price');
+
+        return round(($price + ($pricePerKm * $km)) * $rate, 2);
+    }
+
+    /**
+     * @param ParcelOrderSetting $type
+     * @param float|null $km
+     * @param float|null $rate
+     * @return float|null
+     */
+    public function getParcelPriceByDistance(ParcelOrderSetting $type, ?float $km, ?float $rate): ?float
+    {
+        $price      = $type->special ? $type->special_price : $type->price;
+        $pricePerKm = $type->special ? $type->special_price_per_km : $type->price_per_km;
+
+        return round(($price + ($pricePerKm * $km)) * $rate, 2);
     }
 
     /**
@@ -27,7 +49,11 @@ class Utility
      */
     public function getDistance(array $origin, array $destination): float|int|null
     {
-        if (count($origin) !== 2 && count($destination) !== 2) {
+
+        if (
+            !data_get($origin, 'latitude') && !data_get($origin, 'longitude') &&
+            !data_get($destination, 'latitude') && !data_get($destination, 'longitude')
+        ) {
             return 0;
         }
 

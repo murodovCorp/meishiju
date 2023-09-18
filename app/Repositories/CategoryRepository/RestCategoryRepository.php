@@ -22,25 +22,15 @@ class RestCategoryRepository extends CoreRepository
         $category = $this->model();
 
         return $category
-            ->withThreeChildren(['language' => $this->language])
+            ->withThreeChildren($filter + ['lang' => $this->language])
             ->updatedDate($this->updatedDate)
             ->filter($filter)
             ->where(fn($q) => $q->where('parent_id', null)->orWhere('parent_id', 0))
             ->whereHas('translation',
                 fn($q) => $q->select('id', 'locale', 'title', 'category_id')->where('locale', $this->language),
             )
-            ->select([
-                'id',
-                'uuid',
-                'keywords',
-                'parent_id',
-                'type',
-                'img',
-                'active',
-                'deleted_at',
-            ])
             ->when(data_get($filter, 'receipt-count'), fn($q) => $q->withCount('receipts'))
-            ->orderByDesc('id')
+            ->orderBy(data_get($filter, 'column', 'id'), data_get($filter, 'sort', 'desc'))
             ->paginate(data_get($filter, 'perPage', 10));
     }
 

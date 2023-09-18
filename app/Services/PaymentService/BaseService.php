@@ -8,6 +8,7 @@ use App\Models\PaymentProcess;
 use App\Models\Payout;
 use App\Models\PushNotification;
 use App\Models\Shop;
+use App\Models\Subscription;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WalletHistory;
@@ -15,8 +16,8 @@ use App\Services\CoreService;
 use App\Services\SubscriptionService\SubscriptionService;
 use App\Traits\Notification;
 use Exception;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Log;
 use Throwable;
 use Yansongda\Pay\Pay;
 
@@ -31,24 +32,24 @@ class BaseService extends CoreService
 
     public function afterHook($token, $status) {
 
-        /** @var PaymentProcess $paymentProcess */
-        $paymentProcess = PaymentProcess::with(['order.transaction', 'subscription.transaction'])
+        $paymentProcess = PaymentProcess::with(['model.transaction'])
             ->where('id', $token)
             ->first();
 
-        if (empty($paymentProcess)) {
-            return;
-        }
+		if(empty($paymentProcess)) {
+			return;
+		}
 
-        if (!empty($paymentProcess->subscription_id)) {
-            $subscription = $paymentProcess->subscription;
+		/** @var PaymentProcess $paymentProcess */
+		if ($paymentProcess->model_type === Subscription::class) {
+            $subscription = $paymentProcess->model;
 
             $shop = Shop::find(data_get($paymentProcess->data, 'shop_id'));
 
             $shopSubscription = (new SubscriptionService)->subscriptionAttach(
                 $subscription,
                 (int)$shop?->id,
-                $status === 'paid'
+                $status === 'paid' ? 1 : 0
             );
 
             $shopSubscription->transaction?->update([
@@ -59,28 +60,33 @@ class BaseService extends CoreService
             return;
         }
 
-        if (!empty($paymentProcess->order_id)) {
+        $paymentProcess->model?->transaction?->update([
+            'payment_trx_id' => $token,
+            'status'         => $status,
+        ]);
 
-            $paymentProcess->order?->transaction?->update([
+        $userId = data_get($paymentProcess->data, 'user_id');
+        $type   = data_get($paymentProcess->data, 'type');
+
+        if ($paymentProcess->model_type === Order::class) {
+
+            $paymentProcess->model?->transaction?->update([
                 'payment_trx_id' => $token,
                 'status'         => $status,
             ]);
 
-            $tokens = $this->tokens($paymentProcess->order);
+            $tokens = $this->tokens($paymentProcess->model);
 
             $this->sendNotification(
                 data_get($tokens, 'tokens'),
                 "New order was created",
-                $paymentProcess->order->id,
-                $paymentProcess->order?->setAttribute('type', PushNotification::NEW_ORDER)?->only(['id', 'status', 'type']),
+                $paymentProcess->model->id,
+                $paymentProcess->model?->setAttribute('type', PushNotification::NEW_ORDER)?->only(['id', 'status', 'type']),
                 data_get($tokens, 'ids', [])
             );
 
             return;
         }
-
-        $userId = data_get($paymentProcess->data, 'user_id');
-        $type   = data_get($paymentProcess->data, 'type');
 
         if ($userId && $type === 'wallet') {
 
@@ -197,6 +203,8 @@ class BaseService extends CoreService
                 Log::error('$result', [$result]);
             } catch (Throwable){}
 
+            $tokens = $this->tokens($order);
+
             if (
                 data_get($result, 'trade_status') === 'TRADE_SUCCESS' ||
                 data_get($result, 'trade_state') === 'SUCCESS'
@@ -206,12 +214,27 @@ class BaseService extends CoreService
                     'status' => Transaction::STATUS_PAID,
                 ]);
 
+                $this->sendNotification(
+                    data_get($tokens, 'tokens'),
+                    "New order was created and " . Transaction::STATUS_PAID,
+                    $order->id,
+                    $order?->setAttribute('type', PushNotification::NEW_ORDER)?->only(['id', 'status', 'type']),
+                    data_get($tokens, 'ids', [])
+                );
+
             } else if (data_get($result, 'trade_status') === 'NOTPAY') {
 
                 $order->transaction?->update([
                     'status' => Transaction::STATUS_CANCELED,
                 ]);
 
+                $this->sendNotification(
+                    data_get($tokens, 'tokens'),
+                    "New order was created and " . Transaction::STATUS_CANCELED,
+                    $order->id,
+                    $order?->setAttribute('type', PushNotification::NEW_ORDER)?->only(['id', 'status', 'type']),
+                    data_get($tokens, 'ids', [])
+                );
             }
 
             return [

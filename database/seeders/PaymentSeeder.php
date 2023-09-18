@@ -19,23 +19,24 @@ class PaymentSeeder extends Seeder
     public function run(): void
     {
         $payments = [
-            ['tag' => 'stripe',         'input' => 10],
-            ['tag' => 'razorpay',       'input' => 9],
-            ['tag' => 'mercado-pago',   'input' => 8],
-            ['tag' => 'paystack',       'input' => 7],
-            ['tag' => 'flutterWave',    'input' => 6],
-            ['tag' => 'paytabs',        'input' => 5],
-            ['tag' => 'wallet',         'input' => 4],
-            ['tag' => 'we-chat',        'input' => 3],
-            ['tag' => 'alipay',         'input' => 2],
-            ['tag' => 'cash',           'input' => 1],
+            ['tag' => 'cash',         'input' => 1],
+            ['tag' => 'wallet',       'input' => 2],
+            ['tag' => 'paytabs',      'input' => 3],
+            ['tag' => 'flutterWave',  'input' => 4],
+            ['tag' => 'paystack',     'input' => 5],
+            ['tag' => 'mercado-pago', 'input' => 6],
+            ['tag' => 'razorpay',     'input' => 7],
+            ['tag' => 'stripe',       'input' => 8],
+            ['tag' => 'paypal',       'input' => 9],
         ];
 
         foreach ($payments as $payment) {
             try {
                 Payment::updateOrCreate([
-                    'tag' => data_get($payment, 'tag')
-                ], $payment);
+                    'tag'   => data_get($payment, 'tag')
+                ], [
+                    'input' => data_get($payment, 'input')
+                ]);
             } catch (Throwable $e) {
                 $this->error($e);
             }

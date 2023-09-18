@@ -39,7 +39,7 @@ class UserWalletService extends CoreService
             $this->error($e);
         }
 
-        return $user->loadMissing('wallet');
+        return $user->fresh(['wallet']);
     }
 
     public function update(User $user, array $array): array

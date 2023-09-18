@@ -12,20 +12,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property string $id
  * @property int $user_id
- * @property int $order_id
- * @property int $subscription_id
  * @property array $data
+ * @property string $model_type
+ * @property int $model_id
  * @property User|null $user
- * @property Order|null $order
- * @property Subscription|null $subscription
- * @method static Builder|User newModelQuery()
- * @method static Builder|User newQuery()
- * @method static Builder|User query()
- * @method static Builder|User filter($filter)
- * @method static Builder|User whereId($value)
- * @method static Builder|User whereUserId($value)
- * @method static Builder|User whereOrderId($value)
- * @method static Builder|User whereData($value)
+ * @property Order|ParcelOrder|Subscription $model
+ * @method static Builder|self newModelQuery()
+ * @method static Builder|self newQuery()
+ * @method static Builder|self query()
+ * @method static Builder|self filter($filter)
+ * @method static Builder|self whereId($value)
+ * @method static Builder|self whereUserId($value)
+ * @method static Builder|self whereOrderId($value)
+ * @method static Builder|self whereData($value)
  * @mixin Eloquent
  */
 class PaymentProcess extends Model
@@ -44,13 +43,9 @@ class PaymentProcess extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function order(): BelongsTo
+    public function model(): BelongsTo
     {
-        return $this->belongsTo(Order::class);
+        return $this->morphTo('model');
     }
 
-    public function subscription(): BelongsTo
-    {
-        return $this->belongsTo(Subscription::class);
-    }
 }

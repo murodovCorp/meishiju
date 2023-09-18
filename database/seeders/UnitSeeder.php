@@ -23,9 +23,9 @@ class UnitSeeder extends Seeder
             // Units
             $units = [
                 [
-                    'id' => 1,
-                    'active' => 1,
-                    'position' => 'after',
+                    'id'         => 1,
+                    'active'     => 1,
+                    'position'   => 'after',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ],
@@ -41,7 +41,7 @@ class UnitSeeder extends Seeder
                     'id' => 1,
                     'unit_id' => 1,
                     'locale' => 'en',
-                    'title' => 'PCS',
+                    'title' => 'Quantity',
                 ],
             ];
 

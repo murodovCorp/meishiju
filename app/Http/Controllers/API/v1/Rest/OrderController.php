@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API\v1\Rest;
 use App\Helpers\ResponseError;
 use App\Http\Requests\Order\AddReviewRequest;
 use App\Http\Requests\Order\StoreRequest;
+use App\Http\Requests\Order\UpdateTipsRequest;
+use App\Http\Resources\UserResource;
 use App\Models\Order;
 use App\Repositories\OrderRepository\OrderRepository;
 use App\Services\OrderService\OrderReviewService;
@@ -57,6 +59,20 @@ class OrderController extends RestBaseController
     }
 
     /**
+     * Display the specified resource.
+     *
+     * @param int $id
+     * @param UpdateTipsRequest $request
+     * @return JsonResponse
+     */
+    public function updateTips(int $id, UpdateTipsRequest $request): JsonResponse
+    {
+        $order = $this->orderService->updateTips($id, $request->validated());
+
+        return $this->successResponse(ResponseError::NO_ERROR, $this->orderRepository->reDataOrder($order));
+    }
+
+    /**
      * Add Review to Order.
      *
      * @param int $id
@@ -80,5 +96,38 @@ class OrderController extends RestBaseController
         );
 
     }
+
+	/**
+	 * Display the specified resource.
+	 *
+	 * @param int $id
+	 * @return JsonResponse
+	 */
+	public function showByTableId(int $id): JsonResponse
+	{
+		$order = $this->orderRepository->orderByTableId($id);
+
+		return $this->successResponse(ResponseError::NO_ERROR, $this->orderRepository->reDataOrder($order));
+	}
+
+	/**
+	 * Display the specified resource.
+	 *
+	 * @param int $id
+	 * @return JsonResponse
+	 */
+	public function showDeliveryman(int $id): JsonResponse
+	{
+        $user = $this->orderRepository->showDeliveryman($id);
+
+        if (empty($user)) {
+            return $this->onErrorResponse([
+                'code' => ResponseError::ERROR_404,
+                'message' => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
+            ]);
+        }
+
+		return $this->successResponse(ResponseError::NO_ERROR, UserResource::make($user));
+	}
 
 }

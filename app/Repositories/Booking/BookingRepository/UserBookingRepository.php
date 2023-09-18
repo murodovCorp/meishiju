@@ -18,12 +18,15 @@ class UserBookingRepository extends CoreRepository
     {
         /** @var UserBooking $models */
         $models = $this->model();
+		$locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
-        return $models
+		return $models
             ->filter($filter)
             ->with([
                 'booking:id,max_time,start_time,end_time,shop_id',
-                'user:id,uuid,firstname,lastname,img,active',
+                'booking.shop:id,uuid,logo_img,open,visibility',
+                'booking.shop.translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
+                'user:id,uuid,firstname,lastname,img,active,phone',
                 'table:id,name,shop_section_id,tax,chair_count',
             ])
             ->orderBy(data_get($filter, 'column', 'id'), data_get($filter, 'sort', 'desc'))
@@ -40,10 +43,10 @@ class UserBookingRepository extends CoreRepository
 
         return $model->loadMissing([
             'booking:id,shop_id,max_time,start_time,end_time,shop_id',
-            'booking.shop:id,uuid,logo_img,open,visibility,delivery_price',
+            'booking.shop:id,uuid,logo_img,open,visibility',
             'booking.shop.translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
 
-            'user:id,uuid,firstname,lastname,img,active',
+            'user:id,uuid,firstname,lastname,img,active,phone',
 
             'table:id,name,shop_section_id,tax,chair_count',
             'table.shopSection.translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),

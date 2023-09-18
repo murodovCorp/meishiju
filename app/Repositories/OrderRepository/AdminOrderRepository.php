@@ -43,8 +43,9 @@ class AdminOrderRepository extends CoreRepository
                 'shop.translation' => fn($q) => $q->select('id', 'shop_id', 'locale', 'title')
                     ->where('locale', $this->language)->orWhere('locale', $locale),
                 'deliveryMan:id,lastname,firstname',
-                'transaction.paymentSystem',
-                'currency',
+				'transaction.paymentSystem',
+				'currency',
+				'table',
             ])
             ->updatedDate($this->updatedDate)
             ->filter($filter)
@@ -80,6 +81,7 @@ class AdminOrderRepository extends CoreRepository
                 'orderDetails.children.stock' => fn($q) => $q->select('id', 'countable_id', 'countable_type'),
                 'orderDetails.children.stock.countable.translation' => fn($q) => $q->where('locale', $this->language)
                     ->orWhere('locale', $locale),
+                'table',
             ])
             ->updatedDate($this->updatedDate)
             ->filter($filter)

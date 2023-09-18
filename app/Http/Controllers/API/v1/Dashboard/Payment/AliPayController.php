@@ -45,7 +45,7 @@ class AliPayController extends Controller
         } catch (Throwable $e) {
             $this->error($e);
             return $this->onErrorResponse([
-                'message' => $e->getMessage() . ' ' . $e->getFile() . ' '  . $e->getLine() . ' '. $e->getCode(),
+                'message' => $e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getCode(),
             ]);
         }
 
@@ -140,12 +140,14 @@ class AliPayController extends Controller
      */
     public function paymentWebHook(Request $request): void
     {
-        $status = $request->input('result.resultCode');
+        Log::error('Klarna WebHook', $request->all());
+
+        $status = $request->input('event_type');
 
         $status = match ($status) {
-            'SUCCESS',      => WalletHistory::PAID,
-            'CANCELED',     => WalletHistory::CANCELED,
-            default         => 'progress',
+            'order.canceled', 'order.expired'   => WalletHistory::CANCELED,
+            'order.captured',                   => WalletHistory::PAID,
+            default                             => 'progress',
         };
 
         $token = $request->input('order.order_id');

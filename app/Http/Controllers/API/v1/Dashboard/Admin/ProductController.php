@@ -14,7 +14,8 @@ use App\Http\Resources\ProductResource;
 use App\Http\Resources\StockResource;
 use App\Http\Resources\UserActivityResource;
 use App\Imports\ProductImport;
-use App\Jobs\ImportReadyNotify;
+use App\Models\Category;
+use App\Models\Language;
 use App\Models\Product;
 use App\Models\Shop;
 use App\Models\Stock;
@@ -28,6 +29,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
@@ -55,6 +57,17 @@ class ProductController extends AdminBaseController
     {
         $products = $this->productRepository->productsPaginate($request->all());
 
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
+
+        return ProductResource::collection($products);
+    }
+
+    public function selectPaginate(Request $request): AnonymousResourceCollection
+    {
+        $products = $this->productRepository->selectPaginate($request->all());
+
         return ProductResource::collection($products);
     }
 
@@ -69,6 +82,10 @@ class ProductController extends AdminBaseController
 
         if (!data_get($result, 'status')) {
             return $this->onErrorResponse($result);
+        }
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
         }
 
         return $this->successResponse(
@@ -92,6 +109,10 @@ class ProductController extends AdminBaseController
                 'code'      => ResponseError::ERROR_404,
                 'message'   => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
             ]);
+        }
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
         }
 
         return $this->successResponse(
@@ -284,6 +305,7 @@ class ProductController extends AdminBaseController
     public function addInStock(string $uuid, addInStockRequest $request): JsonResponse
     {
         $product = Product::firstWhere('uuid', $uuid);
+        $locale  = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
         if (!$product) {
             return $this->onErrorResponse([
@@ -292,15 +314,33 @@ class ProductController extends AdminBaseController
             ]);
         }
 
-        $product->addInStock($request->validated());
+        try {
+            $product->addInStock($request->validated());
+        } catch (Throwable $e) {
+            return $this->onErrorResponse([
+                'status'  => false,
+                'code'    => $e->getCode(),
+                'message' => $e->getMessage(),
+            ]);
+        }
+
+        $product = $product->fresh([
+            'translation' => fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale),
+
+            'stocks.stockExtras.group.translation' => fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale),
+
+            'stocks.addons.addon.translation' => fn($q) => $q
+                ->where('locale', $this->language)
+                ->orWhere('locale', $locale),
+        ]);
 
         return $this->successResponse(
             __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_CREATED, locale: $this->language),
-            ProductResource::make($product->load([
-                'translation' => fn($q) => $q->where('locale', $this->language),
-                'stocks.addons',
-                'stocks.addons.addon.translation' => fn($q) => $q->where('locale', $this->language),
-            ]))
+            ProductResource::make($product)
         );
     }
 
@@ -373,12 +413,25 @@ class ProductController extends AdminBaseController
 
         if (empty($product)) {
             return $this->onErrorResponse([
-                'code'      => ResponseError::ERROR_404,
-                'message'   => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
+                'code'    => ResponseError::ERROR_404,
+                'message' => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
             ]);
         }
 
         $product->update(['active' => !$product->active]);
+
+
+		if ($product->active) {
+
+			$product->category?->update([
+				'active' => true,
+			]);
+
+			$product->brand?->update([
+				'active' => true,
+			]);
+
+		}
 
         return $this->successResponse(
             __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_UPDATED, locale: $this->language),
@@ -410,8 +463,22 @@ class ProductController extends AdminBaseController
         }
 
         $product->update([
-            'status' => $request->input('status')
+            'status' => $request->input('status'),
+			'status_note' => $request->input('status_note')
         ]);
+
+		if ($product->status === Product::PUBLISHED) {
+
+			$product->category?->update([
+				'status' => Category::PUBLISHED,
+				'active' => true
+			]);
+
+			$product->brand?->update([
+				'active' => true,
+			]);
+
+		}
 
         return $this->successResponse(
             __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_UPDATED, locale: $this->language),
@@ -421,12 +488,12 @@ class ProductController extends AdminBaseController
 
     public function fileExport(FilterParamsRequest $request): JsonResponse
     {
-        $fileName = 'export/products.xls';
+        $fileName = 'export/products.xlsx';
 
         $productExport = new ProductExport($request->merge(['language' => $this->language])->all());
 
         try {
-            Excel::store($productExport, $fileName, 'public');
+            Excel::store($productExport, $fileName, 'public', \Maatwebsite\Excel\Excel::XLSX);
 
             return $this->successResponse('Successfully exported', [
                 'path'      => 'public/export',

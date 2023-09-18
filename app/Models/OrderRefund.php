@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -22,7 +21,6 @@ use Illuminate\Support\Collection;
  * @property string $answer
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property string|null $deleted_at
  * @property Order|null $order
  * @property Collection|Gallery[] $galleries
  * @method static TransactionFactory factory(...$parameters)
@@ -31,7 +29,6 @@ use Illuminate\Support\Collection;
  * @method static Builder|OrderRefund newQuery()
  * @method static Builder|OrderRefund query()
  * @method static Builder|OrderRefund whereCreatedAt($value)
- * @method static Builder|OrderRefund whereDeletedAt($value)
  * @method static Builder|OrderRefund whereUpdatedAt($value)
  * @method static Builder|OrderRefund whereId($value)
  * @method static Builder|OrderRefund whereCause($value)
@@ -41,7 +38,7 @@ use Illuminate\Support\Collection;
  */
 class OrderRefund extends Model
 {
-    use HasFactory, SoftDeletes, Loadable;
+    use HasFactory, Loadable;
 
     protected $guarded = ['id'];
 
@@ -57,7 +54,7 @@ class OrderRefund extends Model
 
     public function order(): BelongsTo
     {
-        return $this->belongsTo(Order::class)->withTrashed();
+        return $this->belongsTo(Order::class);
     }
 
     public function scopeFilter($query, $filter = [])
@@ -76,7 +73,6 @@ class OrderRefund extends Model
                     }
                 });
             })
-            ->when(isset($filter['deleted_at']), fn($q) => $q->onlyTrashed())
             ->when(data_get($filter, 'status'), function ($q, $status) {
                 $q->where('status', $status);
             })

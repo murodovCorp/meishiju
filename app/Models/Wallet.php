@@ -66,7 +66,7 @@ class Wallet extends Model
 
     public function histories(): HasMany
     {
-        return $this->hasMany(WalletHistory::class, 'wallet_uuid', 'uuid');
+        return $this->hasMany(WalletHistory::class, 'wallet_uuid', 'uuid')->orderBy('id', 'desc');
     }
 
     public function currency(): BelongsTo
@@ -74,7 +74,7 @@ class Wallet extends Model
         return $this->belongsTo(Currency::class);
     }
 
-    public function getPriceRateAttribute(): float
+    public function getPriceRateAttribute(): float|int|null
     {
         $currency = request('currency_id')
             ? Currency::currenciesList()->where('id', request('currency_id'))->first()

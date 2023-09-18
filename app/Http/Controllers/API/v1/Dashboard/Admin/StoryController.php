@@ -11,6 +11,7 @@ use App\Services\StoryService\StoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 
 class StoryController extends AdminBaseController
 {
@@ -52,6 +53,11 @@ class StoryController extends AdminBaseController
      */
     public function show(Story $story): JsonResponse
     {
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
             StoryResource::make($this->repository->show($story)),

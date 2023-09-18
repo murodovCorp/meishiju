@@ -25,6 +25,10 @@ use Illuminate\Support\Carbon;
  * @property string $color
  * @property boolean $online
  * @property array $location
+ * @property integer|null $width
+ * @property integer|null $height
+ * @property integer|null $length
+ * @property integer|null $kg
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
@@ -32,16 +36,16 @@ use Illuminate\Support\Carbon;
  * @property-read Collection|Gallery[] $galleries
  * @property-read int|null $galleries_count
  * @method static DeliveryManSettingFactory factory(...$parameters)
- * @method static Builder|Blog newModelQuery()
- * @method static Builder|Blog newQuery()
- * @method static Builder|Blog query()
- * @method static Builder|Blog whereUserId($value)
- * @method static Builder|Blog whereTypeOfTechnique($value)
- * @method static Builder|Blog whereBrand($value)
- * @method static Builder|Blog whereModel($value)
- * @method static Builder|Blog whereNumber($value)
- * @method static Builder|Blog whereColor($value)
- * @method static Builder|Blog whereOnline($value)
+ * @method static Builder|self newModelQuery()
+ * @method static Builder|self newQuery()
+ * @method static Builder|self query()
+ * @method static Builder|self whereUserId($value)
+ * @method static Builder|self whereTypeOfTechnique($value)
+ * @method static Builder|self whereBrand($value)
+ * @method static Builder|self whereModel($value)
+ * @method static Builder|self whereNumber($value)
+ * @method static Builder|self whereColor($value)
+ * @method static Builder|self whereOnline($value)
  * @mixin Eloquent
  */
 class DeliveryManSetting extends Model
@@ -61,6 +65,7 @@ class DeliveryManSetting extends Model
     const MOTORBIKE     = 'motorbike';
     const BIKE          = 'bike';
     const FOOT          = 'foot';
+    const HYBRID        = 'hybrid';
 
     const TYPE_OF_TECHNIQUES = [
         self::BENZINE       => self::BENZINE,
@@ -70,6 +75,7 @@ class DeliveryManSetting extends Model
         self::MOTORBIKE     => self::MOTORBIKE,
         self::BIKE          => self::BIKE,
         self::FOOT          => self::FOOT,
+        self::HYBRID        => self::HYBRID,
     ];
 
     public function deliveryMan(): BelongsTo

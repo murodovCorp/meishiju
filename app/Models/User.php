@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\Activity;
 use App\Traits\Loadable;
+use App\Traits\RequestToModel;
 use Database\Factories\UserFactory;
 use Eloquent;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -102,7 +103,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read Collection|PaymentProcess[] $paymentProcess
  * @property-read int $payment_process_count
  * @property-read int|null $tokens_count
- * @property-read Wallet|null|Builder $wallet
+ * @property-read Wallet|Builder|null $wallet
  * @property static|void $create
  * @property Collection|Activity[] $activities
  * @property int $activities_count
@@ -155,6 +156,7 @@ class User extends Authenticatable implements MustVerifyEmail
         HasFactory,
         HasRoles,
         Loadable,
+		RequestToModel,
         SoftDeletes;
 
     const DATES = [
@@ -414,8 +416,8 @@ class User extends Authenticatable implements MustVerifyEmail
                         ->when($online === "1" || $online === "0", function ($q) use($online) {
                             $q->whereOnline(!!(int)$online)->where('location', '!=', null);
                         })
-                        ->when(data_get(DeliveryManSetting::TYPE_OF_TECHNIQUES, $typeOfTechnique), function ($q, $type) {
-                            $q->where('type_of_technique', $type);
+                        ->when($typeOfTechnique, function ($q, $type) {
+                            $q->where('type_of_technique', data_get(DeliveryManSetting::TYPE_OF_TECHNIQUES, $type));
                         });
 
                 });

@@ -12,6 +12,7 @@ use App\Services\TranslationService\TranslationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class TranslationController extends AdminBaseController
 {
@@ -34,7 +35,9 @@ class TranslationController extends AdminBaseController
      */
     public function index(Request $request): AnonymousResourceCollection
     {
-        $translations = Translation::filter($request->all())->get();
+        $translations = Translation::filter($request->all())
+            ->orderBy($request->input('column', 'id'), $request->input('sort','desc'))
+            ->get();
 
         return TranslationTableResource::collection($translations);
     }
@@ -48,9 +51,6 @@ class TranslationController extends AdminBaseController
     public function paginate(FilterParamsRequest $request): JsonResponse
     {
         $translations = Translation::filter($request->all())
-            ->when($request->input('search'), fn ($query, $search) => $query->where(function ($q) use($search) {
-                $q->where('key', 'LIKE', "%$search%")->orWhere('value', "%$search");
-            }))
             ->orderBy($request->input('column', 'id'), $request->input('sort','desc'))
             ->groupBy('key', 'id', 'group', 'locale', 'value')
             ->get();
@@ -65,6 +65,10 @@ class TranslationController extends AdminBaseController
                 ]
             ];
         });
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         $count = $values->count();
         $values = $values->skip($request->input('skip', 0))->take($request->input('perPage', 10));

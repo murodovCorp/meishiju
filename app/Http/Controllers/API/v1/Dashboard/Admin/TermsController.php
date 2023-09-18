@@ -7,6 +7,7 @@ use App\Http\Requests\TermCondition\StoreRequest;
 use App\Models\TermCondition;
 use App\Services\TermService\TermService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 
 class TermsController extends AdminBaseController
 {
@@ -39,6 +40,10 @@ class TermsController extends AdminBaseController
             return $this->onErrorResponse($termCondition);
         }
 
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_CREATED, locale: $this->language),
             data_get($termCondition, 'data')
@@ -53,6 +58,10 @@ class TermsController extends AdminBaseController
     public function show(): JsonResponse
     {
         $termCondition = TermCondition::with('translations')->first();
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),

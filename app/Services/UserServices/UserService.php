@@ -7,6 +7,7 @@ use App\Models\Notification;
 use App\Models\User;
 use App\Services\CoreService;
 use App\Services\Interfaces\UserServiceInterface;
+use DB;
 use Exception;
 use Throwable;
 
@@ -111,22 +112,16 @@ class UserService extends CoreService implements UserServiceInterface
 
                 $password = bcrypt(data_get($data, 'password', 'password'));
 
-                unset($data['password']);
+				$data['password'] = $password;
 
-                $item = $user->update($data + [
-                    'password' => $password
-                ]);
-
-            } else {
-
-                if (data_get($data, 'firebase_token')) {
-                    $token = is_array($user->firebase_token) ? $user->firebase_token : [];
-                    $data['firebase_token'] = array_push($token, data_get($data, 'firebase_token'));
-                }
-
-
-                $item = $user->update($data);
             }
+
+			if (data_get($data, 'firebase_token')) {
+				$token = is_array($user->firebase_token) ? $user->firebase_token : [];
+				$data['firebase_token'] = array_push($token, data_get($data, 'firebase_token'));
+			}
+
+			$item = $user->update($data);
 
             if (data_get($data, 'subscribe') !== null) {
 
@@ -203,25 +198,27 @@ class UserService extends CoreService implements UserServiceInterface
 
     public function updateNotifications(array $data): array
     {
-        try {
-            /** @var User $user */
-            $user = auth('sanctum')->user();
+		try {
+			/** @var User $user */
+			$user = auth('sanctum')->user();
 
-            $user->notifications()->sync(data_get($data, 'notifications'));
+			DB::table('notification_user')->where('user_id', $user->id)->delete();
 
-            return [
-                'status' => true,
-                'code'   => ResponseError::NO_ERROR,
-                'data'   => $user->loadMissing('notifications')
-            ];
-        } catch (Throwable $e) {
-            $this->error($e);
-            return [
-                'status'  => false,
-                'code'    => ResponseError::ERROR_502,
-                'message' => __('errors.' . ResponseError::ERROR_502, locale: $this->language)
-            ];
-        }
+			$user->notifications()->attach(data_get($data, 'notifications'));
+
+			return [
+				'status' => true,
+				'code'   => ResponseError::NO_ERROR,
+				'data'   => $user->fresh('notifications')
+			];
+		} catch (Throwable $e) {
+			$this->error($e);
+			return [
+				'status'  => false,
+				'code'    => ResponseError::ERROR_502,
+				'message' => __('errors.' . ResponseError::ERROR_502, locale: $this->language)
+			];
+		}
     }
 
     public function delete(?array $ids = []): array
@@ -231,7 +228,11 @@ class UserService extends CoreService implements UserServiceInterface
 
         foreach (User::find($ids) as $user) {
             try {
-                $user->delete();
+                $user->update([
+                    'firebase_token' => null,
+                    'deleted_at'     => now()
+                ]);
+//                $user->delete();
             } catch (Throwable) {
                 $errors[] = $user->firstname . ' / ' . $user->lastname;
             }

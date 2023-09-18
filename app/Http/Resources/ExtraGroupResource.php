@@ -24,12 +24,14 @@ class ExtraGroupResource extends JsonResource
             'id'            => $this->id,
             'type'          => (string) $this->type,
             'active'        => (bool) $this->active,
+            'shop_id'       => $this->when($this->shop_id, $this->shop_id),
             'deleted_at'    => $this->when($this->deleted_at, $this->deleted_at?->format('Y-m-d H:i:s') . 'Z'),
 
             // Relation
             'translation'   => TranslationResource::make($this->whenLoaded('translation')),
             'translations'  => TranslationResource::collection($this->whenLoaded('translations')),
             'extra_values'  => ExtraValueResource::collection($this->whenLoaded('extraValues')),
+            'shop'  		=> ShopResource::make($this->whenLoaded('shop')),
             'locales'       => $this->when($locales, $locales),
         ];
     }

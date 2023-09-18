@@ -8,7 +8,7 @@ use App\Models\Referral;
 use App\Models\Settings;
 use App\Models\User;
 use App\Repositories\CoreRepository;
-use Cache;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -34,7 +34,8 @@ class UserRepository extends CoreRepository
                 'notifications',
                 'assignReviews',
                 'addresses',
-                'invite'
+                'invite',
+                'wallet.histories',
             ])
             ->withCount([
                 'orders' => fn($q) => $q->where('status', Order::STATUS_DELIVERED)
@@ -72,7 +73,8 @@ class UserRepository extends CoreRepository
                 $toTopUp      = $user->wallet->histories?->where('type','referral_to_withdraw');
                 $toWithdraw   = $user->wallet->histories?->where('type','referral_to_topup');
 
-                $user->setAttribute('referral_from_topup_price', $fromTopUp?->sum('price') * $rate)
+                $user
+                    ->setAttribute('referral_from_topup_price', $fromTopUp?->sum('price') * $rate)
                     ->setAttribute('referral_from_withdraw_price', $fromWithdraw?->sum('price') * $rate)
                     ->setAttribute('referral_to_withdraw_price', $toWithdraw?->sum('price') * $rate)
                     ->setAttribute('referral_to_topup_price', $toTopUp?->sum('price') * $rate)
@@ -122,8 +124,9 @@ class UserRepository extends CoreRepository
                     $query->where('shop_id', $shopId);
                 }),
                 'invitations.shop:id',
-                'invitations.shop.translation' => fn($q) => $q->select(['id', 'shop_id', 'locale', 'title'])
-                                                              ->where('locale', $this->language),
+                'invitations.shop.translation' => fn($q) => $q
+					->select(['id', 'shop_id', 'locale', 'title'])
+					->where('locale', $this->language),
                 'deliveryManSetting',
                 'roles' => fn($q)  => $q->when(data_get($filter, 'role'), function ($q, $role) {
                     $q->where('name', $role);
@@ -162,7 +165,6 @@ class UserRepository extends CoreRepository
      */
     public function deliveryMans(array $filter): LengthAwarePaginator
     {
-
         $filter['role'] = 'deliveryman';
 
         if (data_get($filter, 'empty-setting')) {
@@ -171,27 +173,27 @@ class UserRepository extends CoreRepository
 
         return User::filter($filter)
             ->with([
-            'roles',
-            'assignReviews',
-            'deliveryManSetting',
-            'deliveryManOrders' => fn($q) => $q->select([
-                'id', 'total_price', 'status', 'location', 'address',
-                'delivery_fee', 'rate', 'delivery_date', 'delivery_time', 'deliveryman', 'shop_id', 'user_id',
-                'username', 'current'
-            ])->when(data_get($filter, 'statuses'), function ($query, $statuses) {
+                'roles',
+                'assignReviews',
+                'deliveryManSetting',
+                'deliveryManOrders' => fn($q) => $q->select([
+                    'id', 'total_price', 'status', 'location', 'address',
+                    'delivery_fee', 'rate', 'delivery_date', 'delivery_time', 'deliveryman', 'shop_id', 'user_id',
+                    'username', 'current'
+                ])->when(data_get($filter, 'statuses'), function ($query, $statuses) {
 
-                if (!is_array($statuses)) {
-                    return $query;
-                }
+                    if (!is_array($statuses)) {
+                        return $query;
+                    }
 
-                $statuses = array_intersect($statuses, Order::STATUSES);
+                    $statuses = array_intersect($statuses, Order::STATUSES);
 
-                return $query->whereIn('status', $statuses);
-            }),
-            'deliveryManOrders.shop:id,uuid,logo_img,location,delivery_price',
-            'deliveryManOrders.user:id,img,firstname,lastname',
-            'deliveryManOrders.shop.translation' => fn($q) => $q->where('locale', $this->language),
-            'wallet',
+                    return $query->whereIn('status', $statuses);
+                }),
+                'deliveryManOrders.shop:id,uuid,delivery_price,logo_img,location',
+                'deliveryManOrders.user:id,img,firstname,lastname',
+                'deliveryManOrders.shop.translation' => fn($q) => $q->where('locale', $this->language),
+                'wallet',
             ])
             ->withAvg('assignReviews', 'rating')
             ->withCount('deliveryManOrders')

@@ -2,6 +2,7 @@
 
 namespace App\Repositories\UnitRepository;
 
+use App\Models\Language;
 use App\Models\Unit;
 use App\Repositories\CoreRepository;
 use Illuminate\Support\Facades\Cache;
@@ -14,16 +15,22 @@ class UnitRepository extends CoreRepository
     }
 
     /**
-     * Get Units with pagination
+     * @param array $filter
+     * @return mixed
      */
-    public function unitsPaginate(array $filter = [])
+    public function unitsPaginate(array $filter = []): mixed
     {
-       if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
-           abort(403);
-       }
-       return $this->model()->with([
-            'translation' => fn($q) => $q->where('locale', $this->language)
-       ])
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
+
+        $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
+
+        return $this->model()
+            ->with([
+                'translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale)
+            ])
            ->when(data_get($filter, 'active'), function ($q, $active) {
                $q->where('active', $active);
            })
@@ -37,13 +44,18 @@ class UnitRepository extends CoreRepository
     }
 
     /**
-     * Get Unit by Identification
+     * @param int $id
+     * @return mixed
      */
-    public function unitDetails(int $id)
+    public function unitDetails(int $id): mixed
     {
-        return $this->model()->with([
-            'translation' => fn($q) => $q->where('locale', $this->language)
-        ])->find($id);
+        $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
+
+        return $this->model()
+            ->with([
+                'translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale)
+            ])
+            ->find($id);
     }
 
 }

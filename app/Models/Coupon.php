@@ -37,7 +37,7 @@ use Illuminate\Support\Carbon;
  * @property-read CouponTranslation|null $translation
  * @property-read Collection|CouponTranslation[] $translations
  * @property-read int|null $translations_count
- * @method static Builder|self checkCoupon($coupon)
+ * @method static Builder|self checkCoupon($coupon, $shopId)
  * @method static CouponFactory factory(...$parameters)
  * @method static Builder|self filter($array)
  * @method static Builder|self newModelQuery()
@@ -83,8 +83,10 @@ class Coupon extends Model
         return $this->belongsTo(Shop::class);
     }
 
-    public static function scopeCheckCoupon($query, $coupon) {
-        return $query->where('name', $coupon)
+    public static function scopeCheckCoupon($query, $coupon, $shopId) {
+        return $query
+            ->where('name', '=', $coupon)
+            ->where('shop_id', $shopId)
             ->where('qty', '>', 0)
             ->whereDate('expired_at', '>', now());
     }

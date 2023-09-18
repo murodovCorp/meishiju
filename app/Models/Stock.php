@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Loadable;
 use App\Traits\SetCurrency;
 use Database\Factories\StockFactory;
 use Eloquent;
@@ -9,11 +10,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -25,7 +26,9 @@ use Illuminate\Support\Carbon;
  * @property int $countable_id
  * @property float $price
  * @property int $quantity
+ * @property string $sku
  * @property boolean $addon
+ * @property string $img
  * @property Carbon|null $deleted_at
  * @property-read Product $countable
  * @property-read mixed $actual_discount
@@ -66,13 +69,14 @@ use Illuminate\Support\Carbon;
  * @method static Builder|Stock whereId($value)
  * @method static Builder|Stock wherePrice($value)
  * @method static Builder|Stock whereQuantity($value)
+ * @method static Builder|Stock whereSku($value)
  * @method static Builder|Stock withTrashed()
  * @method static Builder|Stock withoutTrashed()
  * @mixin Eloquent
  */
 class Stock extends Model
 {
-    use HasFactory, SoftDeletes, SetCurrency;
+    use HasFactory, SoftDeletes, SetCurrency, Loadable;
 
     protected $guarded = ['id'];
 
@@ -86,9 +90,9 @@ class Stock extends Model
         'pivot'
     ];
 
-    public function countable(): MorphTo
+    public function countable(): BelongsTo
     {
-        return $this->morphTo('countable');
+        return $this->belongsTo(Product::class, 'countable_id');
     }
 
     public function bonus(): MorphOne
@@ -108,7 +112,7 @@ class Stock extends Model
 
     public function orderDetails(): HasMany
     {
-        return $this->hasMany(OrderDetail::class)->withTrashed();
+        return $this->hasMany(OrderDetail::class);
     }
 
     public function cartDetails(): HasMany
@@ -123,7 +127,7 @@ class Stock extends Model
 
     public function stockExtras(): BelongsToMany
     {
-        return $this->belongsToMany(ExtraValue::class, StockExtra::class);
+        return $this->belongsToMany(ExtraValue::class, StockExtra::class)->orderBy('id');
     }
 
     public function logs(): MorphMany
@@ -149,13 +153,11 @@ class Stock extends Model
             return 0;
         }
 
+        $price = $discount->price;
+
         if ($discount->type == 'percent') {
 
-            $price = ($discount->price / 100 * $this->price);
-
-        } else {
-
-            $price = $discount->price;
+            $price = ($price / 100 * $this->price);
 
         }
 
@@ -185,7 +187,7 @@ class Stock extends Model
         return $this->total_price;
     }
 
-    public function getRatePriceAttribute()
+    public function getRatePriceAttribute(): float|int|null
     {
         if (request()->is('api/v1/dashboard/user/*') || request()->is('api/v1/rest/*')) {
             return $this->price * $this->currency();

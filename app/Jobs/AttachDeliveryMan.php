@@ -73,8 +73,8 @@ class AttachDeliveryMan implements ShouldQueue
 
             foreach ($users as $user) {
                 $items[] = [
-                    'firebase_token'    => $user->firebase_token,
-                    'user'              =>  $user,
+                    'firebase_token' => $user->firebase_token,
+                    'user'           => $user,
                 ];
 
             }
@@ -93,7 +93,7 @@ class AttachDeliveryMan implements ShouldQueue
                         'title'         => "New order #$order->id",
                         'body'          => 'need attach deliveryman',
                     ],
-                    'data'              => (new NotificationHelper)->deliveryManOrder($order, $this->language)
+                    'data'              => (new NotificationHelper)->deliveryManOrder($order)
                 ];
 
                 Http::withHeaders($headers)->post('https://fcm.googleapis.com/fcm/send', $data)->json();

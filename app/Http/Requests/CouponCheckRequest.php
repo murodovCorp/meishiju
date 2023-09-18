@@ -15,6 +15,7 @@ class CouponCheckRequest extends BaseRequest
     {
         return [
             'coupon'    => ['required', 'string', 'min:2'],
+            'shop_id'    => ['required', Rule::exists('shops', 'id')->whereNull('deleted_at')],
             'user_id'   => ['integer', Rule::exists('users', 'id')->whereNull('deleted_at')],
         ];
     }

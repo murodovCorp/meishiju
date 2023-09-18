@@ -2,14 +2,24 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Brand;
+use App\Models\Category;
+use App\Models\Order;
+use App\Models\ParcelOrder;
+use App\Models\Product;
+use App\Models\Settings;
+use App\Models\Shop;
+use Http;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class AfterSheet extends Command
 {
 
-    protected $signature = 'update:products:galleries';
+    protected $signature = 'update:models:galleries';
 
     /**
      * The console command description.
@@ -30,29 +40,30 @@ class AfterSheet extends Command
 
     public function handle()
     {
-        $this->info('Команда для загрузки картинок запущена');
 
-        $result = DB::table('before_galleries')
-            ->distinct('product_id')
-            ->orderBy('id', 'desc')
-            ->get()
-            ->unique('product_id')
-            ->chunk(50);
-//            ->chunkById(50, function ($images, $key) {
-//                $this->info("внутри чанка $key " . date('Y-m-d H:i:s'));
-//                $this->downloadImages($images);
-//            });
+        try {
+            $result = DB::table('before_galleries')
+                ->orderBy('parent', 'desc')
+                ->get()
+                ->chunk(500);
 
-        foreach ($result as $key => $images) {
+            foreach ($result as $images) {
 
-            $this->info("внутри чанка $key " . date('Y-m-d H:i:s'));
-            $this->downloadImages($images);
+                $this->downloadImages($images->toArray());
 
+            }
+
+        } catch (Throwable $e) {
+            $this->error($e);
         }
 
         $memoryUsage = memory_get_usage() / 1024 / 1024;
 
         $this->info("total gallery mb $memoryUsage " . date('Y-m-d H:i:s'));
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
 //        Log::error("total gallery mb $memoryUsage " . date('Y-m-d H:i:s'));
 
@@ -60,26 +71,29 @@ class AfterSheet extends Command
 
     public function downloadImages($images) {
 
+        $isAws = Settings::adminSettings()->where('key', 'aws')->first();
+
         $galleries      = [];
         $deleteImages   = [];
 
         $mh = curl_multi_init();
 
-        $handles = array();
+        $handles = [];
 
         foreach ($images as $image) {
 
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $image->url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-//            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-//            curl_setopt($ch, CURLOPT_CAINFO, 'D:/cacert-2023-01-10.pem');
             curl_multi_add_handle($mh, $ch);
+            curl_multi_setopt($mh, CURLMOPT_PIPELINING, 0);
 
             $handles[] = [
                 'id'         => $image->id,
                 'url'        => $image->url,
-                'product_id' => $image->product_id,
+                'model_id'   => $image->model_id,
+                'model_type' => $image->model_type,
+                'parent'     => $image->parent,
                 'ch'         => $ch
             ];
 
@@ -92,55 +106,74 @@ class AfterSheet extends Command
             curl_multi_select($mh);
         } while ($running > 0);
 
-        $handles = collect($handles)->groupBy('product_id');
+//        $handles = collect($handles)->groupBy(['model_id', 'model_type']);
 
-        foreach ($handles as $handle) {
+        foreach ($handles as $data) {
 
-            foreach ($handle as $key => $data) {
+            if (!isset($data['ch'])) {
+                continue;
+            }
 
-                $handle = $data['ch'];
+            $handle  = $data['ch'];
 
-                $content = curl_multi_getcontent($handle);
-                $info    = curl_getinfo($handle);
+            $info    = curl_getinfo($handle);
 
-                if ($info['http_code'] == 200) {
+            if ($info['http_code'] == 200) {
 
-                    $fileName = basename($info['url']);
+                $fileName = basename($info['url']);
 
+                $type = match ($data['model_type']) {
+                    Category::class     => 'categories',
+                    Brand::class        => 'brands',
+                    Product::class      => 'products',
+                    Shop::class         => 'shops',
+                    Order::class        => 'orders',
+                    ParcelOrder::class  => 'parcel-orders',
+                };
 
-                    $name = 'products/' . $data['product_id'] . time() . '.' . substr(strrchr($fileName, '.'), 1);
+                $name = "$type/" . $data['model_id'] . time() . '.' . substr(strrchr($fileName, '.'), 1);
+                $url  = "$name";
 
-                    $url = "public/images/$name";
+                Storage::put($url, file_get_contents($info['url']), [
+                    'disk' => data_get($isAws, 'value') ? 's3' : 'public'
+                ]);
 
-                    Storage::disk('do')->put($url, $content, 'public');
+                $name = config('app.img_host') . str_replace('public/images/', '', $url);
 
-                    $memoryUsage = memory_get_usage() / 1024 / 1024;
+                $galleries[] = [
+                    'title'         => $url,
+                    'path'          => $name,
+                    'type'          => $type,
+                    'loadable_type' => $data['model_type'],
+                    'loadable_id'   => $data['model_id'],
+                ];
 
-                    $this->info("gallery mb $memoryUsage " . date('Y-m-d H:i:s'));
+                $any = DB::table('before_galleries')
+                    ->where('model_id',   $data['model_id'])
+                    ->where('model_type', $data['model_type'])
+                    ->where('parent', 1)
+                    ->exists();
 
-//                    Log::error("gallery mb $memoryUsage " . date('Y-m-d H:i:s'));
+                if (data_get($data, 'parent') || !$any) {
 
-                    $galleries[] = [
-                        'title'         => $url,
-                        'path'          => $name,
-                        'type'          => 'products',
-                        'loadable_type' => 'App\Models\Product',
-                        'loadable_id'   => $data['product_id'],
-                    ];
+                    $key = 'img';
 
-                    if ($key == 0) {
-                        DB::table('products')
-                            ->where('id', $data['product_id'])
-                            ->update([
-                                'img' => $name,
-                            ]);
+                    if ($type === 'shops') {
+                        $key = 'logo_img';
                     }
 
-                    $deleteImages[] = $data['id'];
+                    DB::table(str_replace('-', '_', $type))
+                        ->where('id', $data['model_id'])
+                        ->update([
+                            $key => $name,
+                        ]);
+
                 }
 
-                curl_multi_remove_handle($mh, $handle);
+                $deleteImages[] = $data['id'];
             }
+
+            curl_multi_remove_handle($mh, $handle);
 
         }
 
@@ -151,13 +184,7 @@ class AfterSheet extends Command
         DB::table('before_galleries')
             ->whereIn('id', $deleteImages)
             ->delete();
-
-        $memoryUsage = memory_get_usage() / 1024 / 1024;
-
-        $this->info("gallery chunk mb $memoryUsage " . date('Y-m-d H:i:s'));
-
-//        Log::error("gallery mb $memoryUsage " . date('Y-m-d H:i:s'));
-
+//        $this->info("mb:" . memory_get_usage(true) / (1024 * 1024));
     }
 
 

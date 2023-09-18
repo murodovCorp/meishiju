@@ -9,7 +9,7 @@ interface OrderRepoInterface
 {
     public function ordersList(array $filter = []);
 
-    public function ordersPaginate(array $filter = [], string $paginate = 'simplePaginate', array $with = [], bool $isUser = false);
+    public function ordersPaginate(array $filter = [], bool $isUser = false);
 
     public function orderStocksCalculate(array $filter);
 

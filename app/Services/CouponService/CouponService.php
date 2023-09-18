@@ -35,7 +35,7 @@ class CouponService extends CoreService
             return [
                 'status'  => false,
                 'code'    => ResponseError::ERROR_502,
-                'message' => __('errors.' . ResponseError::ERROR_502, locale: $this->language)
+                'message' => __('errors.' . $e->getMessage(), locale: $this->language)
             ];
         }
     }

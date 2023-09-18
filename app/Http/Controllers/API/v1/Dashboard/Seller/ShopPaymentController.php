@@ -78,7 +78,10 @@ class ShopPaymentController extends SellerBaseController
     public function show(ShopPayment $shopPayment): JsonResponse
     {
         if ($shopPayment->shop_id !== $this->shop->id) {
-            return $this->onErrorResponse(['code' => ResponseError::ERROR_204]);
+            return $this->onErrorResponse([
+                'code'      => ResponseError::ERROR_404,
+                'message'   => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
+            ]);
         }
 
         return $this->successResponse(
@@ -97,7 +100,10 @@ class ShopPaymentController extends SellerBaseController
     public function update(ShopPayment $shopPayment, UpdateRequest $request): JsonResponse
     {
         if ($shopPayment->shop_id !== $this->shop->id) {
-            return $this->onErrorResponse(['code' => ResponseError::ERROR_204]);
+            return $this->onErrorResponse([
+                'code'      => ResponseError::ERROR_404,
+                'message'   => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
+            ]);
         }
 
         $result = $this->service->update($request->validated(), $shopPayment);

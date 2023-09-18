@@ -2,6 +2,7 @@
 
 namespace App\Repositories\OrderRepository;
 
+use App\Models\Language;
 use App\Models\OrderDetail;
 use App\Repositories\CoreRepository;
 
@@ -17,15 +18,22 @@ class OrderDetailRepository extends CoreRepository
 
     public function paginate(array $filter = [])
     {
-        return $this->model()
+		$locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
+
+		return $this->model()
             ->with([
                 'orderDetails.stock',
                 'order.currency' => function ($q) {
                     $q->select('id', 'title', 'symbol');
                 },
-                'orderDetails.stock.countable.translation' => function ($q) {
-                    $q->select('id', 'product_id', 'locale', 'title')
-                        ->where('locale', $this->language);
+                'orderDetails.stock.countable.translation' => function ($q) use($locale) {
+                    $q
+						->select('id', 'product_id', 'locale', 'title')
+                        ->where('locale', $this->language)
+						->orWhere('locale', $locale);
+                },
+                'orderDetails.stock.countable.unit.translation' => function ($q) use($locale) {
+                    $q->where('locale', $this->language)->orWhere('locale', $locale);
                 }
             ])
             ->updatedDate($this->updatedDate)

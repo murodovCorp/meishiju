@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\v1\Rest;
 
 use App\Helpers\ResponseError;
+use App\Http\Requests\FilterParamsRequest;
 use App\Http\Resources\BrandResource;
 use App\Repositories\BrandRepository\BrandRepository;
 use Illuminate\Http\JsonResponse;
@@ -22,7 +23,7 @@ class BrandController extends RestBaseController
         $this->brandRepository = $brandRepository;
     }
 
-    public function paginate(Request $request): AnonymousResourceCollection
+    public function paginate(FilterParamsRequest $request): AnonymousResourceCollection
     {
         $brands = $this->brandRepository->brandsPaginate($request->merge(['active' => 1])->all());
 

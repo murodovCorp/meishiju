@@ -22,7 +22,10 @@ class UserAddressService extends CoreService
     public function create(array $data): array
     {
         try {
-            $model = $this->model()->create($data);
+			/** @var UserAddress $model */
+			$model = $this->model()->create($data);
+
+			$this->changeActive($model);
 
             return [
                 'status' => true,
@@ -49,6 +52,8 @@ class UserAddressService extends CoreService
     {
         try {
             $model->update($data);
+
+			$this->changeActive($model);
 
             return [
                 'status' => true,
@@ -91,6 +96,11 @@ class UserAddressService extends CoreService
             $addresses = $model->user?->addresses ?? [];
 
             foreach ($addresses as $address) {
+
+                if ($address->id == $model->id) {
+                    continue;
+                }
+
                 $address->update([
                     'active' => false
                 ]);
@@ -115,6 +125,27 @@ class UserAddressService extends CoreService
         }
     }
 
+	public function changeActive(UserAddress $model): void
+    {
+
+		if (!$model->active) {
+			return;
+		}
+
+		$addresses = UserAddress::where([
+			'user_id' => $model->user_id,
+			'active'  => true,
+		])
+			->where('id', '!=', $model->id)
+			->get();
+
+		foreach ($addresses as $address) {
+			$address->update([
+				'active' => false
+			]);
+		}
+
+	}
     /**
      * Delete model.
      * @param array|null $ids

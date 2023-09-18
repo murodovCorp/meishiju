@@ -19,6 +19,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class UserController extends AdminBaseController
 {
@@ -45,6 +46,10 @@ class UserController extends AdminBaseController
     public function paginate(Request $request): AnonymousResourceCollection
     {
         $users = $this->userRepository->usersPaginate($request->all());
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return UserResource::collection($users);
     }
@@ -73,6 +78,10 @@ class UserController extends AdminBaseController
             return $this->onErrorResponse($result);
         }
 
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
+
         (new UserVerifyService)->verifyEmail(data_get($result, 'data'));
 
         return $this->successResponse(
@@ -98,6 +107,10 @@ class UserController extends AdminBaseController
             ]);
         }
 
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),
             UserResource::make($user)
@@ -119,6 +132,10 @@ class UserController extends AdminBaseController
 
         if (!data_get($result, 'status')) {
             return $this->onErrorResponse($result);
+        }
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
         }
 
         return $this->successResponse(
@@ -307,7 +324,6 @@ class UserController extends AdminBaseController
      */
     public function walletHistories(string $uuid): JsonResponse|AnonymousResourceCollection
     {
-        /** @var User $user */
         $user = User::with('wallet')->firstWhere('uuid', $uuid);
 
         if (empty($user)) {
@@ -317,10 +333,7 @@ class UserController extends AdminBaseController
             ]);
         }
 
-        if (empty($user->wallet?->uuid)) {
-            $user = (new UserWalletService)->create($user);
-        }
-
+        /** @var User $user */
         $histories = (new WalletHistoryRepository)->walletHistoryPaginate(
             ['wallet_uuid' => $user->wallet?->uuid],
         );

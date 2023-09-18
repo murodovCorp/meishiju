@@ -42,7 +42,8 @@ class ReceiptService extends CoreService
             $data['bg_img']         = data_get($data, 'images.1');
 
             $model = DB::transaction(function () use ($data) {
-                $model = $this->model()->create($data);
+				/** @var Receipt $model */
+				$model = $this->model()->create($data);
 
                 //translations
                 $this->setTranslations($model, $data);
@@ -60,7 +61,15 @@ class ReceiptService extends CoreService
                     $model->uploads(data_get($data, 'images'));
                 }
 
-                $model->stocks()->sync(data_get($data, 'stocks'));
+				$model->receiptStock()->forceDelete();
+
+				foreach (data_get($data, 'stocks') as $stock) {
+					$model->receiptStock()->create([
+						'stock_id'      => data_get($stock, 'stock_id'),
+						'min_quantity'  => data_get($stock, 'min_quantity'),
+						'receipt_id'    => $model->id,
+					]);
+				}
 
                 return $model;
             });
@@ -105,7 +114,15 @@ class ReceiptService extends CoreService
                 //nutrition
                 $this->setRelations($model, $data, 'nutrition');
 
-                $model->stocks()->sync(data_get($data, 'stocks'));
+				$model->receiptStock()->forceDelete();
+
+				foreach (data_get($data, 'stocks') as $stock) {
+					$model->receiptStock()->create([
+						'stock_id'      => data_get($stock, 'stock_id'),
+						'min_quantity'  => data_get($stock, 'min_quantity'),
+						'receipt_id'    => $model->id,
+					]);
+				}
 
                 if (data_get($data, 'images.0')) {
                     $model->galleries()->delete();
@@ -124,7 +141,7 @@ class ReceiptService extends CoreService
             return [
                 'status'  => false,
                 'code'    => ResponseError::ERROR_502,
-                'message' => __('errors.' . ResponseError::ERROR_502, locale: $this->language)
+                'message' => __('errors.' . $e->getMessage(), locale: $this->language)
             ];
         }
     }
@@ -141,8 +158,7 @@ class ReceiptService extends CoreService
             /** @var Receipt $model */
             try {
                 DB::transaction(function () use ($model) {
-                    $model->stocks()->delete();
-                    $model->translations()->delete();
+                    $model->receiptStock()->forceDelete();
                     $model->ingredients()->delete();
                     $model->instructions()->delete();
                     $model->nutritions()->delete();

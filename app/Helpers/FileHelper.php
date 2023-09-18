@@ -1,10 +1,11 @@
 <?php
-
 namespace App\Helpers;
 
 use App\Models\Gallery;
 use App\Models\Settings;
+use File;
 use Illuminate\Http\UploadedFile;
+use Storage;
 use Throwable;
 
 class FileHelper
@@ -27,9 +28,10 @@ class FileHelper
             }
 
             $id = auth('sanctum')->id() ?? "0001";
+
             $ext = strtolower(
                 preg_replace("#.+\.([a-z]+)$#i", "$1",
-                    str_replace(['.png', '.jpg'], '.webp', $file->getClientOriginalName())
+                    str_replace(['.png', '.jpg', '.jpeg', '.webp', '.svg', '.jfif'], '.webp', $file->getClientOriginalName())
                 )
             );
 

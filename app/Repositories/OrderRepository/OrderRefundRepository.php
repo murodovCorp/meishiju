@@ -2,6 +2,7 @@
 
 namespace App\Repositories\OrderRepository;
 
+use App\Models\Language;
 use App\Models\OrderRefund;
 use App\Models\User;
 use App\Repositories\CoreRepository;
@@ -29,7 +30,7 @@ class OrderRefundRepository extends CoreRepository
             ->filter($filter)
             ->with([
                 'order' => fn($q) => $q->select('id', 'shop_id', 'user_id', 'status', 'created_at'),
-                'order.shop:id,uuid,delivery_price',
+                'order.shop:id,uuid',
                 'order.shop.translation' => fn($q) => $q->where('locale', $this->language)
                     ->select('id', 'locale', 'title', 'shop_id')
             ])
@@ -64,7 +65,7 @@ class OrderRefundRepository extends CoreRepository
                         }
                     })
                     ->select('id', 'shop_id', 'user_id', 'status', 'total_price', 'created_at'),
-                'order.shop:id,uuid,logo_img,delivery_price',
+                'order.shop:id,uuid,logo_img',
                 'order.shop.translation' => fn($q) => $q->where('locale', $this->language)
                                                         ->select('id', 'locale', 'title', 'shop_id'),
                 'order.user:id,firstname,lastname,uuid'
@@ -84,18 +85,32 @@ class OrderRefundRepository extends CoreRepository
 
     public function show(OrderRefund $orderRefund): OrderRefund
     {
-        return $orderRefund->load([
+		$locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
+
+		return $orderRefund->load([
             'order',
             'order.shop',
-            'order.shop.translation' => fn($q) => $q->where('locale', $this->language)
-                ->select('id', 'locale', 'title', 'shop_id'),
+            'order.shop.translation' => fn($q) => $q
+				->select('id', 'locale', 'title', 'shop_id')
+				->where('locale', $this->language)
+				->orWhere('locale', $locale),
             'order.user:id,firstname,lastname,uuid',
             'order.deliveryMan.deliveryManSetting',
-            'order.orderDetails.stock.stockExtras.group.translation' => function ($q) {
-                $q->select('id', 'extra_group_id', 'locale', 'title')->where('locale', $this->language);
+            'order.orderDetails.stock.stockExtras.group.translation' => function ($q) use($locale) {
+                $q
+					->select('id', 'extra_group_id', 'locale', 'title')
+					->where('locale', $this->language)
+					->orWhere('locale', $locale);
             },
-            'order.orderDetails.stock.countable.translation' => function ($q) {
-                $q->select('id', 'product_id', 'locale', 'title')->where('locale', $this->language);
+			'order.orderDetails.stock.countable.unit.translation' => function ($q) use($locale) {
+				$q
+					->where('locale', $this->language)
+					->orWhere('locale', $locale);
+			},
+            'order.orderDetails.stock.countable.translation' => function ($q) use($locale) {
+                $q->select('id', 'product_id', 'locale', 'title')
+					->where('locale', $this->language)
+					->orWhere('locale', $locale);
             },
         ]);
     }

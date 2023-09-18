@@ -35,34 +35,8 @@ $address   = data_get($order, 'address.address', '');
             margin-top: 50px;
         }
 
-        .product-taxes {
-            display: flex !important;
-            width: 50%;
-            justify-content: end;
-            height: 100% !important;
-        }
-
-        .parent-left {
-            background-color: #EAEAEAFF;
-            width: 50%;
-            height: 100%;
-            position: relative;
-            float: left;
-            border-top: 1px solid #000;
-            border-bottom: 1px solid #000;
-            border-left: 1px solid #000;
-            text-align: end;
-            padding: 20px;
-        }
-
-        .parent-right {
-            width: 50%;
-            height: 100%;
-            border-top: 1px solid black;
-            border-bottom: 1px solid black;
-            float: right;
-            text-align: end;
-            padding: 20px;
+        .space {
+            margin-top: 300px;
         }
     </style>
 </head>
@@ -76,8 +50,8 @@ $address   = data_get($order, 'address.address', '');
         <h2 class="title gray">{{ $order->created_at?->format('Y-m-d') }}</h2>
     </div>
 </div>
-<div class="container d-flex justify-content-between">
-    <div class="float-left">
+<div class="container d-flex justify-content-between" style="margin-top: 100px">
+    <div class="float-left" style="margin-right: 50px">
         <h3 class="subtitle">Address</h3>
         <div class="address__info">
             <div class="address__info--item">{!! $order->shop?->translation?->address ?? '' !!}</div>
@@ -85,8 +59,6 @@ $address   = data_get($order, 'address.address', '');
                 {!! !empty($shopPhone) ? '+' . str_replace('+', '', $shopPhone) : '' !!}
             </div>
         </div>
-    </div>
-    <div class="float-right">
         <h3 class="subtitle">Address place</h3>
         <div class="address__info">
             <div class="address__info--item">{!! $userName !!}</div>
@@ -157,65 +129,44 @@ $address   = data_get($order, 'address.address', '');
         @endforeach
     </tbody>
 </table>
-<div class="container d-flex m-0 p-0">
-    <table class="table table-striped mt-4 table-bordered float-left w-50"> {{-- style="page-break-after: always;" --}}
-        <thead>
-        <tr>
-            <th scope="col">Details</th>
-            <th scope="col">Tax %</th>
-            <th scope="col">Price {{ $order->currency?->symbol }}</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-            <th scope="row">{{$order->shop?->translation?->title}}</th>
-            <td>{{ $order->shop?->tax ?? 1 }}</td>
-            <td>{{ $order->rate_tax }}</td>
-        </tr>
-        </tbody>
-    </table>
-    <div class="product-taxes float-right">
-        <div class="parent-left">
-            <div class="left" style="font-weight: 600;">Price</div>
-            <br>
-            <div class="left" style="font-weight: 600;">Delivery fee</div>
-            <br>
-            <div class="left" style="font-weight: bold;">Price</div>
-            <br>
-            <div class="left" style="font-weight: bold;">Total price</div>
-        </div>
-        <div class="parent-right">
-            <div class="right" style="font-weight: 600;">{{ ($order->rate_total_price - $order->rate_tax) . ' ' . $order->currency?->symbol }}</div>
-            <br>
-            <div class="right" style="font-weight: 600;">{{ $order->rate_delivery_fee . ' ' . $order->currency?->symbol }}</div>
-            <br>
-            <div class="right" style="font-weight: bold;">{{ $order->rate_total_price . ' ' . $order->currency?->symbol }}</div>
-            <br>
-            <div class="right" style="font-weight: bold;">{{ $order->rate_total_price . ' ' . $order->currency?->symbol }}</div>
-        </div>
-    </div>
-</div>
-<div class="container d-flex m-0 p-0">
-    <div class="product-taxes" style="margin-top: -50px; border-right: 1px solid #000; border-bottom: none !important;">
-        <div class="parent-left" style="height: 100%; min-height: 150px">
-            <div class="left" style="font-weight: 600;">Payment type</div>
-            <br>
-            <div class="left" style="font-weight: 600;">Delivery</div>
-        </div>
-        <div class="parent-right" style="height: 100%; min-height: 150px">
-            <div class="right" style="font-weight: 600;">
-                {{ $order->transaction?->paymentSystem?->tag }} {{ $order->transaction?->price }} {{ $order->currency?->symbol }}
-            </div>
-            <br>
-            <div class="right" style="font-weight: bold;">
-                {{ Str::limit($order->deliveryMan?->firstname . ' ' . $order->deliveryMan?->lastname, 35) }}
-            </div>
-        </div>
-    </div>
-</div>
-<div class="container mt-5">
-    <p>Delivery Date:{{ $order->delivery_date }}</p>
-    <p>Delivery Time:{{ $order->delivery_time }}</p>
+<div class="space"></div>
+<table class="table table-striped mt-4 table-bordered">
+    <thead>
+    <tr>
+        <th scope="col">Details</th>
+        <th scope="col">Tax %</th>
+        <th scope="col">Price {{ $order->currency?->symbol }}</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <th scope="row">{{$order->shop?->translation?->title}}</th>
+        <td>{{ $order->shop?->tax ?? 1 }}</td>
+        <td>{{ $order->rate_tax }}</td>
+    </tr>
+    </tbody>
+</table>
+<table class="table table-striped table-bordered">
+    <thead>
+    <tr>
+        <th scope="col">Price</th>
+        <th scope="col">Delivery fee</th>
+        <th scope="col">Price {{ $order->currency?->symbol }}</th>
+        <th scope="col">Total price {{ $order->currency?->symbol }}</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <th scope="row">{{ ($order->rate_total_price - $order->rate_tax) . ' ' . $order->currency?->symbol }}</th>
+        <td>{{ $order->rate_delivery_fee . ' ' . $order->currency?->symbol }}</td>
+        <td>{{ $order->rate_total_price . ' ' . $order->currency?->symbol }}</td>
+        <td>{{ $order->rate_total_price . ' ' . $order->currency?->symbol }}</td>
+    </tr>
+    </tbody>
+</table>
+<div class="container float-left">
+    <p><b>Delivery Date:</b> {{ $order->delivery_date }}</p>
+    <p><b>Delivery Time:</b> {{ $order->delivery_time }}</p>
 </div>
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>

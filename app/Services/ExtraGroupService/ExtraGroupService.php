@@ -41,15 +41,14 @@ class ExtraGroupService extends CoreService
             return [
                 'status'  => false,
                 'code'    => ResponseError::ERROR_501,
-                'message' => __('errors.' . ResponseError::ERROR_501, locale: $this->language)
+                'message' => $e->getMessage()
             ];
         }
     }
 
-    public function update(int $id, array $data): array
+    public function update(ExtraGroup $extraGroup, array $data): array
     {
         try {
-            $extraGroup = ExtraGroup::find($id);
             $extraGroup->update($data);
             $this->setTranslations($extraGroup, $data, false);
 
@@ -65,16 +64,24 @@ class ExtraGroupService extends CoreService
             return [
                 'status'  => false,
                 'code'    => ResponseError::ERROR_502,
-                'message' => __('errors.' . ResponseError::ERROR_502, locale: $this->language)
+                'message' => $e->getMessage()
             ];
         }
     }
 
-    public function delete(?array $ids): int
+    public function delete(?array $ids, ?int $shopId = null): int
     {
         $hasValues = 0;
 
-        foreach ($this->model()->whereIn('id', is_array($ids) ? $ids : [])->get() as $extraGroup) {
+		$extraGroups = $this->model()
+			->with([
+				'extraValues',
+			])
+			->whereIn('id', is_array($ids) ? $ids : [])
+			->when($shopId, fn($q) => $q->where('shop_id', $shopId))
+			->get();
+
+        foreach ($extraGroups as $extraGroup) {
 
             /** @var ExtraGroup $extraGroup */
 
@@ -89,11 +96,11 @@ class ExtraGroupService extends CoreService
         return $hasValues;
     }
 
-    public function setActive(int $id): array
+    public function setActive(int $id, ?int $shopId = null): array
     {
         $extraGroup = ExtraGroup::find($id);
 
-        if (empty($extraGroup)) {
+        if (empty($extraGroup) || (!empty($shopId) && $extraGroup->shop_id !== $shopId)) {
             return [
                 'status'  => false,
                 'code'    => ResponseError::ERROR_404,

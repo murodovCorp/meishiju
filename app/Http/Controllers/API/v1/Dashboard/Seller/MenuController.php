@@ -11,6 +11,7 @@ use App\Repositories\MenuRepository\MenuRepository;
 use App\Services\MenuService\MenuService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class MenuController extends SellerBaseController
 {
@@ -52,6 +53,10 @@ class MenuController extends SellerBaseController
             return $this->onErrorResponse($result);
         }
 
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
+
         return $this->successResponse(
             __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_CREATED, locale: $this->language),
             MenuResource::make(data_get($result, 'data'))
@@ -72,6 +77,10 @@ class MenuController extends SellerBaseController
         }
 
         $result = $this->repository->show($menu);
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),

@@ -26,6 +26,7 @@ class BannerResource extends JsonResource
             'img'           => $this->img,
             'active'        => $this->active,
             'clickable'     => $this->clickable,
+            'input'         => $this->input,
             'type'          => $this->type,
             'likes'         => $this->whenLoaded('likes', $this->likes_count),
             'shops_count'   => $this->when($this->shops_count, $this->shops_count),

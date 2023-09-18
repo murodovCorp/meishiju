@@ -3,11 +3,15 @@
 namespace App\Services\ShopServices;
 
 use App\Helpers\ResponseError;
+use App\Models\PushNotification;
 use App\Models\Shop;
 use App\Services\CoreService;
+use App\Traits\Notification;
 
 class ShopActivityService extends CoreService
 {
+	use Notification;
+
     /**
      * @return string
      */
@@ -19,7 +23,12 @@ class ShopActivityService extends CoreService
     public function changeStatus(string $uuid,  $status): array
     {
         /** @var Shop $shop */
-        $shop = $this->model()->firstWhere('uuid', $uuid);
+        $shop = $this->model()
+			->with([
+				'seller.roles'
+			])
+			->whereHas('seller')
+			->firstWhere('uuid', $uuid);
 
         if (!$shop) {
             return [
@@ -38,7 +47,26 @@ class ShopActivityService extends CoreService
         $shop->update(['status' => $status]);
 
         if ($status == 'approved') {
+
             $shop->seller->syncRoles('seller');
+
+			if ($shop->seller->firebase_token) {
+
+				$this->sendNotification(
+					$shop->seller->firebase_token,
+					__('errors.' . ResponseError::STATUS_CHANGED, locale: $this->language),
+					$shop->user_id,
+					[
+						'id'     => $shop->user_id,
+						'status' => 'approved',
+						'type'   => PushNotification::SHOP_APPROVED
+					],
+					[$shop->user_id],
+					__('errors.' . ResponseError::SHOP_APPROVED, locale: $this->language),
+				);
+
+			}
+
         }
 
         return ['status' => true, 'message' => ResponseError::NO_ERROR, 'data' => $shop];

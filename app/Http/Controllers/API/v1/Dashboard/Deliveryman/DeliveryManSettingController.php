@@ -9,6 +9,7 @@ use App\Http\Resources\DeliveryManSettingResource;
 use App\Repositories\DeliveryManSettingRepository\DeliveryManSettingRepository;
 use App\Services\DeliveryManSettingService\DeliveryManSettingService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 
 class DeliveryManSettingController extends DeliverymanBaseController
 {
@@ -99,6 +100,10 @@ class DeliveryManSettingController extends DeliverymanBaseController
                 'code'      => ResponseError::ERROR_404,
                 'message'   => __('errors.' . ResponseError::ERROR_404, locale: $this->language)
             ]);
+        }
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
         }
 
         return $this->successResponse(

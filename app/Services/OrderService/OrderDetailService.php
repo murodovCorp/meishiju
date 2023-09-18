@@ -36,14 +36,7 @@ class OrderDetailService extends CoreService
 
     public function update($order, $collection) {
 
-        $addons = [];
-
         foreach ($collection as $item) {
-
-            if (!empty(data_get($item, 'parent_id'))) {
-                $addons[] = $item;
-                continue;
-            }
 
             /** @var Stock $stock */
             $stock = Stock::with([
@@ -55,7 +48,7 @@ class OrderDetailService extends CoreService
             ])
                 ->find(data_get($item, 'stock_id'));
 
-            if (empty($stock) || !$stock->countable?->active || $stock->countable?->status != Product::PUBLISHED) {
+            if (!$stock?->countable?->active || $stock?->countable?->status != Product::PUBLISHED) {
                 continue;
             }
 
@@ -75,47 +68,48 @@ class OrderDetailService extends CoreService
             );
 
             $stock->decrement('quantity', $actualQuantity);
-        }
 
-        foreach ($addons as $addon) {
-            /** @var Stock $addonStock */
-            $addonStock = Stock::with([
-                'countable:id,status,shop_id,active,min_qty,max_qty,tax,img,interval',
-                'countable.discounts' => fn($q) => $q
-                    ->where('start', '<=', today())
-                    ->where('end', '>=', today())
-                    ->where('active', 1)
-            ])
-                ->find(data_get($addon, 'stock_id'));
+			foreach (data_get($item, 'addons', []) as $addon) {
+				/** @var Stock $addonStock */
+				$addonStock = Stock::with([
+					'countable:id,status,shop_id,active,min_qty,max_qty,tax,img,interval',
+					'countable.discounts' => fn($q) => $q
+						->where('start', '<=', today())
+						->where('end', '>=', today())
+						->where('active', 1)
+				])
+					->find(data_get($addon, 'stock_id'));
 
-            if (!$addonStock) {
-                continue;
-            }
+				if (!$addonStock) {
+					continue;
+				}
 
-            $actualQuantity = $this->actualQuantity($addonStock, data_get($addon, 'quantity', 0));
+				$actualQuantity = $this->actualQuantity($addonStock, data_get($addon, 'quantity', 0));
 
-            if (empty($actualQuantity) || $actualQuantity <= 0) {
-                continue;
-            }
+				if (empty($actualQuantity) || $actualQuantity <= 0) {
+					continue;
+				}
 
-            $addon['quantity'] = $actualQuantity;
+				$addon['quantity'] = $actualQuantity;
 
-            $parent = OrderDetail::where([
-                ['stock_id', data_get($addon, 'parent_id')],
-                ['order_id', $order->id]
-            ])->first();
+				$parent = OrderDetail::where([
+					['stock_id', data_get($addon, 'parent_id')],
+					['order_id', $order->id]
+				])->first();
 
-            $addon['parent_id'] = $parent?->id;
+				$addon['parent_id'] = $parent?->id;
 
-            $order->orderDetails()->updateOrCreate(
-                [
-                    'stock_id'  => $addonStock->id,
-                    'parent_id' => $parent?->id,
-                ],
-                $this->setItemParams($addon, $addonStock)
-            );
+				$order->orderDetails()->updateOrCreate(
+					[
+						'stock_id'  => $addonStock->id,
+						'parent_id' => $parent?->id,
+					],
+					$this->setItemParams($addon, $addonStock)
+				);
 
-            $addonStock->decrement('quantity', $actualQuantity);
+				$addonStock->decrement('quantity', $actualQuantity);
+			}
+
         }
 
         return $order;
@@ -124,18 +118,18 @@ class OrderDetailService extends CoreService
     public function createOrderUser(Order $order, int $cartId, array $notes = []): Order
     {
         /** @var Cart $cart */
-        $cart = Cart::with([
-            'userCarts.cartDetails:id,user_cart_id,stock_id,price,discount,quantity',
-            'userCarts.cartDetails.stock.bonus' => fn($q) => $q->where('expired_at', '>', now()),
-            'shop',
-            'shop.bonus' => fn($q) => $q->where('expired_at', '>', now()),
-        ])
-            ->select('id', 'total_price', 'shop_id')
-            ->find($cartId);
+		$cart = clone Cart::with([
+			'userCarts.cartDetails:id,user_cart_id,stock_id,price,discount,quantity',
+			'userCarts.cartDetails.stock.bonus' => fn($q) => $q->where('expired_at', '>', now()),
+			'shop',
+			'shop.bonus' => fn($q) => $q->where('expired_at', '>', now()),
+		])
+			->select('id', 'total_price', 'shop_id')
+			->find($cartId);
 
         (new CartService)->calculateTotalPrice($cart);
 
-        $cart = Cart::with([
+        $cart = clone Cart::with([
             'shop',
             'userCarts.cartDetails' => fn($q) => $q->whereNull('parent_id'),
             'userCarts.cartDetails.stock.countable',
@@ -148,36 +142,36 @@ class OrderDetailService extends CoreService
 
         foreach ($cart->userCarts as $userCart) {
 
-            /** @var UserCart $userCart */
-            $cartDetails = $userCart->cartDetails;
+			$cartDetails = $userCart->cartDetails;
 
             if (empty($cartDetails)) {
                 $userCart->delete();
                 continue;
             }
 
-            foreach ($cartDetails as $cartDetail) {
+			foreach ($cartDetails as $cartDetail) {
 
-                $stock = $cartDetail->stock;
+				/** @var UserCart $userCart */
+				$stock = $cartDetail->stock;
 
                 $cartDetail->setAttribute('note', data_get($notes, $stock->id, ''));
 
-                /** @var OrderDetail $parent */
-                $parent = $order->orderDetails()->create($this->setItemParams($cartDetail, $stock));
+				/** @var OrderDetail $parent */
+				$parent = $order->orderDetails()->create($this->setItemParams($cartDetail, $stock));
 
                 $stock->decrement('quantity', $cartDetail->quantity);
 
-                foreach ($cartDetail->children as $addon) {
+				foreach ($cartDetail->children as $addon) {
 
-                    $stock = $addon->stock;
+					$stock = $addon->stock;
 
-                    $addon->setAttribute('parent_id', $parent?->id);
+					$addon->setAttribute('parent_id', $parent?->id);
 
-                    $addon->setAttribute('note', data_get($notes, $stock->id, ''));
-                    $order->orderDetails()->create($this->setItemParams($addon, $stock));
+					$addon->setAttribute('note', data_get($notes, $stock->id, ''));
+					$order->orderDetails()->create($this->setItemParams($addon, $stock));
 
-                    $stock->decrement('quantity', $addon->quantity);
-                }
+					$stock->decrement('quantity', $addon->quantity);
+				}
 
             }
 
@@ -218,6 +212,7 @@ class OrderDetailService extends CoreService
         }
 
         return [
+            'note'          => data_get($item, 'note', 0),
             'origin_price'  => data_get($item, 'origin_price', 0),
             'tax'           => data_get($item, 'tax', 0),
             'discount'      => data_get($item, 'discount', 0),

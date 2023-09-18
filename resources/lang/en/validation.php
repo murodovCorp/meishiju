@@ -258,7 +258,7 @@ return [
         'username' => 'username',
         'order_id' => 'order',
         'brand_id' => 'brand',
-        'bar_code' => 'bar code',
+        'sku'      => 'sku',
         'max_time' => 'max time',
         'end_time' => 'end time',
         'owner_id' => 'owner',
@@ -351,6 +351,7 @@ return [
         'origin_price' => 'origin price',
         'nutrition_id' => 'nutrition',
         'min_quantity' => 'min quantity',
+        'price_per_km' => 'price per km',
         'countable_id' => 'product',
         'verify_token' => 'verify token',
 

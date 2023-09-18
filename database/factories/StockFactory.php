@@ -2,10 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\ExtraGroup;
-use App\Models\ExtraValue;
 use App\Models\Product;
-use App\Models\Unit;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
@@ -16,7 +13,7 @@ class StockFactory extends Factory
      *
      * @return array
      */
-    public function definition()
+    public function definition(): array
     {
         $countable = $this->faker->randomElement([
             Product::class,
@@ -27,6 +24,7 @@ class StockFactory extends Factory
             'countable_type' => array_search($countable, Relation::$morphMap),
             'price' => rand(10, 1200),
             'quantity' => rand(10, 150),
+            'sku' => $this->faker->word(),
         ];
     }
 }

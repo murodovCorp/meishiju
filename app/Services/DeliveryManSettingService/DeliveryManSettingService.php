@@ -7,7 +7,6 @@ use App\Models\DeliveryManSetting;
 use App\Services\CoreService;
 use App\Traits\SetTranslations;
 use DB;
-use Exception;
 use Throwable;
 
 class DeliveryManSettingService extends CoreService

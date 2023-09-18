@@ -28,9 +28,6 @@ class ShopService extends CoreService implements ShopServiceInterface
      */
     public function create(array $data): array
     {
-        //if (!Cache::has(base64_decode('cHJvamVjdC5zdGF0dXM=')) || Cache::get(base64_decode('cHJvamVjdC5zdGF0dXM='))->active != 1) {
-        //    return ['status' => false, 'code' => ResponseError::ERROR_403];
-        //}
         try {
             $shopId = DB::transaction(function () use($data) {
 
@@ -164,7 +161,7 @@ class ShopService extends CoreService implements ShopServiceInterface
             FileHelper::deleteFile($shop->logo_img);
             FileHelper::deleteFile($shop->background_img);
 
-            if (!$shop->seller?->hasRole('admin')) {
+            if (!is_null($shop->seller) && !$shop->seller->hasRole('admin')) {
                 $shop->seller->syncRoles('user');
             }
 
@@ -205,8 +202,8 @@ class ShopService extends CoreService implements ShopServiceInterface
             'show_type'         => data_get($data, 'show_type', $shop?->show_type ?? 1),
             'visibility'        => (int)Settings::adminSettings()->where('key', 'by_subscription')->first()?->value,
             'status_note'       => data_get($data, 'status_note', $shop?->status_note ?? ''),
-            'type'              => data_get(Shop::TYPES_BY, data_get($data, 'type', $shop?->type)),
             'delivery_price'    => data_get($data, 'delivery_price', $shop?->delivery_price),
+            'verify'            => data_get($data, 'verify', $shop?->verify ?? 0),
             'location'          => [
                 'latitude'      => data_get($location, 'latitude', data_get($shop?->location, 'latitude', 0)),
                 'longitude'     => data_get($location, 'longitude', data_get($shop?->location, 'longitude', 0)),
@@ -221,7 +218,6 @@ class ShopService extends CoreService implements ShopServiceInterface
      */
     public function imageDelete(string $uuid, array $data): array
     {
-
         /** @var Shop|null $shop */
         $shop = Shop::where('uuid', $uuid)->first();
 

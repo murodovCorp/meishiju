@@ -20,6 +20,7 @@ use DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Laravel\Sanctum\PersonalAccessToken;
 use Spatie\Permission\Models\Role;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
@@ -34,7 +35,7 @@ class LoginController extends Controller
             return $this->loginByPhone($request);
         }
 
-        if (!auth()->attempt($request->only(['email', 'password'])) || !auth()->user()?->hasVerifiedEmail()) {
+        if (!auth()->attempt($request->only(['email', 'password']))) {
             return $this->onErrorResponse([
                 'code'    => ResponseError::ERROR_102,
                 'message' => __('errors.' . ResponseError::ERROR_102, locale: $this->language)
@@ -46,7 +47,7 @@ class LoginController extends Controller
         return $this->successResponse('User successfully login', [
             'access_token'  => $token,
             'token_type'    => 'Bearer',
-            'user'          => UserResource::make(auth('sanctum')->user()),
+            'user'          => UserResource::make(auth('sanctum')->user()->loadMissing(['shop', 'model'])),
         ]);
     }
 
@@ -64,7 +65,7 @@ class LoginController extends Controller
         return $this->successResponse('User successfully login', [
             'access_token' => $token,
             'token_type'   => 'Bearer',
-            'user'         => UserResource::make(auth('sanctum')->user()),
+            'user'         => UserResource::make(auth('sanctum')->user()->loadMissing(['shop', 'model'])),
         ]);
 
     }
@@ -78,7 +79,7 @@ class LoginController extends Controller
      */
     public function handleProviderCallback($provider, ProvideLoginRequest $request): JsonResponse
     {
-        $validated = $this->validateProvider($provider);
+        $validated = $this->validateProvider($request->input('id'), $provider);
 
         if (!empty($validated)) {
             return $validated;
@@ -89,38 +90,20 @@ class LoginController extends Controller
 
                 @[$firstname, $lastname] = explode(' ', $request->input('name'));
 
-                $user = User::withTrashed()->updateOrCreate(
-                    [
-                        'email' => $request->input('email')
-                    ],
-                    [
-                        'email'             => $request->input('email'),
-                        'email_verified_at' => now(),
-                        'referral'          => $request->input('referral'),
-                        'active'            => true,
-                        'firstname'         => !empty($firstname) ? $firstname : $request->input('email'),
-                        'lastname'          => $lastname,
-                        'delete_at'         => null,
-                    ]
-                );
+                $user = User::withTrashed()->updateOrCreate(['email' => $request->input('email')], [
+                    'email'             => $request->input('email'),
+                    'email_verified_at' => now(),
+                    'referral'          => $request->input('referral'),
+                    'active'            => true,
+                    'firstname'         => !empty($firstname) ? $firstname : $request->input('email'),
+                    'lastname'          => $lastname,
+                    'deleted_at'        => null,
+                ]);
 
-                if ($request->input('avatar')) {
-
-//                    $user->galleries()->delete();
-                    $user->update(['img' => $request->input('avatar')]);
-//                    $user->uploads([$request->input('avatar')]);
-
-                }
-
-                $user->socialProviders()->updateOrCreate(
-                    [
-                        'provider'      => $provider,
-                        'provider_id'   => $request->input('id'),
-                    ],
-                    [
-                        'avatar' => $request->input('avatar')
-                    ]
-                );
+                $user->socialProviders()->updateOrCreate([
+                    'provider'      => $provider,
+                    'provider_id'   => $request->input('id'),
+                ]);
 
                 if (!$user->hasAnyRole(Role::query()->pluck('name')->toArray())) {
                     $user->syncRoles('user');
@@ -140,9 +123,9 @@ class LoginController extends Controller
                     'active' => true
                 ]);
 
-                if (empty($user->wallet?->uuid)) {
-                    (new UserWalletService)->create($user);
-                }
+				if (empty($user->wallet?->uuid)) {
+					$user = (new UserWalletService)->create($user);
+				}
 
                 return [
                     'token' => $user->createToken('api_token')->plainTextToken,
@@ -167,7 +150,19 @@ class LoginController extends Controller
     public function logout(): JsonResponse
     {
         try {
-            $current = auth('sanctum')->user()?->currentAccessToken();
+            /** @var User $user */
+            /** @var PersonalAccessToken $current */
+            $user           = auth('sanctum')->user();
+            $firebaseToken  = collect($user->firebase_token)
+                ->reject(fn($item) => (string)$item == (string)request('firebase_token') || empty($item))
+                ->toArray();
+
+            $user->update([
+                'firebase_token' => $firebaseToken
+            ]);
+
+            $current = $user->currentAccessToken();
+
             $current->delete();
         } catch (Throwable $e) {
             $this->error($e);
@@ -177,18 +172,32 @@ class LoginController extends Controller
     }
 
     /**
+     * @param $idToken
      * @param $provider
      * @return JsonResponse|void
      */
-    protected function validateProvider($provider)
+    protected function validateProvider($idToken, $provider)
     {
-        if (!in_array($provider, ['facebook', 'github', 'google'])) {
+//        $serverKey = Settings::adminSettings()->where('key', 'api_key')->first()?->value;
+//        $clientId  = Settings::adminSettings()->where('key', 'client_id')->first()?->value;
+//
+//        $response  = Http::get("https://oauth2.googleapis.com/tokeninfo?id_token=$idToken");
+
+//        dd($response->json(), $clientId, $serverKey);
+
+//        $response = Http::withHeaders([
+//            'Content-Type' => 'application/x-www-form-urlencoded',
+//        ])
+//            ->post('http://your-laravel-app.com/oauth/token');
+
+        if (!in_array($provider, ['facebook', 'github', 'google', 'apple'])) { //$response->ok()
             return $this->onErrorResponse([
                 'code'    => ResponseError::ERROR_107,
                 'http'    => Response::HTTP_UNAUTHORIZED,
                 'message' =>  __('errors.' . ResponseError::INCORRECT_LOGIN_PROVIDER, locale: $this->language)
             ]);
         }
+
     }
 
     public function forgetPassword(ForgetPasswordRequest $request): JsonResponse

@@ -9,8 +9,11 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentPayload;
 use App\Models\PaymentProcess;
+use App\Models\WalletHistory;
+use App\Services\PaymentService\StripeService;
 use App\Traits\ApiResponse;
 use App\Traits\OnResponse;
+use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,7 +26,7 @@ class PayPalController extends Controller
 {
     use OnResponse, ApiResponse;
 
-    public function __construct()
+    public function __construct(private StripeService $service)
     {
         parent::__construct();
     }
@@ -34,6 +37,7 @@ class PayPalController extends Controller
     public function credential(array|null $payload): PayPal
     {
         $provider = new PayPal;
+
         $provider->setApiCredentials([
             'mode'    => data_get($payload, 'paypal_mode', 'sandbox'),
             'sandbox' => [
@@ -67,7 +71,7 @@ class PayPalController extends Controller
     {
         try {
             $host           = request()->getSchemeAndHttpHost();
-            $payment        = Payment::where('tag', 'stripe')->first();
+            $payment        = Payment::where('tag', 'paypal')->first();
             $paymentPayload = PaymentPayload::where('payment_id', $payment?->id)->first();
             $payload        = $paymentPayload?->payload;
             $order          = Order::find($request->input('order_id'));
@@ -77,24 +81,53 @@ class PayPalController extends Controller
                 'total_price' => ($totalPrice / $order->rate) / 100
             ]);
 
-            $provider = $this->credential($payload);
+            $url            = 'https://api-m.sandbox.paypal.com';
+            $clientId       = data_get($payload, 'paypal_sandbox_client_id');
+            $clientSecret   = data_get($payload, 'paypal_sandbox_client_secret');
 
-            $response = $provider->createOrder([
-                'intent' => 'CAPTURE',
-                'application_context' => [
-                    'return_url' => "$host/order-stripe-success?token={CHECKOUT_SESSION_ID}&status=paid&order_id=$order->id",
-                    'cancel_url' => "$host/order-stripe-success?token={CHECKOUT_SESSION_ID}&status=canceled&order_id=$order->id",
+            if (data_get($payload, 'paypal_mode', 'sandbox') === 'live') {
+                $url            = 'https://api-m.paypal.com';
+                $clientId       = data_get($payload, 'paypal_live_client_id');
+                $clientSecret   = data_get($payload, 'paypal_live_client_secret');
+            }
+
+            $provider = new Client();
+            $responseAuth = $provider->post("$url/v1/oauth2/token", [
+                'auth' => [
+                    $clientId,
+                    $clientSecret,
                 ],
-                'purchase_units' => [
-                    [
-                        'reference_id' => rand(000000, 999999),
-                        'amount' => [
-                            'currency_code' => Str::upper($order->currency?->title ?? data_get($payload, 'paypal_currency')),
-                            'value'         => $totalPrice
-                        ]
-                    ]
+                'form_params' => [
+                    'grant_type' => 'client_credentials',
                 ]
             ]);
+
+            $responseAuth = json_decode($responseAuth->getBody(), true);
+
+            $response = $provider->post("$url/v2/checkout/orders", [
+                'json' => [
+                    'intent' => 'CAPTURE',
+                    'purchase_units' => [
+                        [
+                            'amount' => [
+                                'currency_code' => Str::upper($order->currency?->title ?? data_get($payload, 'paypal_currency')),
+                                'value' => $totalPrice,
+                            ],
+                        ],
+                    ],
+                    'application_context' => [
+                        'return_url' =>  "$host/order-stripe-success?status=paid&order_id=$order->id",
+                        'cancel_url' =>  "$host/order-stripe-success?status=canceled&order_id=$order->id",
+                    ],
+                ],
+                'headers' => [
+                    'Accept-Language'   => 'en_US',
+                    'Content-Type'      => 'application/json',
+                    'Authorization'     => data_get($responseAuth, 'token_type', 'Bearer') . ' ' . data_get($responseAuth, 'access_token'),
+                ],
+            ]);
+
+            $response = json_decode($response->getBody(), true);
 
             if (data_get($response, 'error')) {
 
@@ -108,7 +141,9 @@ class PayPalController extends Controller
 
             $links = collect(data_get($response, 'links'));
 
-            $checkoutNowUrl = $links->where('rel', 'payer-action')->first()?->href ?? $links->first()?->href;
+            $checkoutNowUrl = data_get($links->where('rel', 'approve')->first(), 'href');
+            $checkoutNowUrl = $checkoutNowUrl ?? data_get($links->where('rel', 'payer-action')->first(), 'href');
+            $checkoutNowUrl = $checkoutNowUrl ?? data_get($links->first(), 'href');
 
             $paymentProcess = PaymentProcess::updateOrCreate([
                 'user_id' => auth('sanctum')->id(),
@@ -123,12 +158,13 @@ class PayPalController extends Controller
 
             return $this->successResponse('success', $paymentProcess);
         } catch (Throwable $e) {
-            $this->error($e);
+            return $this->onErrorResponse([
+                'code'      => ResponseError::ERROR_400,
+                'message'   => $e->getMessage(),
+            ]);
         }
 
-        return $this->onErrorResponse([
-            'code' => ResponseError::ERROR_400,
-        ]);
+
     }
 
     /**
@@ -183,6 +219,25 @@ class PayPalController extends Controller
         $to = config('app.front_url') . "orders/$orderId";
 
         return Redirect::to($to);
+    }
+
+    /**
+     * @param Request $request
+     * @return void
+     */
+    public function paymentWebHook(Request $request): void
+    {
+        $status = $request->input('resource.status');
+
+        $status = match ($status) {
+            'APPROVED', 'COMPLETED', 'CAPTURED' => WalletHistory::PAID,
+            'VOIDED'     => WalletHistory::CANCELED,
+            default     => 'progress',
+        };
+
+        $token = $request->input('data.object.id');
+
+        $this->service->afterHook($token, $status);
     }
 
 }

@@ -13,10 +13,10 @@ use Illuminate\Support\Carbon;
  * App\Models\ReceiptStock
  *
  * @property int $receipt_id
- * @property Receipt|null $receipt
  * @property int $stock_id
- * @property Stock|null $stock
  * @property int $min_quantity
+ * @property Receipt|null $receipt
+ * @property Stock|null $stock
  * @property Carbon|null $deleted_at
  * @method static Builder|ReceiptStock newModelQuery()
  * @method static Builder|ReceiptStock newQuery()
@@ -30,6 +30,7 @@ class ReceiptStock extends Model
 {
     use SoftDeletes;
 
+    public $guarded = ['id'];
     public $timestamps = false;
 
     public function receipt(): BelongsTo

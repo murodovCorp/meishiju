@@ -43,14 +43,14 @@ class StoreRequest extends BaseRequest
             'min_amount'            => 'string',
             'phone'                 => 'string',
             'open'                  => 'in:0,1',
+            'verify'                => 'in:0,1',
             'show_type'             => 'in:0,1',
             'status_note'           => 'string',
-            'type'                  => ['required', Rule::in(Shop::TYPES)],
             'categories.*'          => [
                 'nullable',
                 'integer',
                 Rule::exists('categories', 'id')
-                    ->where('type', Category::SHOP)
+                    ->whereIn('type', [Category::SHOP, Category::SUB_SHOP])
                     ->whereNull('deleted_at')
             ]
         ];

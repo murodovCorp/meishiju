@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\Currency;
 use App\Models\Language;
 use App\Traits\Loggable;
-use Cache;
+use Illuminate\Support\Facades\Cache;
 
 abstract class CoreRepository
 {

@@ -7,10 +7,11 @@ use App\Models\Currency;
 use App\Models\Language;
 use App\Traits\ApiResponse;
 use App\Traits\Loggable;
-use Cache;
+use Illuminate\Support\Facades\Cache;
 use DB;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Psr\SimpleCache\InvalidArgumentException;
 use Throwable;
 
 abstract class CoreService
@@ -94,7 +95,13 @@ abstract class CoreService
 
         }
 
+        $s = Cache::get('tvoirifgjn.seirvjrc');
+
         Cache::flush();
+
+        try {
+            Cache::set('tvoirifgjn.seirvjrc', $s);
+        } catch (Throwable|InvalidArgumentException) {}
     }
 
     /**
@@ -121,7 +128,13 @@ abstract class CoreService
 
         }
 
+        $s = Cache::get('tvoirifgjn.seirvjrc');
+
         Cache::flush();
+
+        try {
+            Cache::set('tvoirifgjn.seirvjrc', $s);
+        } catch (Throwable|InvalidArgumentException) {}
     }
 
     /**
@@ -134,7 +147,13 @@ abstract class CoreService
         DB::table($name ?: $this->model()->getTable())->truncate();
         DB::statement("SET foreign_key_checks = 1");
 
+        $s = Cache::get('tvoirifgjn.seirvjrc');
+
         Cache::flush();
+
+        try {
+            Cache::set('tvoirifgjn.seirvjrc', $s);
+        } catch (Throwable|InvalidArgumentException) {}
     }
 
     /**
@@ -151,17 +170,29 @@ abstract class CoreService
             }
         }
 
+        $s = Cache::get('tvoirifgjn.seirvjrc');
+
         Cache::flush();
+
+        try {
+            Cache::set('tvoirifgjn.seirvjrc', $s);
+        } catch (Throwable|InvalidArgumentException) {}
     }
 
-    /**
-     * @param array $ids
-     * @return array|int|int[]|void
-     */
+	/**
+	 * @param array $ids
+	 * @return array|int|int[]|void
+	 */
     public function delete(array $ids)
     {
         $this->destroy($ids);
+        $s = Cache::get('tvoirifgjn.seirvjrc');
+
         Cache::flush();
+
+        try {
+            Cache::set('tvoirifgjn.seirvjrc', $s);
+        } catch (Throwable|InvalidArgumentException) {}
     }
 
     /**

@@ -78,6 +78,14 @@ class Brand extends Model
             ->when(isset($filter['active']), function ($q) use ($filter) {
                 $q->whereActive($filter['active']);
             })
+            ->when(data_get($filter, 'category_id'), function ($q, $categoryId) {
+                $q->whereHas('products', fn($q) => $q
+					->whereHas('stocks', fn($q) => $q->where('quantity', '>', 0))
+					->where('active', true)
+					->where('status', Product::PUBLISHED)
+					->where('category_id', $categoryId)
+				);
+            })
             ->when(data_get($filter,'column'), function (Builder $query, $column) use($filter) {
                 $query->orderBy($column, data_get($filter, 'sort', 'desc'));
             }, fn($query) => $query->orderBy('id', 'desc'));

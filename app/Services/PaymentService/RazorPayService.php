@@ -62,7 +62,8 @@ class RazorPayService extends BaseService
 
             return PaymentProcess::updateOrCreate([
                 'user_id'   => auth('sanctum')->id(),
-                'order_id'  => data_get($data, 'order_id'),
+				'model_id'   => $order->id,
+				'model_type' => get_class($order)
             ], [
                 'id'    => data_get($paymentLink, 'id'),
                 'data'  => [
@@ -109,8 +110,9 @@ class RazorPayService extends BaseService
         ]);
 
         return PaymentProcess::updateOrCreate([
-            'user_id'   => auth('sanctum')->id(),
-            'order_id'  => data_get($data,'order_id'),
+            'user_id'    => auth('sanctum')->id(),
+			'model_id'   => $subscription->id,
+			'model_type' => get_class($subscription)
         ], [
             'id'    => data_get($paymentLink, 'id'),
             'data'  => [

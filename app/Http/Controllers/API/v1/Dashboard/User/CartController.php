@@ -15,8 +15,6 @@ use App\Repositories\CartRepository\CartRepository;
 use App\Services\CartService\CartService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class CartController extends UserBaseController
 {
@@ -38,10 +36,10 @@ class CartController extends UserBaseController
     }
 
     /**
-     * @param Request $request
+     * @param FilterParamsRequest $request
      * @return JsonResponse
      */
-    public function get(Request $request): JsonResponse
+    public function get(FilterParamsRequest $request): JsonResponse
     {
         $cart = $this->repository->get($request->input('shop_id', 0));
 
@@ -194,10 +192,10 @@ class CartController extends UserBaseController
 
     /**
      * @param string $uuid
-     * @param Request $request
+     * @param FilterParamsRequest $request
      * @return JsonResponse
      */
-    public function statusChange(string $uuid, Request $request): JsonResponse
+    public function statusChange(string $uuid, FilterParamsRequest $request): JsonResponse
     {
         $result = $this->service->statusChange($uuid, (int)$request->input('cart_id', 0));
 

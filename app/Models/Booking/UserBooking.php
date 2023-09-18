@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $user_id
  * @property int|null $table_id
  * @property string $status
+ * @property string|null $note
+ * @property int|null $guest
  * @property Carbon|null $start_date
  * @property Carbon|null $end_date
  * @property Carbon|null $deleted_at
@@ -74,8 +76,11 @@ class UserBooking extends Model
         $startTo    = data_get($filter, 'start_to');
         $endFrom    = data_get($filter, 'end_from');
         $endTo      = data_get($filter, 'end_to');
+        $sectionId  = data_get($filter, 'shop_section_id');
 
         $query
+			->when(isset($filter['deleted_at']), fn($q) => $q->onlyTrashed())
+			->when($sectionId,  fn($q, $id)        => $q->whereHas('table', fn($q) => $q->where('shop_section_id', $id)))
             ->when($bookingId,  fn($q, $bookingId) => $q->where('booking_id', $bookingId))
             ->when($shopId,     fn($q, $shopId)    => $q->whereHas('booking', fn($b) => $b->where('shop_id', $shopId)))
             ->when($userId,     fn($q, $userId)    => $q->where('user_id', $userId))

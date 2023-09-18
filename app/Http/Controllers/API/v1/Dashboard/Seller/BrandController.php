@@ -150,10 +150,10 @@ class BrandController extends SellerBaseController
 
     public function fileExport(): JsonResponse
     {
-        $fileName = 'export/brands.xls';
+        $fileName = 'export/brands.xlsx';
 
         try {
-            Excel::store(new BrandExport, $fileName, 'public');
+            Excel::store(new BrandExport, $fileName, 'public', \Maatwebsite\Excel\Excel::XLSX);
 
             return $this->successResponse('Successfully exported', [
                 'path' => 'public/export',

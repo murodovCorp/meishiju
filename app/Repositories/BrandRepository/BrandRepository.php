@@ -31,7 +31,8 @@ class BrandRepository extends CoreRepository
     {
         return $this->model()
             ->withCount([
-                'products' => fn($q) => $q->whereHas('shop', fn($q) => $q->whereNull('deleted_at') )
+                'products' => fn($q) => $q
+					->whereHas('shop', fn($q) => $q->whereNull('deleted_at'))
                     ->whereHas('stocks', fn($q) => $q->where('quantity', '>', 0))
             ])
             ->filter($filter)

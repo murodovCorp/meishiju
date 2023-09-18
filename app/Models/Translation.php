@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use DB;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -43,12 +44,19 @@ class Translation extends Model
 
     public function scopeFilter($query, $array = [])
     {
-        return $query->when(isset($array['group']), function ($q)  use ($array) {
-            $q->where('group', $array['group']);
-        })->when(isset($array['locale']), function ($q)  use ($array) {
-            $q->where('locale', $array['locale']);
-        })->when(isset($array['deleted_at']), function ($q) {
-            $q->onlyTrashed();
-        });
+        return $query
+            ->when(data_get($array, 'search'), fn ($query, $search) => $query->where(function ($q) use($search) {
+                    $q
+                        ->where('key', 'LIKE', "%$search%")
+                        ->orWhere(DB::raw('LOWER(value)'), 'LIKE', '%' . strtolower($search) . '%');
+                })
+            )
+            ->when(isset($array['group']), function ($q)  use ($array) {
+                $q->where('group', $array['group']);
+            })->when(isset($array['locale']), function ($q)  use ($array) {
+                $q->where('locale', $array['locale']);
+            })->when(isset($array['deleted_at']), function ($q) {
+                $q->onlyTrashed();
+            });
     }
 }

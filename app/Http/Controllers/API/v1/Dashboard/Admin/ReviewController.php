@@ -11,6 +11,7 @@ use App\Repositories\ReviewRepository\ReviewRepository;
 use App\Services\ReviewService\ReviewService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class ReviewController extends AdminBaseController
 {
@@ -34,6 +35,10 @@ class ReviewController extends AdminBaseController
      */
     public function paginate(PaginateRequest $request): AnonymousResourceCollection
     {
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
+
         return ReviewResource::collection($this->repository->paginate($request->all()));
     }
 

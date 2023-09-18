@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class OrderStatusController extends AdminBaseController
 {
@@ -36,6 +37,10 @@ class OrderStatusController extends AdminBaseController
         )
         ->when(isset($request['active']), fn(Collection $q) => $q->where('active', $request['active']))
         ->all();
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return OrderStatusResource::collection($orderStatuses);
     }

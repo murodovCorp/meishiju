@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $payment_sys_id
  * @property string|null $payment_trx_id
  * @property string|null $note
+ * @property string|null $request
  * @property string|null $perform_time
  * @property string|null $refund_time
  * @property string $status
@@ -75,6 +76,18 @@ class Transaction extends Model
         self::STATUS_REFUND     => self::STATUS_REFUND,
     ];
 
+    const REQUEST_WAITING = 'waiting';
+    const REQUEST_PENDING = 'pending';
+    const REQUEST_APPROVED = 'approved';
+    const REQUEST_REJECT = 'reject';
+
+    const REQUESTS = [
+        self::REQUEST_WAITING,
+        self::REQUEST_PENDING,
+        self::REQUEST_APPROVED,
+        self::REQUEST_REJECT,
+    ];
+
     public function payable(): MorphTo
     {
         return $this->morphTo('payable');
@@ -93,8 +106,11 @@ class Transaction extends Model
     public function scopeFilter($query, $filter = [])
     {
         return $query
-            ->when(data_get($filter, 'model') == 'orders' , function (Builder $query) {
+            ->when(data_get($filter, 'model') == 'orders', function (Builder $query) {
                 $query->where(['payable_type' => Order::class]);
+            })
+            ->when(data_get($filter, 'request'), function (Builder $query, $request) {
+                $query->where('request', $request);
             })
             ->when(data_get($filter, 'shop_id'), function (Builder $q, $shopId) {
 

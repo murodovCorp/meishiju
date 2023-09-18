@@ -53,14 +53,14 @@ class CartDetail extends Model
         'bonus' => 'bool'
     ];
 
-    public function getRatePriceAttribute(): float
+    public function getRatePriceAttribute(): float|int|null
     {
         return request()->is('api/v1/dashboard/user/*') || request()->is('api/v1/rest/*') ?
             $this->price * $this->userCart?->cart?->rate :
             $this->price;
     }
 
-    public function getRateDiscountAttribute(): float
+    public function getRateDiscountAttribute(): float|int|null
     {
         return request()->is('api/v1/dashboard/user/*') || request()->is('api/v1/rest/*') ?
             $this->discount * $this->userCart?->cart?->rate :

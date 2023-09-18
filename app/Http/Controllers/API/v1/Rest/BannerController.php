@@ -60,6 +60,10 @@ class BannerController extends RestBaseController
         );
     }
 
+    /**
+     * @param int $id
+     * @return JsonResponse
+     */
     public function likedBanner(int $id): JsonResponse
     {
         $banner = Banner::find($id);
@@ -77,4 +81,29 @@ class BannerController extends RestBaseController
             __('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_UPDATED, locale: $this->language)
         );
     }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @param FilterParamsRequest $request
+     * @return array
+     */
+    public function adsPaginate(FilterParamsRequest $request): array
+    {
+        return $this->repository->adsPaginate($request->merge(['active' => 1])->all());
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function adsShow(int $id): JsonResponse
+    {
+        $models = $this->repository->adsShow($id);
+
+        return $this->successResponse(__('errors.' . ResponseError::NO_ERROR, locale: $this->language), $models);
+    }
+
 }

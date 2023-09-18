@@ -5,6 +5,7 @@ namespace App\Services\ProductService;
 use App\Helpers\ResponseError;
 use App\Models\Product;
 use App\Services\CoreService;
+use Illuminate\Support\Facades\Cache;
 
 class ProductReviewService extends CoreService
 {
@@ -18,13 +19,13 @@ class ProductReviewService extends CoreService
     {
         /** @var Product $product */
 
-        $product = $this->model()->firstWhere('uuid', $uuid);
+        $product = $this->model()->with(['shop'])->firstWhere('uuid', $uuid);
 
         if (empty(data_get($product, 'id'))) {
             return ['status' => false, 'code' => ResponseError::ERROR_404];
         }
 
-        $product->addReview($collection);
+        $product->addOrderReview($collection, $product->shop);
 
         return [
             'status' => true,

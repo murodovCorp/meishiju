@@ -7,12 +7,12 @@ set_time_limit(0);
 
 use App\Models\Booking\Table;
 use App\Models\PushNotification;
-use App\Repositories\CoreRepository;
+use App\Services\CoreService;
 use App\Traits\Notification;
 use DB;
 use Throwable;
 
-class PushNotificationService extends CoreRepository
+class PushNotificationService extends CoreService
 {
     use Notification;
 
@@ -88,6 +88,7 @@ class PushNotificationService extends CoreRepository
                 } catch (Throwable $e) {
                     $this->error($e);
                 }
+
             }
 
         }

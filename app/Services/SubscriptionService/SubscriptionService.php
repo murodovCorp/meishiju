@@ -6,6 +6,7 @@ use App\Helpers\ResponseError;
 use App\Models\ShopSubscription;
 use App\Models\Subscription;
 use App\Services\CoreService;
+use DB;
 use Illuminate\Database\Eloquent\Model;
 use Throwable;
 
@@ -67,6 +68,13 @@ class SubscriptionService extends CoreService
      */
     public function subscriptionAttach(Subscription $subscription, int $shopId, int $active = 0): Model|ShopSubscription
     {
+		try {
+			DB::table('shop_subscriptions')
+				->where('shop_id', $shopId)
+				->whereDate('expired_at', '<=', now())
+				->delete();
+		} catch (Throwable) {}
+
         return ShopSubscription::create([
             'shop_id'           => $shopId,
             'subscription_id'   => $subscription->id,

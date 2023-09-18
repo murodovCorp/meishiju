@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\ShopClosedDate;
 use App\Models\Story;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -41,22 +40,22 @@ class RemoveExpiredStories extends Command
      */
     public function handle(): int
     {
-//        $stories = Story::where('created_at', '<=', date('Y-m-d 23:59:59', strtotime('-1 day')))
-//            ->orWhere('created_at', '<=', date('Y-m-d 23:59:59', strtotime('-1 day')))
-//            ->get();
-//
-//        foreach ($stories as $story) {
-//            try {
-//                $story->delete();
-//            } catch (Throwable $e) {
-//                Log::error($e->getMessage(), [
-//                    'code'    => $e->getCode(),
-//                    'message' => $e->getMessage(),
-//                    'trace'   => $e->getTrace(),
-//                    'file'    => $e->getFile(),
-//                ]);
-//            }
-//        }
+        $stories = Story::where('created_at', '<=', date('Y-m-d 23:59:59', strtotime('-1 day')))
+            ->orWhere('created_at', '<=', date('Y-m-d 23:59:59', strtotime('-1 day')))
+            ->get();
+
+        foreach ($stories as $story) {
+            try {
+                $story->delete();
+            } catch (Throwable $e) {
+                Log::error($e->getMessage(), [
+                    'code'    => $e->getCode(),
+                    'message' => $e->getMessage(),
+                    'trace'   => $e->getTrace(),
+                    'file'    => $e->getFile(),
+                ]);
+            }
+        }
 
         return 0;
     }

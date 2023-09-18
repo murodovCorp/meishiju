@@ -39,7 +39,7 @@ class AttachDeliveryManListener
             $order = $event->order;
             $second = Settings::adminSettings()->where('key', 'deliveryman_order_acceptance_time')->first();
 
-            if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
+            if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
                 abort(403);
             }
 
@@ -105,7 +105,7 @@ class AttachDeliveryManListener
                         'title'         => "New order #$order->id",
                         'body'          => 'need attach deliveryman',
                     ],
-                    'data'              => (new NotificationHelper)->deliveryManOrder($order, $event->language)
+                    'data'              => (new NotificationHelper)->deliveryManOrder($order)
                 ];
 
                 $result[] = Http::withHeaders($headers)->post('https://fcm.googleapis.com/fcm/send', $data)->json();

@@ -24,6 +24,7 @@ class TransactionResource extends JsonResource
             'price'                 => $this->when($this->price, $this->price),
             'payment_trx_id'        => $this->when($this->payment_trx_id, $this->payment_trx_id),
             'note'                  => $this->when($this->note, $this->note),
+            'request'               => $this->when($this->request, $this->request),
             'perform_time'          => $this->when($this->perform_time, $this->perform_time),
             'refund_time'           => $this->when($this->refund_time, $this->refund_time),
             'status'                => $this->when($this->status, $this->status),

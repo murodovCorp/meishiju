@@ -6,7 +6,7 @@ use App\Helpers\ResponseError;
 use App\Models\Language;
 use App\Models\Order;
 use App\Models\Settings;
-use Barryvdh\Snappy\Facades\SnappyPdf as PDF;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
@@ -48,6 +48,8 @@ class ExportController extends UserBaseController
         }
 
         $logo = Settings::adminSettings()->where('key', 'logo')->first()?->value;
+
+		Pdf::setOption(['dpi' => 150, 'defaultFont' => 'sans-serif']);
 
         $pdf = PDF::loadView('order-invoice', compact('order', 'logo'));
 

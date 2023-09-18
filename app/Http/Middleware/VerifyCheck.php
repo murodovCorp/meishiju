@@ -29,9 +29,6 @@ class VerifyCheck
 //                ! auth('sanctum')->user()->hasVerifiedEmail())) {
 //            return $this->errorResponse(ResponseError::ERROR_105, trans('errors.' . ResponseError::ERROR_105, [], request()->lang ?? 'ru'), Response::HTTP_UNAUTHORIZED);
 //        }
-//        if (!Cache::has(base64_decode('cHJvamVjdC5zdGF0dXM=')) || Cache::get(base64_decode('cHJvamVjdC5zdGF0dXM='))->active != 1){
-//            return $this->errorResponse(ResponseError::ERROR_403, trans('errors.' . ResponseError::ERROR_403, [], request()->lang ?? 'ru'), Response::HTTP_UNAUTHORIZED);
-//        }
         return $next($request);
     }
 

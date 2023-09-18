@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\API\v1\Dashboard\Seller;
 
 use App\Helpers\ResponseError;
+use App\Http\Requests\FilterParamsRequest;
 use App\Http\Resources\UnitResource;
 use App\Repositories\UnitRepository\UnitRepository;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class UnitController extends SellerBaseController
@@ -25,10 +25,10 @@ class UnitController extends SellerBaseController
     /**
      * Display a listing of the resource.
      *
-     * @param Request $request
+     * @param FilterParamsRequest $request
      * @return AnonymousResourceCollection
      */
-    public function paginate(Request $request): AnonymousResourceCollection
+    public function paginate(FilterParamsRequest $request): AnonymousResourceCollection
     {
         $units = $this->unitRepository->unitsPaginate($request->all());
 

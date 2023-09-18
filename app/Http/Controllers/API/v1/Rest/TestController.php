@@ -44,6 +44,7 @@ use App\Models\Invitation;
 use App\Models\Language;
 use App\Models\Like;
 use App\Models\MetaTag;
+use App\Models\ModelLog;
 use App\Models\Notification;
 use App\Models\NotificationUser;
 use App\Models\Order;
@@ -109,7 +110,6 @@ use App\Models\UserCart;
 use App\Models\UserPoint;
 use App\Models\Wallet;
 use App\Models\WalletHistory;
-use App\Services\Yandex\YandexService;
 use App\Traits\ApiResponse;
 use Artisan;
 use Http;
@@ -122,217 +122,6 @@ class TestController extends Controller
 
     public function bosyaTest(Request $request)
     {
-        dd();
-        $translations = [
-            'yandex.new' => 'Новая заявка.',
-            'yandex.estimating' => 'Идет процесс оценки заявки.',
-            'yandex.estimating_failed' => 'Не удалось оценить заявку',
-            'yandex.ready_for_approval' => 'Заявка успешно оценена и ожидает подтверждения от клиента.',
-            'yandex.accepted' => 'Заявка подтверждена клиентом.',
-            'yandex.performer_lookup' => 'Заявка взята в обработку. Промежуточный статус перед созданием заказа.',
-            'yandex.performer_draft' => 'Идет поиск водителя.',
-            'yandex.performer_found' => 'Водитель найден и едет в точку А.',
-            'yandex.performer_not_found' => 'Не удалось найти водителя. Можно попробовать снова через некоторое время.',
-            'yandex.pickup_arrived' => 'Водитель приехал в точку А.',
-            'yandex.ready_for_pickup_confirmation' => 'Водитель ждет, когда отправитель назовет ему код подтверждения.',
-            'yandex.pickuped' => 'Водитель успешно забрал груз.',
-            'yandex.pay_waiting' => 'Заказ ожидает оплаты (актуально для оплаты при получении).',
-            'yandex.delivery_arrived' => 'Водитель приехал в точку Б.',
-            'yandex.ready_for_delivery_confirmation' => 'Водитель ждет, когда получатель назовет ему код подтверждения.',
-            'yandex.delivered' => 'Водитель успешно доставил груз.',
-            'yandex.delivered_finish' => 'Заказ завершен.',
-            'yandex.returning' => 'Водителю пришлось вернуть груз и он едет в точку возврата.',
-            'yandex.return_arrived' => 'Водитель приехал в точку возврата.',
-            'yandex.ready_for_return_confirmation' => 'Водитель в точке возврата ожидает, когда ему назовут код подтверждения.',
-            'yandex.returned' => 'Водитель успешно вернул груз.',
-            'yandex.returned_finish' => 'Заказ завершен.',
-            'yandex.cancelled' => 'Заказ был отменен клиентом бесплатно.',
-            'yandex.cancelled_with_payment' => 'Заказ был отменен клиентом платно (водитель уже приехал).',
-            'yandex.cancelled_by_taxi' => 'Водитель отменил заказ (до получения груза).',
-            'yandex.cancelled_with_items_on_hands' => 'Клиент платно отменил заявку без необходимости возврата груза (заявка была создана с флагом optional_return).',
-            'yandex.failed' => 'При выполнение заказа произошла ошибка, дальнейшее выполнение невозможно.',
-        ];
-
-        foreach ($translations as $key => $translation) {
-            Translation::updateOrCreate([
-                'status'    => 1,
-                'locale'    => 'en',
-                'group'     => 'web',
-                'key'       => $key,
-                'value'     => $translation,
-            ]);
-        }
-
-        $or = Order::whereJsonContains('yandex->id', '63e22bc68f6f4221a6a711ac23d49dc9')->get();
-        dd($or);
-        /** @var Order $order */
-        $order = Order::with([
-            'currency',
-            'orderDetails',
-            'shop.seller',
-            'shop.translation' => fn($q) => $q->where('locale', $this->language),
-            'user',
-        ])
-            ->find(2653);
-
-//        $order->shop->update([
-//            'location' => [
-//                'latitude'  => '55.691862',
-//                'longitude' => '37.578001',
-//            ]
-//        ]);
-//
-//        $order->update([
-//            'location' => [
-//                'latitude'  => '55.692862',
-//                'longitude' => '37.579001',
-//            ]
-//        ]);
-//array:18 [
-//  "id" => "3c31cc0b808844ca8cd8e1b6f7a6de95"
-//  "corp_client_id" => "1570693d73da4b9c969fe805e696d314"
-//  "items" => array:1 [
-//    0 => array:8 [
-//      "pickup_point" => 1805131656
-//      "droppof_point" => 1805131657
-//      "title" => "Плюмбус"
-//      "size" => array:3 [
-//        "length" => 0.15
-//        "width" => 0.15
-//        "height" => 0.15
-//      ]
-//      "weight" => 0.3
-//      "cost_value" => "6.06"
-//      "cost_currency" => "RUB"
-//      "quantity" => 1
-//    ]
-//  ]
-//  "route_points" => array:3 [
-//    0 => array:12 [
-//      "id" => 1805131656
-//      "contact" => array:3 [
-//        "name" => "Giotto"
-//        "phone" => "+79607316358"
-//        "email" => "zaq@gmail.com"
-//      ]
-//      "address" => array:9 [
-//        "fullname" => "проспект 60-летия Октября, 21к2"
-//        "shortname" => "проспект 60-летия Октября, 21к2"
-//        "coordinates" => array:2 [
-//          0 => 37.578001
-//          1 => 55.691862
-//        ]
-//        "country" => "Россия"
-//        "city" => "Москва"
-//        "street" => "проспект 60-летия Октября"
-//        "building" => "21к2"
-//        "uri" => "ymapsbm1://geo?data=Cgg1NjY3Mzg0MhJQ0KDQvtGB0YHQuNGPLCDQnNC-0YHQutCy0LAsINC_0YDQvtGB0L_QtdC60YIgNjAt0LvQtdGC0LjRjyDQntC60YLRj9Cx0YDRjywgMjHQujIiCg1CTxZCFYXEXkI,"
-//        "description" => "Москва"
-//      ]
-//      "type" => "source"
-//      "visit_order" => 1
-//      "visit_status" => "pending"
-//      "skip_confirmation" => true
-//      "leave_under_door" => false
-//      "meet_outside" => false
-//      "no_door_call" => false
-//      "modifier_age_check" => false
-//      "visited_at" => []
-//    ]
-//    1 => array:13 [
-//      "id" => 1805131657
-//      "contact" => array:2 [
-//        "name" => "James"
-//        "phone" => "+79775053520"
-//      ]
-//      "address" => array:9 [
-//        "fullname" => "проспект 60-летия Октября, 21к2"
-//        "shortname" => "проспект 60-летия Октября, 21к2"
-//        "coordinates" => array:2 [
-//          0 => 37.578001
-//          1 => 55.691862
-//        ]
-//        "country" => "Россия"
-//        "city" => "Москва"
-//        "street" => "проспект 60-летия Октября"
-//        "building" => "21к2"
-//        "uri" => "ymapsbm1://geo?data=Cgg1NjY3Mzg0MhJQ0KDQvtGB0YHQuNGPLCDQnNC-0YHQutCy0LAsINC_0YDQvtGB0L_QtdC60YIgNjAt0LvQtdGC0LjRjyDQntC60YLRj9Cx0YDRjywgMjHQujIiCg1CTxZCFYXEXkI,"
-//        "description" => "Москва"
-//      ]
-//      "type" => "destination"
-//      "visit_order" => 2
-//      "visit_status" => "pending"
-//      "skip_confirmation" => true
-//      "leave_under_door" => false
-//      "meet_outside" => false
-//      "no_door_call" => false
-//      "modifier_age_check" => false
-//      "external_order_id" => "2651"
-//      "visited_at" => []
-//    ]
-//    2 => array:12 [
-//      "id" => 1805131658
-//      "contact" => array:3 [
-//        "name" => "Giotto"
-//        "phone" => "+79607316358"
-//        "email" => "zaq@gmail.com"
-//      ]
-//      "address" => array:9 [
-//        "fullname" => "проспект 60-летия Октября, 21к2"
-//        "shortname" => "проспект 60-летия Октября, 21к2"
-//        "coordinates" => array:2 [
-//          0 => 37.578001
-//          1 => 55.691862
-//        ]
-//        "country" => "Россия"
-//        "city" => "Москва"
-//        "street" => "проспект 60-летия Октября"
-//        "building" => "21к2"
-//        "uri" => "ymapsbm1://geo?data=Cgg1NjY3Mzg0MhJQ0KDQvtGB0YHQuNGPLCDQnNC-0YHQutCy0LAsINC_0YDQvtGB0L_QtdC60YIgNjAt0LvQtdGC0LjRjyDQntC60YLRj9Cx0YDRjywgMjHQujIiCg1CTxZCFYXEXkI,"
-//        "description" => "Москва"
-//      ]
-//      "type" => "return"
-//      "visit_order" => 3
-//      "visit_status" => "pending"
-//      "skip_confirmation" => true
-//      "leave_under_door" => false
-//      "meet_outside" => false
-//      "no_door_call" => false
-//      "modifier_age_check" => false
-//      "visited_at" => []
-//    ]
-//  ]
-//  "status" => "new"
-//  "version" => 1
-//  "user_request_revision" => "1"
-//  "skip_door_to_door" => false
-//  "skip_client_notify" => false
-//  "skip_emergency_notify" => false
-//  "skip_act" => false
-//  "optional_return" => false
-//  "created_ts" => "2023-07-12T07:09:29.87866+00:00"
-//  "updated_ts" => "2023-07-12T07:09:29.87866+00:00"
-//  "pricing" => []
-//  "available_cancel_state" => "free"
-//  "features" => []
-//  "revision" => 1
-//]
-        //{"latitude":"55.691862","longitude":"37.578001"}
-        $lat = ['latitude' => '55.650433', 'longitude' => '37.617288'];
-        $lon = ['latitude' => '55.848572', 'longitude' => '37.582241'];
-
-//        $result = (new YandexService)->checkPrice($order, $lat, $lon);
-        $result = (new YandexService)->createOrder($order);
-//        $result = (new YandexService)->getOrderInfo();
-//        $result = (new YandexService)->acceptOrder();
-//        $result = (new YandexService)->cancelInfoOrder();
-//        $result = (new YandexService)->cancelOrder();
-//        $result = (new YandexService)->orderDriverVoiceForwarding();
-//        $result = (new YandexService)->orderDriverPerformerPosition();
-//        $result = (new YandexService)->orderTrackingLinks();
-//        $result = (new YandexService)->orderPointsEta();
-        dd($result, $order->delivery_fee, $order->rate_delivery_fee, $this->currency);
-
 //        $this->createNewTranslations();
 //        $this->ordersUpdate();
     }
@@ -382,8 +171,7 @@ class TestController extends Controller
     #region ORDERS UPDATE
     public function ordersUpdate() {
 
-        $orders = Order::withTrashed()
-            ->where('created_at', '>=' , date('Y-m-d', strtotime('2023-05-12')))
+        $orders = Order::where('created_at', '>=' , date('Y-m-d', strtotime('2023-05-12')))
             ->get();
 
         foreach ($orders as $order) {

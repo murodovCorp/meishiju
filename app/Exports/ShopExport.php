@@ -25,8 +25,8 @@ class ShopExport extends BaseExport implements FromCollection, WithHeadings
     public function headings(): array
     {
         return [
-            '#',
-            'uuid',
+            'Id',
+            'Uu Id',
             'User Id',
             'Tax',
             'Percentage',
@@ -40,6 +40,8 @@ class ShopExport extends BaseExport implements FromCollection, WithHeadings
             'Status Note',
             'Created At',
             'Delivery Time',
+            'Delivery Price',
+            'Delivery Price Per Km',
         ];
     }
 
@@ -55,22 +57,22 @@ class ShopExport extends BaseExport implements FromCollection, WithHeadings
         $type = data_get($shop->delivery_time, 'type', '');
 
         return [
-            'id'                => $shop->id, //0
-            'uuid'              => $shop->uuid, //1
-            'user_id'           => $shop->user_id, //2
-            'tax'               => $shop->tax, //3
-            'percentage'        => $shop->percentage, //4
-            'location'          => implode(',', $shop->location), //5
-            'phone'             => $shop->phone, //6
-            'show_type'         => $shop->show_type, //7
-            'open'              => $shop->open, //8
-            'img_urls'          => $this->imageUrl($shop->galleries), //10
-            'min_amount'        => $shop->min_amount, //12
-            'status'            => $shop->status, //13
-            'status_note'       => $shop->status_note, //14
-            'created_at'        => $shop->created_at ?? date('Y-m-d H:i:s'),//23
-            'delivery_time'     => "from: $from, to: $to, type: $type", //20
-            'type'              => data_get(Shop::TYPES, $shop->type, 'shop'), //21
+            'id'                => $shop->id,
+            'uuid'              => $shop->uuid,
+            'user_id'           => $shop->user_id,
+            'tax'               => $shop->tax,
+            'percentage'        => $shop->percentage,
+            'location'          => implode(',', $shop->location),
+            'phone'             => $shop->phone,
+            'show_type'         => $shop->show_type,
+            'open'              => $shop->open,
+            'img_urls'          => $this->imageUrl($shop->galleries),
+            'min_amount'        => $shop->min_amount,
+            'status'            => $shop->status,
+            'status_note'       => $shop->status_note,
+            'created_at'        => $shop->created_at ?? date('Y-m-d H:i:s'),
+            'delivery_time'     => "from: $from, to: $to, type: $type",
+            'delivery_price'    => $shop->delivery_price,
         ];
     }
 }

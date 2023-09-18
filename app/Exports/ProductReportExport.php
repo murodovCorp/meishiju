@@ -24,7 +24,6 @@ class ProductReportExport extends BaseExport implements FromCollection, WithHead
     {
         return [
             'Product title',
-            'Bar code',
             'Item sold',
             'Net sales',
             'Orders',
@@ -37,7 +36,6 @@ class ProductReportExport extends BaseExport implements FromCollection, WithHead
     {
         return [
             'title'         => data_get($product, 'translation.title'),
-            'bar_code'      => data_get($product, 'bar_code'),
             'quantity'      => data_get($product, 'quantity', 0),
             'sum'           => data_get($product, 'price', 0),
             'orders'        => data_get($product, 'count', 0),

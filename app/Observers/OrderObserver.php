@@ -5,9 +5,12 @@ namespace App\Observers;
 use App\Jobs\AttachDeliveryMan;
 use App\Models\Language;
 use App\Models\Order;
+use App\Models\PushNotification;
 use App\Models\Settings;
 use App\Services\ModelLogService\ModelLogService;
 use App\Traits\Notification;
+use DB;
+use Psr\SimpleCache\InvalidArgumentException;
 use Throwable;
 
 class OrderObserver
@@ -52,14 +55,22 @@ class OrderObserver
      */
     public function deleted(Order $order): void
     {
-        try {
-            $order->transactions()->delete();
-            $order->reviews()->delete();
-            $order->galleries()->delete();
-            $order->coupon()->delete();
-            $order->pointHistories()->delete();
-            $order->orderDetails()->delete();
-        } catch (Throwable) {}
+		try {
+			$order->transactions()->delete();
+			$order->reviews()->delete();
+			$order->galleries()->delete();
+			$order->coupon()->delete();
+			$order->pointHistories()->delete();
+			$order->orderDetails()->delete();
+			DB::table('push_notifications')
+				->where(function ($query) {
+					$query
+						->where('type', PushNotification::NEW_ORDER)
+						->orWhere('type', PushNotification::STATUS_CHANGED);
+				})
+				->where('title', $order->id)
+				->delete();
+		} catch (Throwable|InvalidArgumentException) {}
 
         (new ModelLogService)->logging($order, $order->getAttributes(), 'deleted');
     }

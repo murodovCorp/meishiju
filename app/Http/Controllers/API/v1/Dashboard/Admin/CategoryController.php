@@ -6,6 +6,8 @@ use App\Exports\CategoryExport;
 use App\Helpers\ResponseError;
 use App\Http\Requests\CategoryCreateRequest;
 use App\Http\Requests\CategoryFilterRequest;
+use App\Http\Requests\CategoryInputRequest;
+use App\Http\Requests\CategoryStatusRequest;
 use App\Http\Requests\FilterParamsRequest;
 use App\Http\Requests\Order\OrderChartRequest;
 use App\Http\Resources\CategoryResource;
@@ -16,6 +18,7 @@ use App\Services\CategoryServices\CategoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
 
@@ -35,16 +38,13 @@ class CategoryController extends AdminBaseController
      * Display a listing of the resource.
      *
      * @param CategoryFilterRequest $request
-     * @return JsonResponse
+     * @return AnonymousResourceCollection
      */
-    public function index(CategoryFilterRequest $request): JsonResponse
+    public function index(CategoryFilterRequest $request): AnonymousResourceCollection
     {
-        $categories = $this->categoryRepository->parentCategories($request->all());
+        $categories = $this->categoryRepository->categories($request->merge(['is_admin' => true])->all());
 
-        return $this->successResponse(
-            __('errors.' . ResponseError::SUCCESS, locale: $this->language),
-            CategoryResource::collection($categories)
-        );
+        return CategoryResource::collection($categories);
     }
 
     /**
@@ -55,7 +55,11 @@ class CategoryController extends AdminBaseController
      */
     public function paginate(CategoryFilterRequest $request): AnonymousResourceCollection
     {
-        $categories = $this->categoryRepository->parentCategories($request->all());
+        $categories = $this->categoryRepository->parentCategories($request->merge(['is_admin' => true])->all());
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return CategoryResource::collection($categories);
     }
@@ -68,7 +72,7 @@ class CategoryController extends AdminBaseController
      */
     public function selectPaginate(CategoryFilterRequest $request): AnonymousResourceCollection
     {
-        $categories = $this->categoryRepository->selectPaginate($request->except(['active']));
+        $categories = $this->categoryRepository->selectPaginate($request->merge(['is_admin' => true])->all());
 
         return CategoryResource::collection($categories);
     }
@@ -85,6 +89,10 @@ class CategoryController extends AdminBaseController
 
         if (!data_get($result, 'status')) {
             return $this->onErrorResponse($result);
+        }
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
         }
 
         return $this->successResponse(
@@ -137,6 +145,55 @@ class CategoryController extends AdminBaseController
 
         return $this->successResponse(__('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_UPDATED));
     }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param CategoryInputRequest $request
+     * @param string $uuid
+     * @return JsonResponse
+     */
+    public function changeInput(string $uuid, CategoryInputRequest $request): JsonResponse
+    {
+        $result = $this->categoryService->changeInput($uuid, $request->validated());
+
+        if (!data_get($result, 'status')) {
+            return $this->onErrorResponse($result);
+        }
+
+        return $this->successResponse(__('errors.' . ResponseError::RECORD_WAS_SUCCESSFULLY_UPDATED));
+    }
+
+	/**
+	 * @param string $uuid
+	 * @return JsonResponse
+	 */
+	public function changeActive(string $uuid): JsonResponse
+	{
+		$result = $this->categoryService->changeActive($uuid);
+
+		if (!empty(data_get($result, 'data'))) {
+			return $this->onErrorResponse($result);
+		}
+
+		return $this->successResponse(__('errors.' . ResponseError::ERROR_502, locale: $this->language));
+	}
+
+	/**
+	 * @param string $uuid
+	 * @param CategoryStatusRequest $request
+	 * @return JsonResponse
+	 */
+	public function changeStatus(string $uuid, CategoryStatusRequest $request): JsonResponse
+	{
+		$result = $this->categoryService->changeStatus($uuid, $request->input('status'));
+
+		if (!data_get($result, 'status')) {
+			return $this->onErrorResponse($result);
+		}
+
+		return $this->successResponse(__('errors.' . ResponseError::NO_ERROR, locale: $this->language));
+	}
 
     /**
      * Remove the specified resource from storage.
@@ -258,12 +315,12 @@ class CategoryController extends AdminBaseController
         );
     }
 
-    public function fileExport(): JsonResponse
+    public function fileExport(FilterParamsRequest $request): JsonResponse
     {
-        $fileName = 'export/categories.xls';
+        $fileName = 'export/categories.xlsx';
 
         try {
-            Excel::store(new CategoryExport($this->language), $fileName, 'public');
+            Excel::store(new CategoryExport($this->language, $request->all()), $fileName, 'public', \Maatwebsite\Excel\Excel::XLSX);
         } catch (Throwable $e) {
             $this->error($e);
             return $this->errorResponse('Error during export');

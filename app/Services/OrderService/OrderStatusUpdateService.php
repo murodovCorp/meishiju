@@ -50,24 +50,18 @@ class OrderStatusUpdateService extends CoreService
             ];
         }
 
-        $order = $order->fresh([
-            'user',
-            'pointHistories',
-            'orderRefunds',
-            'orderDetails',
-            'transaction.paymentSystem',
-        ]);
+		$order = $order->fresh([
+			'user',
+			'pointHistories',
+			'orderRefunds',
+			'orderDetails',
+			'transaction.paymentSystem',
+		]);
 
         try {
             $order = DB::transaction(function () use ($order, $status) {
 
                 if ($status == Order::STATUS_DELIVERED) {
-
-//                    $this->sellerWalletTopUp($order);
-//
-//                    if (!empty($order->deliveryman)) {
-//                        $this->deliverymanWalletTopUp($order);
-//                    }
 
                     $default = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
 
@@ -79,25 +73,18 @@ class OrderStatusUpdateService extends CoreService
 
                     $this->adminWalletTopUp($order);
 
-                    if ($order?->transaction?->paymentSystem?->tag == 'cash') {
-                        $order->transaction->update([
-                            'status' => Transaction::STATUS_PAID,
-                        ]);
-                    }
+					if ($order?->transaction?->paymentSystem?->tag == 'cash') {
+						$order->transaction->update([
+							'status' => Transaction::STATUS_PAID,
+						]);
+					}
 
-                    $order = $order->loadMissing([
-                        'coupon',
-                        'pointHistories',
-                    ]);
+					$order = $order->loadMissing([
+						'coupon',
+						'pointHistories',
+					]);
 
-                    $sellerPrice = $order->total_price
-                        - $order->delivery_fee
-                        - $order->service_fee
-                        - $order->commission_fee
-                        - ($order->coupon?->price ?? 0)
-                        - $order->pointHistories->sum('price');
-
-                    $point = Point::getActualPoint($sellerPrice, $order->shop_id);
+                    $point = Point::getActualPoint($order->total_price, $order->shop_id);
 
                     if (!empty($point)) {
                         $token  = $order->user?->firebase_token;
@@ -141,16 +128,16 @@ class OrderStatusUpdateService extends CoreService
                         (new WalletHistoryService)->create([
                             'type'   => 'topup',
                             'price'  => $order->total_price,
-                            'note'   => 'For Order #' . $order->id,
+                            'note'   => 'Canceled Order #' . $order->id,
                             'status' => WalletHistory::PAID,
                             'user'   => $user
                         ]);
 
                     }
 
-                    $order->transaction?->update([
-                        'status' => Transaction::STATUS_CANCELED,
-                    ]);
+					$order->transaction?->update([
+						'status' => Transaction::STATUS_CANCELED,
+					]);
 
                     if ($order->pointHistories?->count() > 0) {
                         foreach ($order->pointHistories as $pointHistory) {
@@ -245,10 +232,11 @@ class OrderStatusUpdateService extends CoreService
         return ['status' => true, 'code' => ResponseError::NO_ERROR, 'data' => $order];
     }
 
-    /**
-     * @param Order $order
-     * @return void
-     */
+	/**
+	 * @param Order $order
+	 * @return void
+	 * @throws Throwable
+	 */
     private function adminWalletTopUp(Order $order): void
     {
         /** @var User $admin */
@@ -269,49 +257,5 @@ class OrderStatusUpdateService extends CoreService
 
         (new WalletHistoryService)->create($request);
     }
-//
-//    /**
-//     * @param Order $order
-//     * @return void
-//     */
-//    private function sellerWalletTopUp(Order $order): void
-//    {
-//        $seller = $order->shop->seller;
-//
-//        if ($seller->wallet) {
-//
-//            $request = request()->merge([
-//                'type'      => 'topup',
-//                'price'     => $order->total_price - $order->delivery_fee - $order->commission_fee,
-//                'note'      => "For Seller Order #$order->id",
-//                'status'    => WalletHistory::PAID,
-//                'user'      => $seller,
-//            ])->all();
-//
-//            (new WalletHistoryService)->create($request);
-//        }
-//    }
-//
-//    /**
-//     * @param Order $order
-//     * @return void
-//     */
-//    private function deliverymanWalletTopUp(Order $order): void
-//    {
-//        $deliveryman = $order->deliveryMan;
-//
-//        if ($deliveryman->wallet) {
-//
-//            $request = request()->merge([
-//                'type'      => 'topup',
-//                'price'     => $order->delivery_fee,
-//                'note'      => "For Deliveryman Order fee #$order->id",
-//                'status'    => WalletHistory::PAID,
-//                'user'      => $deliveryman,
-//            ])->all();
-//
-//            (new WalletHistoryService)->create($request);
-//        }
-//
-//    }
+
 }

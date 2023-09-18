@@ -22,10 +22,12 @@ class TransactionRepository extends CoreRepository
      */
     public function paginate(array $filter): LengthAwarePaginator
     {
-        if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
             abort(403);
         }
-        return $this->model()->with([
+
+        return $this->model()
+			->with([
                 'payable',
                 'user',
                 'paymentSystem'
@@ -42,18 +44,23 @@ class TransactionRepository extends CoreRepository
      */
     public function show(int $id, ?int $shopId = null): ?Transaction
     {
-        if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
             abort(403);
         }
-        return $this->model()->with([
-            'payable',
-            'user',
-            'paymentSystem'
-        ])->when($shopId, function (Builder $query, $shopId) {
-            $query
-                ->where('payable_type', Order::class)
-                ->whereHas('payable', fn(Builder $payable) => $payable->where('shop_id', $shopId));
-            })
-            ->find($id);
+
+        return $this->model()
+        	->with([
+        		'payable',
+        	   	'user',
+        	   	'paymentSystem'
+        	])
+			->when($shopId, function (Builder $query, $shopId) {
+        		$query->whereHasMorph(
+					'payable',
+					Order::class,
+					fn(Builder $payable) => $payable->where('shop_id', $shopId)
+				);
+        	})
+        	->find($id);
     }
 }

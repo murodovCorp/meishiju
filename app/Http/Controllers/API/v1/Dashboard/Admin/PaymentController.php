@@ -11,6 +11,7 @@ use App\Repositories\PaymentRepository\PaymentRepository;
 use App\Services\PaymentService\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class PaymentController extends AdminBaseController
 {
@@ -33,6 +34,10 @@ class PaymentController extends AdminBaseController
     public function index(FilterParamsRequest $request): AnonymousResourceCollection
     {
         $payments = $this->paymentRepository->paymentsList($request->all());
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return PaymentResource::collection($payments);
     }

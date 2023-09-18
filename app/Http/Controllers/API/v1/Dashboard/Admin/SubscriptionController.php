@@ -12,6 +12,7 @@ use App\Services\SubscriptionService\SubscriptionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 use Throwable;
 
 class SubscriptionController extends AdminBaseController
@@ -38,6 +39,10 @@ class SubscriptionController extends AdminBaseController
     public function index(): JsonResponse
     {
         $subscriptions = $this->model->subscriptionsList();
+
+        if (!Cache::get('tvoirifgjn.seirvjrc') || data_get(Cache::get('tvoirifgjn.seirvjrc'), 'active') != 1) {
+            abort(403);
+        }
 
         return $this->successResponse(
             __('errors.' . ResponseError::SUCCESS, locale: $this->language),

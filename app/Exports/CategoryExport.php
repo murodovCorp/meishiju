@@ -5,51 +5,69 @@ namespace App\Exports;
 use App\Models\Category;
 use App\Models\Language;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Schema;
 
 class CategoryExport extends BaseExport implements FromCollection, WithHeadings
 {
-    protected string $language;
-
-    public function __construct(string $language) {
-        $this->language = $language;
-    }
+    public function __construct(protected string $language, protected array $filter) {}
 
     /**
      * @return Collection
      */
     public function collection(): Collection
     {
-        $language = Language::where('default', 1)->first();
-        if (!Cache::get('tytkjbjkfr.reprijvbv') || data_get(Cache::get('tytkjbjkfr.reprijvbv'), 'active') != 1) {
-            abort(403);
+        $locale = data_get(Language::languagesList()->where('default', 1)->first(), 'locale');
+
+        if (empty(data_get($this->filter, 'type'))) {
+            $this->filter['type'] = 'main';
         }
-        $categories = Category::with([
-            'translation' => fn($q) => $q->where('locale', $this->language)
-                ->orWhere('locale', data_get($language, 'locale')),
-        ])
-            ->where('type', Category::MAIN)
-            ->orderBy('id')
+
+        $column = data_get($this->filter, 'column', 'id');
+
+        if (!Schema::hasColumn('categories', $column)) {
+            $column = 'id';
+        }
+
+        $categories = Category::filter($this->filter)
+            ->with([
+                'translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
+            ])
+            ->orderBy($column, data_get($this->filter, 'sort', 'desc'))
             ->get();
 
-        return $categories->map(fn(Category $category) => $this->tableBody($category));
+        return $categories->map(fn(Category $category) => $this->mergeCategories($category));
     }
 
+    /**
+     * @param  Category  $category
+     * @return array
+     */
+    private function mergeCategories(Category $category): array
+    {
+        $categories = [$this->tableBody($category)];
+
+        foreach ($category->children as $child) {
+            $categories = array_merge($categories, $this->mergeCategories($child));
+        }
+
+        return $categories;
+    }
     /**
      * @return string[]
      */
     public function headings(): array
     {
         return [
-            '#',
+            'Id',
             'Uu Id',
             'Keywords',
             'Parent Id',
             'Title',
             'Description',
             'Active',
+            'Status',
             'Type',
             'Img Urls',
         ];
@@ -62,15 +80,16 @@ class CategoryExport extends BaseExport implements FromCollection, WithHeadings
     private function tableBody(Category $category): array
     {
         return [
-            'id'            => $category->id,//0
-            'uuid'          => $category->uuid,//1
-            'keywords'      => $category->keywords,//2
-            'parent_id'     => $category->parent_id,//3
-            'title'         => data_get($category->translation, 'title', ''),//4
-            'description'   => data_get($category->translation, 'description', ''),//5
-            'active'        => $category->active ? 'active' : 'inactive',//6
-            'type'          => 'main',//7
-            'img_urls'      => $this->imageUrl($category->galleries),//9
+            'id'            => $category->id,
+            'uuid'          => $category->uuid,
+            'keywords'      => $category->keywords,
+            'parent_id'     => $category->parent_id,
+            'title'         => $category->translation?->title,
+            'description'   => $category->translation?->description,
+            'active'        => $category->active ? 'active' : 'inactive',
+            'status'        => $category->status,
+            'type'          => $category->type ? data_get(Category::TYPES_VALUES, $category->type, 'main') : '',
+            'img_urls'      => $this->imageUrl($category->galleries),
         ];
     }
 }

@@ -15,6 +15,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Throwable;
 
 class WalletController extends UserBaseController
 {
@@ -39,13 +40,12 @@ class WalletController extends UserBaseController
      */
     public function walletHistories(FilterParamsRequest $request): JsonResponse|AnonymousResourceCollection
     {
+		/** @var User $user */
+		$user = auth('sanctum')->user();
 
-        /** @var User $user */
-        $user = auth('sanctum')->user();
-
-        if (empty($user->wallet?->uuid)) {
-            $user = (new UserWalletService)->create($user);
-        }
+		if (empty($user->wallet?->uuid)) {
+			$user = (new UserWalletService)->create($user);
+		}
 
         $data = $request->merge(['wallet_uuid' => $user->wallet->uuid])->all();
 
@@ -54,15 +54,21 @@ class WalletController extends UserBaseController
         return WalletHistoryResource::collection($histories);
     }
 
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
+	/**
+	 * @param Request $request
+	 * @return JsonResponse
+	 * @throws Throwable
+	 */
     public function store(Request $request): JsonResponse
     {
-        $user = auth('sanctum')->user();
+		/** @var User $user */
+		$user = auth('sanctum')->user();
 
-        if (empty($user->wallet?->uuid) || $user->wallet->price < $request->input('price')) {
+		if (empty($user->wallet?->uuid)) {
+			$user = (new UserWalletService)->create($user);
+		}
+
+        if ($user->wallet->price < $request->input('price')) {
             return $this->onErrorResponse(['code' => ResponseError::ERROR_109]);
         }
 

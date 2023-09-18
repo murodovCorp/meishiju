@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 /**
  * App\Models\Cart
@@ -31,7 +32,7 @@ use Illuminate\Support\Carbon;
  * @property-read User|BelongsTo $user
  * @property-read Shop|BelongsTo $shop
  * @property-read Currency|BelongsTo $currency
- * @property-read UserCart[]|HasMany $userCarts
+ * @property-read UserCart[]|HasMany|Collection $userCarts
  * @property-read int|null $user_carts_count
  * @method static Builder|Cart newModelQuery()
  * @method static Builder|Cart newQuery()
@@ -63,7 +64,7 @@ class Cart extends Model
     public function getRateTotalPriceAttribute(): float|int|null
     {
         if (request()->is('api/v1/dashboard/user/*') || request()->is('api/v1/rest/*')) {
-            return $this->total_price * $this->rate;
+            return $this->total_price * ($this->rate <= 0 ? 1 : $this->rate);
         }
 
         return $this->total_price;

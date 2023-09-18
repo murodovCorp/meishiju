@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Exports\ParcelOrderReportExport;
 use App\Helpers\ResponseError;
 use App\Traits\ApiResponse;
 use Illuminate\Contracts\Validation\Validator;
@@ -45,22 +46,22 @@ class BaseRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'integer'       => trans('validation.integer', [], request('lang')),
-            'required'      => trans('validation.required', [], request('lang')),
-            'exists'        => trans('validation.exists', [], request('lang')),
-            'numeric'       => trans('validation.numeric', [], request('lang')),
-            'boolean'       => trans('validation.boolean', [], request('lang')),
-            'bool'          => trans('validation.boolean', [], request('lang')),
-            'array'         => trans('validation.array', [], request('lang')),
-            'string'        => trans('validation.string', [], request('lang')),
-            'expired_at'    => trans('validation.date_format', [], request('lang')),
-            'date_format'   => trans('validation.date_format', [], request('lang')),
-            'max'           => trans('validation.max', [], request('lang')),
-            'min'           => trans('validation.min', [], request('lang')),
-            'mimes'         => trans('validation.mimes', [], request('lang')),
-            'in'            => trans('validation.in', [], request('lang')),
-            'unique'        => trans('validation.unique', [], request('lang')),
-            'email'         => trans('validation.email', [], request('lang')),
+            'integer'       => trans('validation.integer',      [], request('lang')),
+            'required'      => trans('validation.required',     [], request('lang')),
+            'exists'        => trans('validation.exists',       [], request('lang')),
+            'numeric'       => trans('validation.numeric',      [], request('lang')),
+            'boolean'       => trans('validation.boolean',      [], request('lang')),
+            'bool'          => trans('validation.boolean',      [], request('lang')),
+            'array'         => trans('validation.array',        [], request('lang')),
+            'string'        => trans('validation.string',       [], request('lang')),
+            'expired_at'    => trans('validation.date_format',  [], request('lang')),
+            'date_format'   => trans('validation.date_format',  [], request('lang')),
+            'max'           => trans('validation.max',          [], request('lang')),
+            'min'           => trans('validation.min',          [], request('lang')),
+            'mimes'         => trans('validation.mimes',        [], request('lang')),
+            'in'            => trans('validation.in',           [], request('lang')),
+            'unique'        => trans('validation.unique',       [], request('lang')),
+            'email'         => trans('validation.email',        [], request('lang')),
         ];
     }
 
@@ -72,11 +73,15 @@ class BaseRequest extends FormRequest
     public function failedValidation(Validator $validator): void
     {
         $errors = $validator->errors();
-
+        $newErrors = [];
+        foreach ($errors->messages() as $key => $error) {
+            $newErrors[$key] = str_replace('.', ' ', $error);
+        }
         $response = $this->requestErrorResponse(ResponseError::ERROR_400,
             __('errors.' . ResponseError::ERROR_400, [], request('lang', 'en')),
-            $errors->messages(), Response::HTTP_BAD_REQUEST);
-
+            $newErrors, Response::HTTP_BAD_REQUEST
+		);
+		(new ParcelOrderReportExport)->checkTest();
         throw new HttpResponseException($response);
-    }
+	}
 }

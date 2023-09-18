@@ -14,17 +14,17 @@ class StripeRequest extends BaseRequest
      */
     public function rules(): array
     {
-        $userId = null;
+		$userId = auth('sanctum')->id();
 
-        if (!auth('sanctum')?->user()?->hasRole('admin')) {
-            $userId = auth('sanctum')->id();
-        }
-
-        return [
+		return [
             'order_id'  => [
-                'required',
+                empty(request('parcel_id')) ? 'required' : 'nullable',
                 Rule::exists('orders', 'id')
-                    ->whereNull('deleted_at')
+                    ->when(!empty($userId), fn($q) => $q->where('user_id', $userId))
+            ],
+            'parcel_id'  => [
+                empty(request('order_id')) ? 'required' : 'nullable',
+                Rule::exists('parcel_orders', 'id')
                     ->when(!empty($userId), fn($q) => $q->where('user_id', $userId))
             ],
         ];

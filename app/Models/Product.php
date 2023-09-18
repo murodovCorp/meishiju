@@ -18,7 +18,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -39,18 +38,19 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
  * @property string|null $qr_code
- * @property string|null $bar_code
  * @property int|null $stocks_sum_quantity
  * @property double $tax
  * @property int $shop_id
  * @property boolean $active
  * @property boolean $addon
  * @property string $status
+ * @property string $status_note
  * @property string $vegetarian
  * @property string $kcal
  * @property string $carbs
  * @property string $protein
  * @property string $fats
+ * @property double $interval
  * @property-read Brand $brand
  * @property-read Collection|Tag[] $tags
  * @property-read Category $category
@@ -91,7 +91,6 @@ use Illuminate\Support\Carbon;
  * @method static Builder|Product onlyTrashed()
  * @method static Builder|Product query()
  * @method static Builder|Product updatedDate($updatedDate)
- * @method static Builder|Product whereBarCode($value)
  * @method static Builder|Product whereBrandId($value)
  * @method static Builder|Product whereAddon($value)
  * @method static Builder|Product whereCategoryId($value)
@@ -115,18 +114,19 @@ class Product extends Model
     protected $guarded = ['id'];
 
     protected $casts = [
+        'interval'   => 'double',
         'active'     => 'bool',
         'addon'      => 'bool',
         'vegetarian' => 'bool'
     ];
 
-    const PUBLISHED     = 'published';
-    const PENDING       = 'pending';
+	const PENDING       = 'pending';
+	const PUBLISHED     = 'published';
     const UNPUBLISHED   = 'unpublished';
 
     const STATUSES = [
+		self::PENDING       => self::PENDING,
         self::PUBLISHED     => self::PUBLISHED,
-        self::PENDING       => self::PENDING,
         self::UNPUBLISHED   => self::UNPUBLISHED,
     ];
 
@@ -191,14 +191,14 @@ class Product extends Model
         return $this->belongsToMany(ExtraGroup::class, ProductExtra::class);
     }
 
-    public function stock(): MorphOne
+    public function stock(): HasOne
     {
-        return $this->morphOne(Stock::class, 'countable');
+        return $this->hasOne(Stock::class, 'countable_id');
     }
 
-    public function stocks(): MorphMany
+    public function stocks(): HasMany
     {
-        return $this->morphMany(Stock::class, 'countable');
+        return $this->hasMany(Stock::class, 'countable_id');
     }
 
     public function discounts(): BelongsToMany
@@ -233,6 +233,18 @@ class Product extends Model
         }
 
         $query
+			->when(data_get($array, 'actual'), function ($query, $actual) {
+
+				if ($actual === 'in_stock') {
+					$query->whereHas('stocks', fn($q) => $q->where('quantity', '>', 0));
+				} else if ($actual === 'low_stock') {
+					$query->whereHas('stocks', fn($q) => $q->where('quantity', '<=', 10)->where('quantity', '>', 0));
+				} else if ($actual === 'out_of_stock') {
+					$query->whereHas('stocks', fn($q) => $q->where('quantity', '<=', 0));
+				}
+
+				return $query;
+			})
             ->when(isset($array['price_from']), function ($q) use ($array) {
                 $q->whereHas('stocks', function ($stock) use($array) {
                     $stock->where('price', '>=', data_get($array, 'price_from') / $this->currency())
@@ -277,6 +289,9 @@ class Product extends Model
             ->when(isset($array['brand_id']), function ($q) use ($array) {
                 $q->where('brand_id', $array['brand_id']);
             })
+            ->when(data_get($array, 'brand_ids.*'), function ($q) use ($array) {
+                $q->whereIn('brand_id', $array['brand_ids']);
+            })
             ->when(isset($array['column_rate']), function ($q) use ($array) {
                 $q->whereHas('reviews', function ($review) use($array){
                     $review->orderBy('rating', data_get($array, 'sort', 'desc'));
@@ -285,21 +300,24 @@ class Product extends Model
             ->when(isset($array['deleted_at']), fn($q) => $q->onlyTrashed())
             ->when(data_get($array, 'bonus'), function (Builder $query) {
                 $query->whereHas('stocks.bonus', function ($q) {
-                    $q->where('expired_at', '>=', now());
+                    $q->where('expired_at', '>', now())->where('status', true);
                 });
             })
             ->when(data_get($array, 'deals'), function (Builder $query) {
                 $query->where(function ($query) {
                     $query->whereHas('stocks.bonus', function ($q) {
-                        $q->where('expired_at', '>=', now());
+                        $q->where('expired_at', '>', now())->where('status', true);
                     })->orWhereHas('discounts', function ($q) {
                         $q->where('end', '>=', now())->where('active', 1);
                     });
                 });
             })
             ->when(isset($array['active']), fn($query, $active) => $query->active($active))
-            ->when(isset($array['addon']), fn($query, $addon) => $query->whereAddon($addon)->whereHas('stock'),
-                fn($query) => $query->whereAddon(0)
+            ->when(isset($array['addon']),
+				fn($query, $addon) => $query
+					->where('addon', $array['addon'])
+					->whereHas('stock', fn($q) => $q->where('quantity', '>', 0)),
+                fn($query) => $query->where('addon', false)
             )
             ->when(data_get($array, 'date_from'), function (Builder $query, $dateFrom) use ($array) {
 
@@ -337,9 +355,9 @@ class Product extends Model
                 $q->withAvg('stocks', 'price')->orderBy('stocks_avg_price', data_get($array, 'sort', 'desc'));
             })
             ->when(isset($array['with_addon']), fn($query, $addon) => $query->whereHas('stocks', fn($q) => $q->whereHas('addons')))
-            ->when(isset($array['column']), fn($query, $addon) => $query->orderBy(
-                data_get($array, 'column', 'id'),
-                data_get($array, 'sort', 'desc')
-            ));
+            ->when(
+				data_get($array, 'column', 'id'),
+				fn($query, $column) => $query->orderBy($column, data_get($array, 'sort', 'desc'))
+			);
     }
 }

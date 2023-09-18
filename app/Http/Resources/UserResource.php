@@ -90,6 +90,8 @@ class UserResource extends JsonResource
             'delivery_man_setting'          => DeliveryManSettingResource::make($this->whenLoaded('deliveryManSetting')),
             'logs'                          => ModelLogResource::collection($this->whenLoaded('logs')),
             'addresses'                     => UserAddressResource::collection($this->whenLoaded('addresses')),
+            'models'                        => RequestModelResource::collection($this->whenLoaded('models')),
+            'model'                         => RequestModelResource::make($this->whenLoaded('model')),
         ];
     }
 

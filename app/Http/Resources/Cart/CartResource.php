@@ -26,7 +26,7 @@ class CartResource extends JsonResource
             'shop_id'           => $this->shop_id,
             'status'            => $this->status,
             'total_price'       => $this->rate_total_price,
-            'receipt_discount'  => $this->when(request('receipt_discount'), request('receipt_discount') * $this->rate),
+            'receipt_discount'  => $this->when(request('receipt_discount'), request('receipt_discount') * ($this->rate <= 0 ? 1 : $this->rate)),
             'receipt_count'     => $this->when(request('receipt_count'), request('receipt_count')),
             'currency_id'       => $this->currency_id,
             'rate'              => $this->rate,

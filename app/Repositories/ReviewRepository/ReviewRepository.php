@@ -4,6 +4,7 @@ namespace App\Repositories\ReviewRepository;
 
 use App\Models\Blog;
 use App\Models\Order;
+use App\Models\ParcelOrder;
 use App\Models\Product;
 use App\Models\Review;
 use App\Models\Shop;
@@ -31,13 +32,13 @@ class ReviewRepository extends CoreRepository
                 'img',
             ]),
             'assignable',
+            'reviewable',
         ];
 
         $orderWith = [
             'reviewable.shop' => fn($q) => $q->select([
                 'id',
                 'uuid',
-                'type',
             ]),
             'reviewable.shop.translation' => fn($q) => $q->select([
                 'id',
@@ -94,6 +95,10 @@ class ReviewRepository extends CoreRepository
                     $query->whereHasMorph('reviewable', Blog::class);
                 } else if ($type === 'order') {
                     $query->whereHasMorph('reviewable', Order::class);
+                } else if ($type === 'shop') {
+                    $query->whereHasMorph('reviewable', Shop::class);
+                } else if ($type === 'parcel') {
+                    $query->whereHasMorph('reviewable', ParcelOrder::class);
                 } else if ($type === 'product') {
                     $query->whereHasMorph('reviewable', Product::class);
                 }

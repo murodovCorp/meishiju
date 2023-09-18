@@ -61,6 +61,7 @@ return [
     'img_host' => env('IMG_HOST'),
 
     'front_url' => env('FRONT_URL'),
+    'admin_url' => env('ADMIN_URL'),
 
     'telegram_bot_token' => env('TELEGRAM_BOT_TOKEN'),
 
@@ -172,9 +173,10 @@ return [
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
         Jenssegers\Agent\AgentServiceProvider::class,
-        /*
-         * Package Service Providers...
-         */
+
+		/*
+		 * Package Service Providers...
+		 */
 
         /*
          * Application Service Providers...
@@ -234,7 +236,6 @@ return [
         'Request'       => Illuminate\Support\Facades\Request::class,
         'Response'      => Illuminate\Support\Facades\Response::class,
         'Route'         => Illuminate\Support\Facades\Route::class,
-        // 'Redis' => Illuminate\Support\Facades\Redis::class,
         'Schema'        => Illuminate\Support\Facades\Schema::class,
         'Session'       => Illuminate\Support\Facades\Session::class,
         'Storage'       => Illuminate\Support\Facades\Storage::class,
@@ -243,7 +244,7 @@ return [
         'Validator'     => Illuminate\Support\Facades\Validator::class,
         'View'          => Illuminate\Support\Facades\View::class,
         'Agent'         => Jenssegers\Agent\Facades\Agent::class,
-        'BotMan'        => BotMan\BotMan\Facades\BotMan::class
+        'BotMan'        => BotMan\BotMan\Facades\BotMan::class,
     ],
 
 ];

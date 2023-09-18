@@ -15,7 +15,7 @@ class ShopReviewService extends CoreService
 
     public function addReview(Shop $shop, $collection): array
     {
-        $shop->addOrderReview($collection, $shop);
+		$shop->addOrderReview($collection, $shop);
 
         return [
             'status' => true,
