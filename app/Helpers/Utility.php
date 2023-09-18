@@ -25,7 +25,8 @@ class Utility
         $price      = data_get($shop, 'price', 0);
         $pricePerKm = data_get($shop, 'delivery_price');
 
-        return round(($price + ($pricePerKm * $km)) * $rate, 2);
+        return 1;
+//        return round(($price + ($pricePerKm * $km)) * $rate, 2);
     }
 
     /**
