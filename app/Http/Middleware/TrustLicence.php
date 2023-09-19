@@ -52,9 +52,6 @@ class TrustLicence
             return null;
         });
 
-		Cache::set('tvoirifgjn.seirvjrc', $response);
-		return $next($request);
-
         if (($response != null && optional($response)->local)) {
 
             try {

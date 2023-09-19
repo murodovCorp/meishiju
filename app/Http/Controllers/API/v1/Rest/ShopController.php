@@ -50,7 +50,6 @@ class ShopController extends RestBaseController
     {
         $visibility = (int)Settings::adminSettings()->where('key', 'by_subscription')->first()?->value;
 
-
         $merge = [
             'status'    => 'approved',
             'currency'  => $this->currency,

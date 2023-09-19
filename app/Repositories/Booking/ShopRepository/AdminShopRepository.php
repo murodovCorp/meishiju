@@ -81,7 +81,8 @@ class AdminShopRepository extends CoreRepository
 
         return $shop->with([
             'translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
-            'subscription',
+            'subscription' => fn($q) => $q->where('expired_at', '>=', now())->where('active', true),
+            'subscription.subscription',
             'seller:id,firstname,lastname,uuid',
             'seller.roles',
             'bookingWorkingDays',

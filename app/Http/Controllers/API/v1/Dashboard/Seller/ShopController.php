@@ -89,7 +89,8 @@ class ShopController extends SellerBaseController
             ShopResource::make($shop->load([
 				'translations',
 				'seller.wallet',
-				'subscription.subscription' => fn($q) => $q->where('expired_at', '>=', now())->where('active', true),
+                'subscription' => fn($q) => $q->where('expired_at', '>=', now())->where('active', true),
+                'subscription.subscription',
 				'tags.translation' => fn($q) => $q->where('locale', $this->language)->orWhere('locale', $locale),
 			]))
         );

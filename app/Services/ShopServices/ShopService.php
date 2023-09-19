@@ -127,7 +127,8 @@ class ShopService extends CoreService implements ShopServiceInterface
                 'code' => ResponseError::NO_ERROR,
                 'data' => Shop::with([
                     'translation' => fn($q) => $q->where('locale', $this->language),
-                    'subscription',
+                    'subscription' => fn($q) => $q->where('expired_at', '>=', now())->where('active', true),
+                    'subscription.subscription',
                     'categories.translation' => fn($q) => $q->where('locale', $this->language),
                     'seller.roles',
                     'tags.translation' => fn($q) => $q->where('locale', $this->language),

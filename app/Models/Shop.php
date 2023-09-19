@@ -297,6 +297,12 @@ class Shop extends Model
             arsort($orders);
         }
 
+        $visibility = (int)Settings::adminSettings()->where('key', 'by_subscription')->first()?->value;
+
+        if ($visibility && request()->is('api/v1/rest/*')) {
+            $filter['visibility'] = true;
+        }
+
         $query
             ->when(data_get($filter, 'user_id'), function ($q, $userId) {
                 $q->where('user_id', $userId);
